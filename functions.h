@@ -41,7 +41,8 @@ template<> static expr fn_base<fn_sin>::make(expr x)
 	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;	// sin(5?/4), sin(7?/4) => -?2/2
 	if(x == pi/2)					return one;				// sin(?/2) => 1
 	if(x == 2*pi/2)					return minus_one;		// sin(3?/2) => -1
-	if(is<func>(x) && is<fn_arcsin>(as<func>(x).f()))	return as<fn_arcsin>(as<func>(x).f()).x();	// sin(arcsin(x)) => x
+	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// sin(-x) => -sin(x)
+	if(is<func>(x) && is<fn_arcsin>(as<func>(x).f()))		return as<fn_arcsin>(as<func>(x).f()).x();	// sin(arcsin(x)) => x
 	return func{fn_sin{x}};
 }
 template<> static expr fn_base<fn_cos>::make(expr x)
@@ -55,11 +56,13 @@ template<> static expr fn_base<fn_cos>::make(expr x)
 	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;	// cos(3?/4), cos(5?/4) => -?2/2
 	if(x == zero || x == 2*pi)		return one;				// cos(0), cos(2?) => 1
 	if(x == pi)						return minus_one;		// cos(?) => -1
-	if(is<func>(x) && is<fn_arccos>(as<func>(x).f()))	return as<fn_arccos>(as<func>(x).f()).x();	// cos(arccos(x)) => x
+	if(is<product>(x) && as<product>(x).left() == minus_one)return make(as<product>(x).right());		// cos(-x) => cos(x)
+	if(is<func>(x) && is<fn_arccos>(as<func>(x).f()))		return as<fn_arccos>(as<func>(x).f()).x();	// cos(arccos(x)) => x
 	return func{fn_cos{x}};
 }
 
 template<> static expr fn_base<fn_tg>::make(expr x) {
+	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// tg(-x) => -tg(x)
 	return func{fn_tg{x}};
 }
 template<> static expr fn_base<fn_arcsin>::make(expr x)	{

@@ -194,6 +194,8 @@ namespace Tests
 			Assert::AreEqual("3", to_string((sin(pi/3)^2)*4).c_str());
 			Assert::AreEqual("x", to_string(sin(arcsin(x))).c_str());
 			Assert::AreEqual("1", to_string((sin(3*x)^2)+(cos(3*x)^2)).c_str());
+			Assert::AreEqual("-sin(x^2)", to_string(sin(-x*x)).c_str());
+			Assert::AreEqual("cos(x^2)", to_string(cos(-x*x)).c_str());
 		}
 		TEST_METHOD(Approximation)
 		{
