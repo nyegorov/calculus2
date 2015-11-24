@@ -222,6 +222,18 @@ namespace Tests
 			Assert::AreEqual("cos(tg(x))", to_string(cos(tg(x))).c_str());
 			Assert::AreEqual("-sin(tg(x))cos(x)^-2", to_string(cos(tg(x))|| x).c_str());
 		}
+		TEST_METHOD(Integrals)
+		{
+			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
+			Assert::AreEqual("1", to_string(integrate(cos(x), x, 0, pi/2)).c_str());
+			Assert::AreEqual("#e^x", to_string((e^x) && x).c_str());
+			Assert::AreEqual("sin(x)-cos(x)", to_string(((sin(x)+cos(x)) && x)).c_str());
+			Assert::AreEqual("2/3yx^3", to_string((2*x*y*x) && x).c_str());
+			Assert::AreEqual("x+10x^2+50x^3+125x^4+125x^5", to_string(((5*x+1)^4) && x).c_str());
+			Assert::AreEqual("1/5ln(1+5x)", to_string(((5 * x + 1) ^ -1) && x).c_str());
+			Assert::AreEqual("-1/4x^2+1/2ln(x)x^2", to_string((x*ln(x)) && x).c_str());
+			//Assert::AreEqual("1/2ln(1+5x)", to_string((ln(5*x)/x) && x).c_str());
+		}
 		TEST_METHOD(Matches)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};

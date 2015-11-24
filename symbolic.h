@@ -84,6 +84,7 @@ expr operator ^ (product lh, product rh) {
 	return (lh.left() ^ *rh) * (lh.right() ^ *rh); 
 }
 expr operator ^ (sum lh, integer n) {
+	if(n.value() <= 0)	return make_power(lh, n);
 	expr s;
 	for(int k = 0; k <= n.value(); k++) {
 		s = s + binomial(n.value(), k) * (lh.left() ^ (n.value() - k)) * (lh.right() ^ k);	// C(n,k) * a^(n-k) * b^k

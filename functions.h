@@ -75,6 +75,16 @@ template<> static expr fn_base<fn_arctg>::make(expr x)	{
 	return func{fn_arctg{x}};
 }
 
+expr make_integral(expr f, expr dx) {
+	if((f || dx) == zero)	return f * dx;																// S y dx => yx
+	match_result mr;
+	symbol x{"x"}, a{"a"};
+	if((mr = cas::match(f, x*ln(x))) && mr[x] == dx)	return (dx ^ 2)*ln(x) / 2 - (dx ^ 2) / 4;		// S xln(x) dx => (x^2 lnx)/2 - x^2/4
+	if((mr = cas::match(f, ln(x) / x)) && mr[x] == dx)	return half * (ln(dx) ^ 2);						// S ln(x)/x dx => 1/2 ln(x)^2
+	//if((mr = cas::match(f, ln(a*x)/x)) && mr[x] == dx && (mr[a] || dx) == zero)	return half * (ln(mr[a]*dx) ^ 2);	// S ln(ax)/x dx => 1/2 ln(ax)^2
+	return func{fn_int{f, dx}};
+}
+
 expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 {
 	if(is<real>(x))		return make_real(rfun(as<real>(x).value()));
@@ -90,9 +100,25 @@ template<> expr fn_base<fn_tg>::approx() const { return apply_fun(~_x, tan, [](c
 template<> expr fn_base<fn_arcsin>::approx() const { return apply_fun(~_x, asin, [](complex_t x) {return asin(x); }); }
 template<> expr fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
 template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
-template<class F> match_result fn_base<F>::match(expr e, match_result res) const { return cas::match(e, _x, res); }
+template<class F> match_result fn_base<F>::match(function_t f, match_result res) const { 
+	return f.type() == typeid(F) ? 
+		cas::match(boost::get<F>(f).x(), _x, res) : 
+		res.found = false, res;
+}
 
 template<class F> static expr operator *(F f) { return f.make(f.x()); }
+expr operator *(fn_int f) { return make_integral(f.f(), f.dx()); }
+
+expr fn_int::derive(expr dx) const { return dx == _dx ? _fun : make_err(error_t::not_implemented); }
+expr fn_int::integrate(expr dx, expr c) const { return make_integral(func{*this}, dx); }
+expr fn_int::subst(pair<expr, expr> s) const { return make_integral(_fun | s, _dx | s); }
+expr fn_int::approx() const { return func{*this}; }
+match_result fn_int::match(function_t f, match_result res) const { 
+	return f.type() == typeid(fn_int) ? 
+		cas::match(boost::get<fn_int>(f).dx(), _dx, cas::match(boost::get<fn_int>(f).f(), _fun, res)) :
+		(res.found = false, res); 
+}
+
 
 expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.f()); }						 
 expr operator + (func lh, func rh) { return make_sum(*lh, *rh); }
@@ -102,11 +128,9 @@ expr operator ^ (func lh, func rh) { return make_power(*lh, *rh); }
 expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
 expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
 match_result func::match(expr e, match_result res) const { 
-	if(is<func>(e) && as<func>(e).f().type() == _func.type()) {
-		auto x = boost::apply_visitor([](auto f) { return f.x(); }, as<func>(e).f());
-		return boost::apply_visitor([x, &res](auto f) { return f.match(x, res); }, _func);
-	}
-	return res.found = false, res;
+	return is<func>(e) ? 
+		boost::apply_visitor([fun = as<func>(e).f(), &res](auto f) { return f.match(fun, res); }, _func) :
+		res.found = false, res;
 }
 
 }

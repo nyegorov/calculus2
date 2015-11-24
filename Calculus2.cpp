@@ -69,13 +69,10 @@ int main()
 	cout << ((x*y)+(x*y)) << endl;
 	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
-	cout << ((x ^ 3) || x) << endl;
-	cout << ((x - y) ^ 3) << endl;
-	//cout << ((x - y) ^ 3) << endl;
-//	cout << ((x - y)*((x ^ 2) + x*y + (y ^ 2))) << endl;
-	cout << p << endl;
+	cout << (((5 * x + 1) ^ minus_one) ) << endl;
+	cout << ((x*ln(x)) && x) << endl;
 
-	auto mr = match(2*pi, x*y);
+	auto mr = match(cos(a + 2 * pi), cos(x + 2 * pi));
 	cout << mr[x] << "," << mr[y] << endl;
 	mr = match(cos(expr{3}), cos(expr{3}));
 	mr = match(cos(expr{3}), cos(x));

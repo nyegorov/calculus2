@@ -70,6 +70,6 @@ namespace cas {
 	expr operator ~ (expr op1) { return cas::approx(op1); }
 	expr operator | (expr op1, symbol op2) { return cas::subst(op1, op2); }
 	expr operator | (expr op1, pair<expr, expr> op2) { return cas::subst(op1, op2); }
-	expr operator || (expr op1, symbol op2) { return cas::derive(op1, op2); }
-	expr operator || (expr op1, string op2) { return cas::derive(op1, op2); }
+	expr operator || (expr op1, expr op2) { return cas::derive(op1, op2); }
+	expr operator && (expr op1, expr op2) { return cas::integrate(op1, op2); }
 }
