@@ -92,10 +92,10 @@ expr operator ^ (sum lh, integer n) {
 }
 expr operator ^ (sum lh, sum rh) { return make_power(*lh, *rh); }
 
-expr symbol::subst(expr from, expr to) const { return expr{*this} == from ? to : *this; }
-expr power::subst(expr from, expr to) const { return expr{*this} == from ? to : cas::subst(_x, from, to) ^ cas::subst(_y, from, to); }
-expr product::subst(expr from, expr to) const { return expr{*this} == from ? to : cas::subst(_left, from, to) * cas::subst(_right, from, to); }
-expr sum::subst(expr from, expr to) const { return expr{*this} == from ? to : cas::subst(_left, from, to) + cas::subst(_right, from, to); }
+expr symbol::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : *this; }
+expr power::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_x | s) ^ (_y | s); }
+expr product::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_left | s) * (_right | s); }
+expr sum::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_left | s) + (_right | s); }
 
 expr symbol::approx() const { return _value == empty ? expr{*this} : ~_value; }
 expr power::approx() const { return ~_x ^ ~_y; }

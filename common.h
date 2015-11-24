@@ -9,7 +9,7 @@
 
 using std::string;
 using std::ostream;
-using std::tuple;
+using std::pair;
 
 namespace cas {
 class integer;
@@ -74,7 +74,7 @@ public:
 	expr derive(string dx) const;
 	expr inte(string dx) const;
 	expr approx() const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	match_result match(expr e, match_result res) const;
 };
 
@@ -167,7 +167,7 @@ public:
 	symbol operator = (expr value) { _value = value; return *this; }
 	bool has_sign() const { return false; }
 	expr derive(string dx) const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	match_result match(expr e, match_result res) const;
 };
@@ -186,7 +186,7 @@ public:
 	expr y() const { return _y; }
 	bool has_sign() const { return cas::has_sign(_x); }
 	expr derive(string dx) const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	match_result match(expr e, match_result res) const;
 };
@@ -209,7 +209,7 @@ public:
 	product(expr left, expr right) : expr_list(left, right) {}
 	bool has_sign() const { return cas::has_sign(_left); }
 	expr derive(string dx) const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	match_result match(expr pattern, match_result res) const;
 };
@@ -230,7 +230,7 @@ public:
 	sum(expr left, expr right) : expr_list(left, right) {}
 	bool has_sign() const { return cas::has_sign(_left); }
 	expr derive(string dx) const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	match_result match(expr e, match_result res) const;
 };
@@ -251,7 +251,7 @@ public:
 	expr x() const { return _x; }
 	static expr make(expr x) { return x; };
 	expr derive(string dx) const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	match_result match(expr e, match_result res) const;
 };
@@ -284,7 +284,7 @@ public:
 	function_t f() const { return _func; }
 	bool has_sign() const { return false; }
 	expr derive(string dx) const;
-	expr subst(expr from, expr to) const;
+	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	match_result match(expr e, match_result res) const;
 };
@@ -301,7 +301,8 @@ bool has_sign(expr e) { return boost::apply_visitor([](auto x) { return x.has_si
 bool is_numeric(expr e) { return e.which() <= numbers; }
 expr derive(expr e, string var) { return boost::apply_visitor([var](auto x) { return x.derive(var); }, e); }
 expr derive(expr e, symbol var) { return boost::apply_visitor([var](auto x) { return x.derive(var.name()); }, e); }
-expr subst(expr e, expr from, expr to) { return boost::apply_visitor([from, to](auto x) { return x.subst(from, to); }, e); }
+expr subst(expr e, pair<expr, expr> s) { return boost::apply_visitor([s](auto x) { return x.subst(s); }, e); }
+expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
 expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
 expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 match_result match(expr e, expr pattern, match_result res = {}) { return boost::apply_visitor([e, res](auto x) { return x.match(e, res); }, pattern); }
@@ -317,6 +318,7 @@ expr operator - (expr op1);
 expr operator ~ (expr op1);
 expr operator / (expr op1, expr op2);
 expr operator | (expr op1, symbol op2);
+expr operator | (expr op1, pair<expr, expr> op2);
 expr operator || (expr op1, symbol op2);
 expr operator || (expr op1, string op2);
 
@@ -329,7 +331,7 @@ expr make_power(expr x, expr y);
 expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
 
-template<class T> expr base<T>::subst(expr from, expr to) const { return {*static_cast<const T*>(this)}; };
+template<class T> expr base<T>::subst(pair<expr, expr> s) const { return {*static_cast<const T*>(this)}; };
 template<class T> expr base<T>::derive(string dx) const { return 0; };
 template<class T> expr base<T>::approx() const { return {*static_cast<const T*>(this)}; };
 template<class T> match_result base<T>::match(expr e, match_result res) const { if(e != expr{*static_cast<const T*>(this)}) res.found = false; return res; };
