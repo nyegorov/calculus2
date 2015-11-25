@@ -72,7 +72,7 @@ template<class T> class base
 {
 public:
 	bool has_sign() const { return false; }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr approx() const;
 	expr subst(pair<expr, expr> s) const;
@@ -85,7 +85,7 @@ class error : public base<error>
 public:
 	error(error_t err) : _error(err) {}
 	error_t get() const { return _error; }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 };
 
 bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
@@ -167,7 +167,7 @@ public:
 	expr value() const { return _value; }
 	symbol operator = (expr value) { _value = value; return *this; }
 	bool has_sign() const { return false; }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -187,7 +187,7 @@ public:
 	expr x() const { return _x; }
 	expr y() const { return _y; }
 	bool has_sign() const { return cas::has_sign(_x); }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -211,7 +211,7 @@ public:
 
 	product(expr left, expr right) : expr_list(left, right) {}
 	bool has_sign() const { return cas::has_sign(_left); }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -233,7 +233,7 @@ public:
 
 	sum(expr left, expr right) : expr_list(left, right) {}
 	bool has_sign() const { return cas::has_sign(_left); }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -255,7 +255,7 @@ public:
 	fn_base(expr x) : _x(x) {}
 	expr x() const { return _x; }
 	static expr make(expr x) { return x; };
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -280,7 +280,7 @@ public:
 	fn_int(expr fun, expr dx) : _fun(fun), _dx(dx) {}
 	expr f() const { return _fun; }
 	expr dx() const { return _dx; }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -306,7 +306,7 @@ public:
 	func(function_t func) : _func(func) {}
 	function_t f() const { return _func; }
 	bool has_sign() const { return false; }
-	expr derive(expr dx) const;
+	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
@@ -328,8 +328,6 @@ expr operator ~ (expr op1);
 expr operator / (expr op1, expr op2);
 expr operator | (expr op1, symbol op2);
 expr operator | (expr op1, pair<expr, expr> op2);
-expr operator || (expr op1, expr op2);
-expr operator && (expr op1, expr op2);
 
 bool failed(expr e) { return e.type() == typeid(error); }
 string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
@@ -338,9 +336,9 @@ bool is_numeric(expr e) { return e.which() <= numbers; }
 expr subst(expr e, pair<expr, expr> s) { return boost::apply_visitor([s](auto x) { return x.subst(s); }, e); }
 expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
 expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
-expr derive(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.derive(dx); }, e); }
-expr integrate(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
-expr integrate(expr e, expr dx, expr a, expr b) { auto F = integrate(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
+expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
+expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
+expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
 expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 match_result match(expr e, expr pattern, match_result res = {}) { return boost::apply_visitor([e, res](auto x) { return x.match(e, res); }, pattern); }
 
@@ -358,7 +356,7 @@ expr make_prod(expr left, expr right);
 expr make_integral(expr f, expr dx);
 
 template<class T> expr base<T>::subst(pair<expr, expr> s) const { return {*static_cast<const T*>(this)}; };
-template<class T> expr base<T>::derive(expr dx) const { return 0; };
+template<class T> expr base<T>::d(expr dx) const { return 0; };
 template<class T> expr base<T>::integrate(expr dx, expr c) const { return dx + c; };
 template<class T> expr base<T>::approx() const { return {*static_cast<const T*>(this)}; };
 template<class T> match_result base<T>::match(expr e, match_result res) const { if(e != expr{*static_cast<const T*>(this)}) res.found = false; return res; };

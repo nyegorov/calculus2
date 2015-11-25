@@ -70,7 +70,6 @@ int main()
 	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
 	//cout << (((5 * x + 1) ^ minus_one) ) << endl;
-	cout << ((x*ln(5*x+1)) && x) << endl;
 
 	a = y;
 	auto mr = match(x*ln(2*x+1), a*ln(y));

@@ -99,7 +99,7 @@ template<class F> match_result fn_base<F>::match(function_t f, match_result res)
 template<class F> static expr operator *(F f) { return f.make(f.x()); }
 expr operator *(fn_int f) { return make_integral(f.f(), f.dx()); }
 
-expr fn_int::derive(expr dx) const { return dx == _dx ? _fun : make_err(error_t::not_implemented); }
+expr fn_int::d(expr dx) const { return dx == _dx ? _fun : make_err(error_t::not_implemented); }
 expr fn_int::integrate(expr dx, expr c) const { return make_integral(func{*this}, dx); }
 expr fn_int::subst(pair<expr, expr> s) const { return make_integral(_fun | s, _dx | s); }
 expr fn_int::approx() const { return func{*this}; }
