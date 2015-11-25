@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <algorithm>
 
@@ -20,7 +20,7 @@ expr make_sum(expr left, expr right) {
 	if(left == zero)	return right;			// 0+x => x
 	if(right == zero)	return left;			// x+0 => x
 	if(right == empty)	return left;			// x+0 => x
-	if(left == right)	return two * left;		// x+x => 2*x
+	if(left == right)	return two * left;		// x+x => 2x
 	if(left > right)	std::swap(left, right);
 	return sum{ left, right };
 }
@@ -30,7 +30,7 @@ expr make_prod(expr left, expr right)
 	if(left == zero || right == zero)	return zero;	// 0*x => 0
 	if(left == one)		return right;			// 1*x => x
 	if(right == one)	return left;			// x*1 => x
-	if(left == right)	return left ^ two;		// x*x => x^2
+	if(left == right)	return left ^ two;		// x*x => x²
 	if(left > right)	std::swap(left, right);
 	return product{ left, right };
 }
@@ -45,7 +45,7 @@ expr operator * (sum op) { return make_sum(op.left(), op.right()); }
 expr operator + (symbol lh, symbol rh) { return make_sum(*lh, *rh); }
 expr operator + (power lh, power rh) { 
 	if(lh.y() == two && rh.y() == two && is<func>(lh.x()) && is<func>(rh.x())) {
-		// sin(x)^2+cos(x)^2=1
+		// sin²(x)+cos²(x)=1
 		if(is<fn_sin>(as<func>(lh.x()).f()) && is<fn_cos>(as<func>(rh.x()).f()) && as<fn_sin>(as<func>(lh.x()).f()).x() == as<fn_cos>(as<func>(rh.x()).f()).x())	return one;
 		if(is<fn_sin>(as<func>(rh.x()).f()) && is<fn_cos>(as<func>(lh.x()).f()) && as<fn_sin>(as<func>(rh.x()).f()).x() == as<fn_cos>(as<func>(lh.x()).f()).x())	return one;
 	}

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "common.h"
 #include "numeric.h"
@@ -32,30 +32,30 @@ template<> static expr fn_base<fn_ln>::make(expr x)
 }
 template<> static expr fn_base<fn_sin>::make(expr x)
 {
-	if(x == zero || x == pi || x == 2*pi)	return zero;	// sin(0), sin(pi), sin(2pi) => 0
-	if(x == pi/6 || x == 5*pi/6)	return half;			// sin(pi/6), sin(5pi/6) => 1/2
-	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;	// sin(pi/3), sin(2pi/3) => pi3/2
-	if(x == 7*pi/6 || x == 11*pi/6)	return -half;			// sin(7pi/6), sin(11pi/6) => -1/2
-	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;	// sin(4pi/3), sin(5pi/3) => -pi3/2
-	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;	// sin(pi/4), sin(3pi/4) => pi2/2
-	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;	// sin(5pi/4), sin(7pi/4) => -pi2/2
-	if(x == pi/2)					return one;				// sin(pi/2) => 1
-	if(x == 2*pi/2)					return minus_one;		// sin(3pi/2) => -1
+	if(x == zero || x == pi || x == 2*pi)	return zero;	// sin(0), sin(π), sin(2π) => 0
+	if(x == pi/6 || x == 5*pi/6)	return half;			// sin(π/6), sin(5π/6) => 1/2
+	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;	// sin(π/3), sin(2π/3) => π3/2
+	if(x == 7*pi/6 || x == 11*pi/6)	return -half;			// sin(7π/6), sin(11π/6) => -1/2
+	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;	// sin(4π/3), sin(5π/3) => -π3/2
+	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;	// sin(π/4), sin(3π/4) => π2/2
+	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;	// sin(5π/4), sin(7π/4) => -π2/2
+	if(x == pi/2)					return one;				// sin(π/2) => 1
+	if(x == 2*pi/2)					return minus_one;		// sin(3π/2) => -1
 	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// sin(-x) => -sin(x)
 	if(is<func>(x) && is<fn_arcsin>(as<func>(x).f()))		return as<fn_arcsin>(as<func>(x).f()).x();	// sin(arcsin(x)) => x
 	return func{fn_sin{x}};
 }
 template<> static expr fn_base<fn_cos>::make(expr x)
 {
-	if(x == pi/2 || x == 3*pi/2)	return zero;			// cos(pi/2), cos(3pi/2) => 0
-	if(x == pi/3 || x == 5*pi/3)	return half;			// cos(pi/3), cos(5pi/3) => 1/2
-	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;	// cos(pi/6), cos(11pi/6) => pi3/2
-	if(x == 2*pi/3 || x == 4*pi/3)	return -half;			// cos(2pi/3), cos(4pi/3) => -1/2
-	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;	// cos(5pi/6), cos(7pi/6) => -pi3/2
-	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;	// cos(pi/4), cos(7pi/4) => pi2/2
-	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;	// cos(3pi/4), cos(5pi/4) => -pi2/2
-	if(x == zero || x == 2*pi)		return one;				// cos(0), cos(2pi) => 1
-	if(x == pi)						return minus_one;		// cos(pi) => -1
+	if(x == pi/2 || x == 3*pi/2)	return zero;			// cos(π/2), cos(3π/2) => 0
+	if(x == pi/3 || x == 5*pi/3)	return half;			// cos(π/3), cos(5π/3) => 1/2
+	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;	// cos(π/6), cos(11π/6) => π3/2
+	if(x == 2*pi/3 || x == 4*pi/3)	return -half;			// cos(2π/3), cos(4π/3) => -1/2
+	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;	// cos(5π/6), cos(7π/6) => -π3/2
+	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;	// cos(π/4), cos(7π/4) => π2/2
+	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;	// cos(3π/4), cos(5π/4) => -π2/2
+	if(x == zero || x == 2*pi)		return one;				// cos(0), cos(2π) => 1
+	if(x == pi)						return minus_one;		// cos(π) => -1
 	if(is<product>(x) && as<product>(x).left() == minus_one)return make(as<product>(x).right());		// cos(-x) => cos(x)
 	if(is<func>(x) && is<fn_arccos>(as<func>(x).f()))		return as<fn_arccos>(as<func>(x).f()).x();	// cos(arccos(x)) => x
 	return func{fn_cos{x}};
@@ -73,16 +73,6 @@ template<> static expr fn_base<fn_arccos>::make(expr x)	{
 }
 template<> static expr fn_base<fn_arctg>::make(expr x)	{
 	return func{fn_arctg{x}};
-}
-
-expr make_integral(expr f, expr dx) {
-	if((f || dx) == zero)	return f * dx;																// S y dx => yx
-	match_result mr;
-	symbol x{"x"}, a{"a"};
-	if((mr = cas::match(f, x*ln(x))) && mr[x] == dx)	return (dx ^ 2)*ln(x) / 2 - (dx ^ 2) / 4;		// S xln(x) dx => (x^2 lnx)/2 - x^2/4
-	if((mr = cas::match(f, ln(x) / x)) && mr[x] == dx)	return half * (ln(dx) ^ 2);						// S ln(x)/x dx => 1/2 ln(x)^2
-	//if((mr = cas::match(f, ln(a*x)/x)) && mr[x] == dx && (mr[a] || dx) == zero)	return half * (ln(mr[a]*dx) ^ 2);	// S ln(ax)/x dx => 1/2 ln(ax)^2
-	return func{fn_int{f, dx}};
 }
 
 expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
@@ -103,7 +93,7 @@ template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, 
 template<class F> match_result fn_base<F>::match(function_t f, match_result res) const { 
 	return f.type() == typeid(F) ? 
 		cas::match(boost::get<F>(f).x(), _x, res) : 
-		res.found = false, res;
+		(res.found = false, res);
 }
 
 template<class F> static expr operator *(F f) { return f.make(f.x()); }
@@ -130,7 +120,7 @@ expr func::approx() const { return boost::apply_visitor([](auto x) { return x.ap
 match_result func::match(expr e, match_result res) const { 
 	return is<func>(e) ? 
 		boost::apply_visitor([fun = as<func>(e).f(), &res](auto f) { return f.match(fun, res); }, _func) :
-		res.found = false, res;
+		(res.found = false, res);
 }
 
 }

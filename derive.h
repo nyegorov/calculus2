@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "common.h"
 #include "numeric.h"
@@ -37,6 +37,21 @@ expr product::derive(expr dx) const { return (_left||dx) * _right + _left * (_ri
 expr sum::derive(expr dx) const { return (_left||dx) + (_right||dx); }
 
 // Integrals
+
+expr make_integral(expr f, expr dx) {
+	if((f || dx) == zero)	return f * dx;												// S y dx => yx
+	match_result mr;
+	symbol x{"x", dx}, y{"y"};
+	//if((mr = cas::match(f, x*ln(x))))	return (dx ^ 2)*ln(x) / 2 - (dx ^ 2) / 4;		// S xln(x) dx => (x² lnx)/2 - x²/4
+	//if((mr = cas::match(f, ln(x) / x)))	return half * (ln(dx) ^ 2);						// S ln(x)/x dx => 1/2 ln(x)²
+
+	if(mr = cas::match(f, x*ln(y))) {													// S xln(ax+b) dx => (a²x²-b²)ln(ax+b)/2a²-x(ax-2b)/4a
+		auto a = mr[y] || dx, b = mr[y] - a*x;
+		if((a || dx) == zero)			return ((a^2)*(x^2)-(b^2))*ln(a*x+b)/(2*(a^2))-x*(a*x-2*b)/(4*a);
+	}
+	return func{fn_int{f, dx}};
+}
+
 //expr error::integrate(symbol dx, expr c) const { return _error == error_t::empty ? zero : *this; }
 expr symbol::integrate(expr dx, expr c) const { 
 	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;

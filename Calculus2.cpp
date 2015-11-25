@@ -1,4 +1,4 @@
-// Calculus2.cpp : Defines the entry point for the console application.
+﻿// Calculus2.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"
@@ -69,10 +69,11 @@ int main()
 	cout << ((x*y)+(x*y)) << endl;
 	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
-	cout << (((5 * x + 1) ^ minus_one) ) << endl;
-	cout << ((x*ln(x)) && x) << endl;
+	//cout << (((5 * x + 1) ^ minus_one) ) << endl;
+	cout << ((x*ln(5*x+1)) && x) << endl;
 
-	auto mr = match(cos(a + 2 * pi), cos(x + 2 * pi));
+	a = y;
+	auto mr = match(x*ln(2*x+1), a*ln(y));
 	cout << mr[x] << "," << mr[y] << endl;
 	mr = match(cos(expr{3}), cos(expr{3}));
 	mr = match(cos(expr{3}), cos(x));
