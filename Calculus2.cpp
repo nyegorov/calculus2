@@ -81,7 +81,7 @@ int main()
 	cout << ((x*y)+(x*y)) << endl;
 	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
-	//cout << (((5 * x + 1) ^ minus_one) ) << endl;
+	cout << (sin(arcsin(x))) << endl;
 
 	a = y;
 	auto mr = match(x*ln(2*x+1), a*ln(y));

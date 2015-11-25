@@ -52,7 +52,7 @@ typedef boost::variant<
 
 typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int> function_t;
 typedef std::vector<expr> vec_expr;
-typedef std::list<expr> list_t;
+typedef std::vector<expr> list_t;
 const unsigned numbers = 3;
 
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
@@ -70,6 +70,7 @@ bool has_sign(expr e);
 bool is_numeric(expr e);
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T> T& as(expr& e) { return boost::get<T>(e); }
+template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
 
 template<class T> class base
 {
@@ -258,6 +259,10 @@ public:
 	fn_base(expr x) : _x(x) {}
 	expr x() const { return _x; }
 	static expr make(expr x) { return x; };
+	expr param(unsigned i) const {
+		if(is<xset>(_x))	return i < as<xset>(_x).items().size() ? as<xset>(_x).items()[i] : make_err(error_t::invalid_args);
+		else				return i == 0 ? _x : make_err(error_t::invalid_args);
+	}
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
@@ -276,19 +281,7 @@ struct fn_tg : public fn_base<fn_tg> { using fn_base::fn_base; };
 struct fn_arcsin : public fn_base<fn_arcsin> { using fn_base::fn_base; };
 struct fn_arccos : public fn_base<fn_arccos> { using fn_base::fn_base; };
 struct fn_arctg : public fn_base<fn_arctg> { using fn_base::fn_base; };
-class fn_int	{ 
-	expr	_fun;
-	expr	_dx;
-public:
-	fn_int(expr fun, expr dx) : _fun(fun), _dx(dx) {}
-	expr f() const { return _fun; }
-	expr dx() const { return _dx; }
-	expr d(expr dx) const;
-	expr integrate(expr dx, expr c) const;
-	expr subst(pair<expr, expr> s) const;
-	expr approx() const;
-	match_result match(function_t f, match_result res) const;
-};
+class fn_int : public fn_base<fn_arctg> { using fn_base::fn_base; };
 
 ostream& operator << (ostream& os, fn_base<fn_ln> f) { return os << "ln(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_sin> f) { return os << "sin(" << f.x() << ')'; }
@@ -297,10 +290,7 @@ ostream& operator << (ostream& os, fn_base<fn_tg> f) { return os << "tg(" << f.x
 ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "arcsin(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_int f) { return os << "int(" << f.f() << ',' << f.dx() << ')'; }
-
-bool operator == (fn_int lh, fn_int rh) { return lh.f() == rh.f() && lh.dx() == rh.dx(); }
-bool operator < (fn_int lh, fn_int rh) { return lh.f() < rh.f(); }
+ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f.param(0) << ',' << f.param(1) << ')'; }
 
 class func
 {
@@ -371,9 +361,6 @@ expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, 
 expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
 expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 match_result match(expr e, expr pattern, match_result res = {}) { return boost::apply_visitor([e, res](auto x) { return x.match(e, res); }, pattern); }
-
-template<class T> bool is(const function_t& f) { return f.type() == typeid(T); }
-template<class T> T& as(function_t& f) { return boost::get<T>(f); }
 
 expr make_err(error_t err);
 expr make_int(int_t value);

@@ -51,10 +51,10 @@ expr operator * (product op) { return make_prod(op.left(), op.right()); }
 expr operator * (sum op) { return make_sum(op.left(), op.right()); }
 expr operator + (symbol lh, symbol rh) { return make_sum(*lh, *rh); }
 expr operator + (power lh, power rh) { 
-	if(lh.y() == two && rh.y() == two && is<func>(lh.x()) && is<func>(rh.x())) {
+	if(lh.y() == two && rh.y() == two) {
 		// sin²(x)+cos²(x)=1
-		if(is<fn_sin>(as<func>(lh.x()).f()) && is<fn_cos>(as<func>(rh.x()).f()) && as<fn_sin>(as<func>(lh.x()).f()).x() == as<fn_cos>(as<func>(rh.x()).f()).x())	return one;
-		if(is<fn_sin>(as<func>(rh.x()).f()) && is<fn_cos>(as<func>(lh.x()).f()) && as<fn_sin>(as<func>(rh.x()).f()).x() == as<fn_cos>(as<func>(lh.x()).f()).x())	return one;
+		if(is<func, fn_sin>(lh.x()) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh.x()).x() == as<func, fn_cos>(rh.x()).x())	return one;
+		if(is<func, fn_sin>(rh.x()) && is<func, fn_cos>(lh.x()) && as<func, fn_sin>(rh.x()).x() == as<func, fn_cos>(lh.x()).x())	return one;
 	}
 	return make_sum(*lh, *rh); 
 }
