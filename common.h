@@ -21,6 +21,7 @@ class func;
 class power;
 class product;
 class sum;
+class xset;
 class error;
 
 struct fn_id;
@@ -46,14 +47,16 @@ typedef boost::variant<
 	boost::recursive_wrapper<power>, 
 	boost::recursive_wrapper<product>, 
 	boost::recursive_wrapper<sum>, 
+	boost::recursive_wrapper<xset>,
 	error>	expr;
 
 typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int> function_t;
 typedef std::vector<expr> vec_expr;
+typedef std::list<expr> list_t;
 const unsigned numbers = 3;
 
-enum class error_t { cast, invalid_args, not_implemented, empty };
-const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Empty"};
+enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
+const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Syntax error", "Empty"};
 
 struct match_result
 {
@@ -316,6 +319,33 @@ public:
 bool operator == (func lh, func rh) { return lh.f() == rh.f(); }
 bool operator < (func lh, func rh) { return lh.f() < rh.f(); }
 ostream& operator << (ostream& os, func f) { return os << f.f(); }
+
+class xset
+{
+	list_t	_items;
+public:
+	xset(expr item) { _items.push_back(item); }
+	xset(list_t items) : _items(items) {}
+	xset(std::initializer_list<expr> items) : _items(items) {}
+	const list_t& items() const { return _items; }
+	bool has_sign() const { return false; }
+	expr d(expr dx) const;
+	expr integrate(expr dx, expr c) const;
+	expr subst(pair<expr, expr> s) const;
+	expr approx() const;
+	match_result match(expr e, match_result res) const;
+};
+
+bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
+bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
+ostream& operator << (ostream& os, xset l) {
+	os << '['; 
+	for(auto it = l.items().cbegin(); it != l.items().cend(); ++it) {
+		if(it != l.items().cbegin())	os << ',';
+		os << *it;
+	}
+	return os << ']';
+}
 
 const expr empty = error{error_t::empty};
 

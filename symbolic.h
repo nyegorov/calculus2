@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <algorithm>
+#include <numeric>
 
 #include "common.h"
 #include "numeric.h"
@@ -35,6 +36,12 @@ expr make_prod(expr left, expr right)
 	return product{ left, right };
 }
 
+expr make_xset(std::initializer_list<expr> items)
+{
+	if(items.size() == 1)	return *items.begin();
+	return xset{items};
+}
+
 expr product::op(const expr& lh, const expr& rh) { return lh * rh; }
 expr sum::op(const expr& lh, const expr& rh) { return lh + rh; }
 
@@ -62,6 +69,11 @@ expr operator + (sum lh, sum rh) {
 	for(auto& e : rh) lh.append(e);
 	return *lh;
 }
+expr operator + (xset lh, xset rh) {
+	list_t items(lh.items()); 
+	items.insert(items.end(), rh.items().begin(), rh.items().end());
+	return lh;
+}
 
 expr operator * (symbol lh, symbol rh) { return make_prod(*lh, *rh); }
 expr operator * (power lh, power rh) {
@@ -76,6 +88,7 @@ expr operator * (product lh, product rh) {
 expr operator * (sum lh, sum rh) {
 	return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right();
 }
+expr operator * (xset lh, xset rh) { return make_err(error_t::syntax); }
 
 expr operator ^ (symbol lh, symbol rh) { return make_power(*lh, *rh); }
 expr operator ^ (power lh, power rh) { return make_power(lh.x(), lh.y() * *rh); }
@@ -92,16 +105,27 @@ expr operator ^ (sum lh, integer n) {
 	return s;
 }
 expr operator ^ (sum lh, sum rh) { return make_power(*lh, *rh); }
+expr operator ^ (xset lh, xset rh) { return make_err(error_t::syntax); }
 
 expr symbol::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : *this; }
 expr power::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_x | s) ^ (_y | s); }
 expr product::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_left | s) * (_right | s); }
 expr sum::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_left | s) + (_right | s); }
+expr xset::subst(pair<expr, expr> s) const {
+	list_t ret;
+	transform(_items.begin(), _items.end(), back_inserter(ret), [s](auto e) {return e | s; });
+	return {ret};
+}
 
 expr symbol::approx() const { return _value == empty ? expr{*this} : ~_value; }
 expr power::approx() const { return ~_x ^ ~_y; }
 expr product::approx() const { return ~_left * ~_right; }
 expr sum::approx() const { return ~_left + ~_right; }
+expr xset::approx() const {
+	list_t ret;
+	transform(_items.begin(), _items.end(), back_inserter(ret), [](auto e) {return ~e; });
+	return {ret};
+}
 
 match_result symbol::match(expr e, match_result res) const { 
 	auto it = find(res.matches.begin(), res.matches.end(), *this);
@@ -115,5 +139,11 @@ match_result symbol::match(expr e, match_result res) const {
 match_result power::match(expr e, match_result res) const { return is<power>(e) ? cas::match(as<power>(e).y(), _y, cas::match(as<power>(e).x(), _x, res)) : (res.found = false, res); }
 match_result product::match(expr e, match_result res) const { return is<product>(e) ? cas::match(as<product>(e).right(), _right, cas::match(as<product>(e).left(), _left, res)) : (res.found = false, res); }
 match_result sum::match(expr e, match_result res) const { return is<sum>(e) ? cas::match(as<sum>(e).right(), _right, cas::match(as<sum>(e).left(), _left, res)) : (res.found = false, res); }
+match_result xset::match(expr e, match_result res) const {
+	if(!is<xset>(e) || as<xset>(e).items().size() != _items.size())	return res.found = false, res;
+	auto pe = as<xset>(e).items().begin();
+	res = std::accumulate(_items.begin(), _items.end(), res, [e, &pe](auto r, auto p) {return cas::match(*pe++, p, r); });
+	return res;
+}
 
 }

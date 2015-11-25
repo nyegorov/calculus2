@@ -1,22 +1,34 @@
 ﻿// Calculus2.cpp : Defines the entry point for the console application.
 //
-
 #include "stdafx.h"
+#include "calculus.h"
+
+#pragma execution_character_set("utf-8")
+
 #include <ostream>
 #include <sstream>
 #include <complex>
-#include "calculus.h"
+
+#include <fcntl.h>
+#include <io.h>
+#include <codecvt>
+#include <locale>
 
 using namespace std;
 using namespace cas;
 using namespace std::literals;
 
+extern void initStreams();
+
 int main()
 {
 	symbol x{"x"}, y{"y"}, a{"a"};
 
+	xset ll{x,y, 2, pi};
+	cout << ll;
+
 	/*sum ms{2, pi};
-	//ms.insert(2);
+	//ms.insert(2);/
 	//ms.insert(pi);
 	ms.insert(1);
 	ms.insert(a);

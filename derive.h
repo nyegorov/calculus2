@@ -36,6 +36,12 @@ expr product::d(expr dx) const { return df(_left, dx) * _right + _left * df(_rig
 
 expr sum::d(expr dx) const { return df(_left, dx) + df(_right, dx); }
 
+expr xset::d(expr dx) const {
+	list_t ret;
+	transform(_items.begin(), _items.end(), back_inserter(ret), [dx](auto e) {return df(e, dx); });
+	return{ret};
+}
+
 // Integrals
 
 expr make_integral(expr f, expr dx) {
@@ -97,5 +103,11 @@ expr product::integrate(expr dx, expr c) const {
 }
 
 expr sum::integrate(expr dx, expr c) const { return cas::intf(_left, dx, c) + cas::intf(_right, dx, c); }
+
+expr xset::integrate(expr dx, expr c) const { 
+	list_t ret;
+	transform(_items.begin(), _items.end(), back_inserter(ret), [dx, c](auto e) {return intf(e, dx, c); });
+	return{ret};
+}
 
 }

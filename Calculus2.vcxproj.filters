@@ -53,6 +53,9 @@
     <ClCompile Include="Calculus2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UtfStreams.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="calculus.natvis" />
