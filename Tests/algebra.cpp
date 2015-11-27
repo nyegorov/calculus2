@@ -220,29 +220,31 @@ namespace Tests
 		TEST_METHOD(Derivative)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
-			Assert::AreEqual("3x^2", to_string(df(x^3, x)).c_str());
-			Assert::AreEqual("ln(3)3^x", to_string(df(3^x, x)).c_str());
-			Assert::AreEqual("x^x+ln(x)x^x", to_string(df(x^x, x)).c_str());
-			Assert::AreEqual("ln(x)", to_string(ln(x)).c_str());
-			Assert::AreEqual("2x^-1", to_string(df(ln(x^2), x)).c_str());
-			Assert::AreEqual("sin(x^-1)", to_string(sin(1/x)).c_str());
-			Assert::AreEqual("-cos(x^-1)x^-2", to_string(df(sin(1/x), x)).c_str());
-			Assert::AreEqual("cos(tg(x))", to_string(cos(tg(x))).c_str());
-			Assert::AreEqual("-sin(tg(x))cos(x)^-2", to_string(df(cos(tg(x)), x)).c_str());
+			Assert::AreEqual(3*(x^2), df(x^3, x));
+			Assert::AreEqual(ln(3)*(3^x), df(3^x, x));
+			Assert::AreEqual((x^x)+ln(x)*(x^x), df(x^x, x));
+			Assert::AreEqual(ln(x), ln(x));
+			Assert::AreEqual(2/x, df(ln(x^2), x));
+			Assert::AreEqual(-cos(1/x)/(x^2), df(sin(1/x), x));
+			Assert::AreEqual(-sin(tg(x))/(cos(x)^2), df(cos(tg(x)), x));
 		}
 		TEST_METHOD(Integrals)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
-			Assert::AreEqual("1", to_string(intf(cos(x), x, 0, pi/2)).c_str());
-			Assert::AreEqual("#e^x", to_string(intf(e^x, x)).c_str());
-			Assert::AreEqual("sin(x)-cos(x)", to_string(intf(sin(x)+cos(x), x)).c_str());
-			Assert::AreEqual("2/3yx^3", to_string(intf(2*x*y*x, x)).c_str());
-			Assert::AreEqual("x+10x^2+50x^3+125x^4+125x^5", to_string(intf((5*x+1)^4, x)).c_str());
-			Assert::AreEqual("1/5ln(1+5x)", to_string(intf((5 * x + 1) ^ -1, x)).c_str());
-			Assert::AreEqual("-1/4x^2+1/2ln(x)x^2", to_string(intf(x*ln(x), x)).c_str());
-			Assert::AreEqual("2", to_string(intf(sin(x), x, 0, pi)).c_str());
+			Assert::AreEqual(one, intf(cos(x), x, 0, pi/2));
+			Assert::AreEqual(e^x, intf(e^x, x));
+			Assert::AreEqual(sin(x)-cos(x), intf(sin(x)+cos(x), x));
+			Assert::AreEqual(2*y/3*(x^3), intf(2*x*y*x, x));
+			Assert::AreEqual(x+10*(x^2)+50*(x^3)+125*(x^4)+125*(x^5), intf((5*x+1)^4, x));
+			Assert::AreEqual(ln(1+5*x)/5, intf((5 * x + 1) ^ -1, x));
+			Assert::AreEqual(-(x^2)/4+ln(x)*(x^2)/2, intf(x*ln(x), x));
+			Assert::AreEqual(two, intf(sin(x), x, 0, pi));
 			Assert::AreEqual("c+int(#e^x^2,x)", to_string(intf(e^(x^2), x, c)).c_str());
-			Assert::AreEqual("1/2ln(x)^2", to_string(intf(ln(x)/x, x)).c_str());
+			Assert::AreEqual((ln(x)^2)/2, intf(ln(x)/x, x));
+			Assert::AreEqual(sin(x)*tg(y), df(intf(sin(x)*tg(y), x), x));
+			Assert::AreEqual(-cos(x)/(cos(y)^2), df(intf(sin(x)*tg(y), x), y));
+			Assert::AreEqual(-ln(cos(y))*cos(x), df(intf(sin(x)*tg(y), y), x));
+			Assert::AreEqual("d/dy int(x^(xy),x)", to_string(df(intf(x^(x*y), x), y)).c_str());
 		}
 		TEST_METHOD(Matches)
 		{

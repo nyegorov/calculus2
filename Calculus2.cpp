@@ -81,7 +81,10 @@ int main()
 	cout << ((x*y)+(x*y)) << endl;
 	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
-	cout << (~(180 / pi*arcsin(1))) << endl;
+	//func f{fn_user{"f", x*y, x, y}};
+	//cout << (f(4, 5)) << end;
+
+	cout << (df(intf(sin(x)*tg(x), x), x)) << endl;
 
 	//a = y;
 	auto mr = match(2 * ln(x) * cos(x), x*ln(y));

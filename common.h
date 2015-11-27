@@ -33,6 +33,8 @@ struct fn_arcsin;
 struct fn_arccos;
 struct fn_arctg;
 struct fn_int;
+struct fn_dif;
+struct fn_user;
 
 typedef int int_t;
 typedef double real_t;
@@ -50,7 +52,7 @@ typedef boost::variant<
 	boost::recursive_wrapper<xset>,
 	error>	expr;
 
-typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int> function_t;
+typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int, fn_dif, fn_user> function_t;
 typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
 const unsigned numbers = 3;
@@ -219,7 +221,6 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	//bool match(expr pattern, match_result& res) const;
 };
 
 bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
@@ -241,7 +242,6 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	//bool match(expr e, match_result& res) const;
 };
 
 bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
@@ -263,6 +263,9 @@ public:
 		if(is<xset>(_x))	return i < as<xset>(_x).items().size() ? as<xset>(_x).items()[i] : make_err(error_t::invalid_args);
 		else				return i == 0 ? _x : make_err(error_t::invalid_args);
 	}
+	size_t params_count() const { return is<xset>(_x) ? as<xset>(_x).items().size() : 1; }
+	expr operator[] (unsigned i) const { return param(i); }
+	size_t size() const { return is<xset>(_x) ? as<xset>(_x).items().size() : 1; }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
@@ -282,6 +285,8 @@ struct fn_arcsin : public fn_base<fn_arcsin> { using fn_base::fn_base; };
 struct fn_arccos : public fn_base<fn_arccos> { using fn_base::fn_base; };
 struct fn_arctg : public fn_base<fn_arctg> { using fn_base::fn_base; };
 struct fn_int : public fn_base<fn_int> { using fn_base::fn_base; };
+struct fn_dif : public fn_base<fn_dif> { using fn_base::fn_base; };
+struct fn_user : public fn_base<fn_user> { using fn_base::fn_base; };
 
 ostream& operator << (ostream& os, fn_base<fn_ln> f) { return os << "ln(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_sin> f) { return os << "sin(" << f.x() << ')'; }
@@ -291,6 +296,15 @@ ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "arcsin(
 ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f.param(0) << ',' << f.param(1) << ')'; }
+ostream& operator << (ostream& os, fn_base<fn_dif> f) { return os << "d/d" << f[1] << " " << f[0]; }
+ostream& operator << (ostream& os, fn_base<fn_user> f) {
+	return os << f[0] << '(';
+	for(size_t i = 2; i < f.size(); i++) {
+		if(i != 2)	os << ',';
+		os << f[i];
+	}
+	return os << ')';
+}
 
 class func
 {

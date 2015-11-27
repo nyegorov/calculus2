@@ -94,6 +94,16 @@ template<> static expr fn_base<fn_int>::make(expr p) {
 	return func{fn_int{xset{f, dx}}};
 }
 
+template<> static expr fn_base<fn_dif>::make(expr p) {
+	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
+	return func{fn_dif{p}};
+}
+
+template<> static expr fn_base<fn_user>::make(expr p) {
+	if(!is<xset>(p) || as<xset>(p).items().size() < 2)	return make_err(error_t::syntax);
+	return func{fn_user{p}};
+}
+
 expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 {
 	if(is<integer>(x))	return make_real(rfun((real_t)as<integer>(x).value()));
@@ -101,8 +111,11 @@ expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 	if(is<complex>(x))	return make_complex(cfun(as<complex>(x).value()));
 	return x;
 }
+template<class F> expr fn_base<F>::approx() const { return fn_base<F>::make(~_x); }
 template<class F> expr fn_base<F>::subst(pair<expr, expr> s) const { return expr{func{F{_x}}} == s.first ? s.second : make(_x | s); }
-template<> expr fn_base<fn_id>::approx() const { return ~_x; }
+template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
+template<class F> static expr operator *(F f) { return f.make(f.x()); }
+
 template<> expr fn_base<fn_ln>::approx() const { return apply_fun(~_x, log, [](complex_t x) {return log(x); }); }
 template<> expr fn_base<fn_sin>::approx() const { return apply_fun(~_x, std::sin, [](complex_t x) {return sin(x); }); }
 template<> expr fn_base<fn_cos>::approx() const { return apply_fun(~_x, std::cos, [](complex_t x) {return cos(x); }); }
@@ -110,16 +123,15 @@ template<> expr fn_base<fn_tg>::approx() const { return apply_fun(~_x, tan, [](c
 template<> expr fn_base<fn_arcsin>::approx() const { return apply_fun(~_x, asin, [](complex_t x) {return asin(x); }); }
 template<> expr fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
 template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
-template<> expr fn_base<fn_int>::approx() const { return make_integral(~param(0), param(1)); }
-template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
-
-template<class F> static expr operator *(F f) { return f.make(f.x()); }
+template<> expr fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
 
 expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.f()); }						 
 expr operator + (func lh, func rh) { return make_sum(*lh, *rh); }
 expr operator * (func lh, func rh) { return make_prod(*lh, *rh); }
 expr operator ^ (func lh, func rh) { return make_power(*lh, *rh); }
 
+expr func::d(expr dx) const { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, _func); }
+expr func::integrate(expr dx, expr c) const { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, _func); }
 expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
 expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
 bool func::match(expr e, match_result& res) const { 
