@@ -7,7 +7,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace cas;
-using namespace std::literals;
+using namespace std::literals::complex_literals;
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -193,6 +193,8 @@ namespace Tests
 			Assert::AreEqual("0", to_string(sin(pi)).c_str());
 			Assert::AreEqual("3", to_string((sin(pi/3)^2)*4).c_str());
 			Assert::AreEqual("x", to_string(sin(arcsin(x))).c_str());
+			Assert::AreEqual("x", to_string(cos(arccos(x))).c_str());
+			Assert::AreEqual("x", to_string(tg(arctg(x))).c_str());
 			Assert::AreEqual("1", to_string((sin(3*x)^2)+(cos(3*x)^2)).c_str());
 			Assert::AreEqual("-sin(x^2)", to_string(sin(-x*x)).c_str());
 			Assert::AreEqual("cos(x^2)", to_string(cos(-x*x)).c_str());
@@ -208,6 +210,12 @@ namespace Tests
 			Assert::AreEqual(sin(pi_/7.), to_real(~sin(pi/7)));
 			Assert::AreEqual(1., to_real(~(ln(x)|(x=e))));
 			Assert::AreEqual(-1.,to_real(~(i*(e^(i*pi/2)))));
+			Assert::IsTrue(i/2 == (~(ln(i)/pi)));
+			Assert::AreEqual(0.5, to_real(~cos(pi/3)));
+			Assert::AreEqual(1., to_real(~tg(pi/4)), 1e-8);
+			Assert::AreEqual(90., to_real(~(180/pi*arcsin(1))));
+			Assert::AreEqual(90., to_real(~(180/pi*arccos(0))));
+			Assert::AreEqual(45., to_real(~(180/pi*arctg(1))));
 		}
 		TEST_METHOD(Derivative)
 		{
@@ -224,7 +232,7 @@ namespace Tests
 		}
 		TEST_METHOD(Integrals)
 		{
-			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
+			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
 			Assert::AreEqual("1", to_string(intf(cos(x), x, 0, pi/2)).c_str());
 			Assert::AreEqual("#e^x", to_string(intf(e^x, x)).c_str());
 			Assert::AreEqual("sin(x)-cos(x)", to_string(intf(sin(x)+cos(x), x)).c_str());
@@ -232,15 +240,19 @@ namespace Tests
 			Assert::AreEqual("x+10x^2+50x^3+125x^4+125x^5", to_string(intf((5*x+1)^4, x)).c_str());
 			Assert::AreEqual("1/5ln(1+5x)", to_string(intf((5 * x + 1) ^ -1, x)).c_str());
 			Assert::AreEqual("-1/4x^2+1/2ln(x)x^2", to_string(intf(x*ln(x), x)).c_str());
-			//Assert::AreEqual("1/2ln(1+5x)", to_string((ln(5*x)/x) && x).c_str());
+			Assert::AreEqual("2", to_string(intf(sin(x), x, 0, pi)).c_str());
+			Assert::AreEqual("c+int(#e^x^2,x)", to_string(intf(e^(x^2), x, c)).c_str());
+			Assert::AreEqual("1/2ln(x)^2", to_string(intf(ln(x)/x, x)).c_str());
 		}
 		TEST_METHOD(Matches)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
 			match_result mr;
 			Assert::AreEqual("cos(a)", to_string(subst(cos(x+y), x+y, a)).c_str());
+			Assert::IsTrue((mr = match(2 * ln(x) * cos(x), x*ln(y))) && mr[x] == 2 * cos(x) && mr[y] == expr{x});
 			Assert::IsTrue((mr = match(2 * pi, x*y)) && mr[x] == two && mr[y] == pi);
 			Assert::IsTrue(mr = match(cos(a+2*pi), cos(x+2*pi)));
+			Assert::IsTrue(mr = match(sin(a+2*pi), sin(y)));
 			Assert::IsTrue(mr = match((cos(expr{3 / 2}) ^ 2) + (sin(expr{3 / 2}) ^ 2), (cos(x) ^ 2) + (sin(x) ^ 2)));
 			Assert::IsFalse(mr = match((cos(expr{3 / 2}) ^ 2) + (sin(expr{5 / 2}) ^ 2), (cos(x) ^ 2) + (sin(x) ^ 2)));
 		}

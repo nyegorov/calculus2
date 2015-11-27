@@ -32,7 +32,7 @@ struct fn_tg;
 struct fn_arcsin;
 struct fn_arccos;
 struct fn_arctg;
-class fn_int;
+struct fn_int;
 
 typedef int int_t;
 typedef double real_t;
@@ -80,7 +80,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr approx() const;
 	expr subst(pair<expr, expr> s) const;
-	match_result match(expr e, match_result res) const;
+	bool match(expr e, match_result& res) const;
 };
 
 class error : public base<error>
@@ -175,7 +175,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(expr e, match_result res) const;
+	bool match(expr e, match_result& res) const;
 };
 
 bool operator == (symbol lh, symbol rh) { return lh.name() == rh.name(); }
@@ -195,7 +195,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(expr e, match_result res) const;
+	bool match(expr e, match_result& res) const;
 };
 
 bool operator == (power lh, power rh) { return lh.x() == rh.x() && lh.y() == rh.y(); }
@@ -219,7 +219,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(expr pattern, match_result res) const;
+	bool match(expr pattern, match_result& res) const;
 };
 
 bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
@@ -241,7 +241,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(expr e, match_result res) const;
+	bool match(expr e, match_result& res) const;
 };
 
 bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
@@ -267,7 +267,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(function_t f, match_result res) const;
+	bool match(function_t f, match_result& res) const;
 };
 template<class F> bool operator == (fn_base<F> lh, fn_base<F> rh) { return lh.x() == rh.x(); }
 template<class F> bool operator < (fn_base<F> lh, fn_base<F> rh) { return lh.x() < rh.x(); }
@@ -281,7 +281,7 @@ struct fn_tg : public fn_base<fn_tg> { using fn_base::fn_base; };
 struct fn_arcsin : public fn_base<fn_arcsin> { using fn_base::fn_base; };
 struct fn_arccos : public fn_base<fn_arccos> { using fn_base::fn_base; };
 struct fn_arctg : public fn_base<fn_arctg> { using fn_base::fn_base; };
-class fn_int : public fn_base<fn_arctg> { using fn_base::fn_base; };
+struct fn_int : public fn_base<fn_int> { using fn_base::fn_base; };
 
 ostream& operator << (ostream& os, fn_base<fn_ln> f) { return os << "ln(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_sin> f) { return os << "sin(" << f.x() << ')'; }
@@ -303,7 +303,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(expr e, match_result res) const;
+	bool match(expr e, match_result& res) const;
 };
 
 bool operator == (func lh, func rh) { return lh.f() == rh.f(); }
@@ -323,7 +323,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	match_result match(expr e, match_result res) const;
+	bool match(expr e, match_result& res) const;
 };
 
 bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
@@ -360,7 +360,8 @@ expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d
 expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
 expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
 expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
-match_result match(expr e, expr pattern, match_result res = {}) { return boost::apply_visitor([e, res](auto x) { return x.match(e, res); }, pattern); }
+bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
+match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
 
 expr make_err(error_t err);
 expr make_int(int_t value);
@@ -376,7 +377,7 @@ template<class T> expr base<T>::subst(pair<expr, expr> s) const { return {*stati
 template<class T> expr base<T>::d(expr dx) const { return 0; };
 template<class T> expr base<T>::integrate(expr dx, expr c) const { return dx + c; };
 template<class T> expr base<T>::approx() const { return {*static_cast<const T*>(this)}; };
-template<class T> match_result base<T>::match(expr e, match_result res) const { if(e != expr{*static_cast<const T*>(this)}) res.found = false; return res; };
+template<class T> bool base<T>::match(expr e, match_result& res) const { if(e != expr{*static_cast<const T*>(this)}) res.found = false; return res; };
 expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }
 
 const expr e = symbol{"#e", make_real(boost::math::constants::e<double>())};

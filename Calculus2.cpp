@@ -25,7 +25,7 @@ int main()
 	symbol x{"x"}, y{"y"}, a{"a"};
 
 	xset ll{x,y, 2, pi};
-	cout << ll;
+	//cout << ll;
 
 	/*sum ms{2, pi};
 	//ms.insert(2);/
@@ -81,10 +81,10 @@ int main()
 	cout << ((x*y)+(x*y)) << endl;
 	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
-	cout << (sin(arcsin(x))) << endl;
+	cout << (~(180 / pi*arcsin(1))) << endl;
 
-	a = y;
-	auto mr = match(x*ln(2*x+1), a*ln(y));
+	//a = y;
+	auto mr = match(2 * ln(x) * cos(x), x*ln(y));
 	cout << mr[x] << "," << mr[y] << endl;
 	mr = match(cos(expr{3}), cos(expr{3}));
 	mr = match(cos(expr{3}), cos(x));

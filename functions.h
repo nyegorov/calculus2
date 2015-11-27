@@ -45,7 +45,7 @@ template<> static expr fn_base<fn_sin>::make(expr x)
 	if(x == pi/2)					return one;				// sin(π/2) => 1
 	if(x == 2*pi/2)					return minus_one;		// sin(3π/2) => -1
 	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// sin(-x) => -sin(x)
-	if(is<func, fn_arcsin>(x))		return as<func, fn_arcsin>(x).x();	// sin(arcsin(x)) => x
+	if(is<func, fn_arcsin>(x))		return as<func, fn_arcsin>(x).x();									// sin(arcsin(x)) => x
 	return func{fn_sin{x}};
 }
 template<> static expr fn_base<fn_cos>::make(expr x)
@@ -60,12 +60,13 @@ template<> static expr fn_base<fn_cos>::make(expr x)
 	if(x == zero || x == 2*pi)		return one;				// cos(0), cos(2π) => 1
 	if(x == pi)						return minus_one;		// cos(π) => -1
 	if(is<product>(x) && as<product>(x).left() == minus_one)return make(as<product>(x).right());		// cos(-x) => cos(x)
-	if(is<func, fn_arccos>(x))		return as<func, fn_arccos>(x).x();	// cos(arccos(x)) => x
+	if(is<func, fn_arccos>(x))		return as<func, fn_arccos>(x).x();									// cos(arccos(x)) => x
 	return func{fn_cos{x}};
 }
 
 template<> static expr fn_base<fn_tg>::make(expr x) {
 	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// tg(-x) => -tg(x)
+	if(is<func, fn_arctg>(x))		return as<func, fn_arctg>(x).x();									// tg(arctg(x)) => x
 	return func{fn_tg{x}};
 }
 template<> static expr fn_base<fn_arcsin>::make(expr x)	{
@@ -88,13 +89,14 @@ template<> static expr fn_base<fn_int>::make(expr p) {
 	if((mr = cas::match(f, ln(x) / x)))	return half * (ln(dx) ^ 2);						// ∫ ln(x)/x dx => 1/2 ln(x)²
 	if(mr = cas::match(f, x*ln(y))) {													// ∫ xln(ax+b) dx => (a²x²-b²)ln(ax+b)/2a²-x(ax-2b)/4a
 		auto a = df(mr[y], dx), b = mr[y] - a*x;
-		if(df(a, dx) == zero)	return ((a ^ 2)*(x ^ 2) - (b ^ 2))*ln(a*x + b) / (2 * (a ^ 2)) - x*(a*x - 2 * b) / (4 * a);
+		if(df(a, dx) == zero)	return (((a*x) ^ 2) - (b ^ 2))*ln(a*x + b) / (2 * (a ^ 2)) - x*(a*x - 2 * b) / (4 * a);
 	}
-	return func{fn_int{list_t{f, dx}}};
+	return func{fn_int{xset{f, dx}}};
 }
 
 expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 {
+	if(is<integer>(x))	return make_real(rfun((real_t)as<integer>(x).value()));
 	if(is<real>(x))		return make_real(rfun(as<real>(x).value()));
 	if(is<complex>(x))	return make_complex(cfun(as<complex>(x).value()));
 	return x;
@@ -108,11 +110,8 @@ template<> expr fn_base<fn_tg>::approx() const { return apply_fun(~_x, tan, [](c
 template<> expr fn_base<fn_arcsin>::approx() const { return apply_fun(~_x, asin, [](complex_t x) {return asin(x); }); }
 template<> expr fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
 template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
-template<class F> match_result fn_base<F>::match(function_t f, match_result res) const { 
-	return f.type() == typeid(F) ? 
-		cas::match(boost::get<F>(f).x(), _x, res) : 
-		(res.found = false, res);
-}
+template<> expr fn_base<fn_int>::approx() const { return make_integral(~param(0), param(1)); }
+template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
 
 template<class F> static expr operator *(F f) { return f.make(f.x()); }
 
@@ -123,10 +122,10 @@ expr operator ^ (func lh, func rh) { return make_power(*lh, *rh); }
 
 expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
 expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
-match_result func::match(expr e, match_result res) const { 
+bool func::match(expr e, match_result& res) const { 
 	return is<func>(e) ? 
 		boost::apply_visitor([fun = as<func>(e).f(), &res](auto f) { return f.match(fun, res); }, _func) :
-		(res.found = false, res);
+		res.found = false;
 }
 
 }
