@@ -219,7 +219,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	bool match(expr pattern, match_result& res) const;
+	//bool match(expr pattern, match_result& res) const;
 };
 
 bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
@@ -241,7 +241,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
-	bool match(expr e, match_result& res) const;
+	//bool match(expr e, match_result& res) const;
 };
 
 bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }

@@ -136,46 +136,7 @@ bool symbol::match(expr e, match_result& res) const {
 	}
 	return res.found;
 }
-
 bool power::match(expr e, match_result& res) const { return is<power>(e) ? cas::match(as<power>(e).y(), _y, res) && cas::match(as<power>(e).x(), _x, res) : res.found = false; }
-bool product::match(expr e, match_result& res) const { 
-	if(!is<product>(e))	return res.found = false;
-
-	const product& pe = as<product>(e);
-	const product& pp = *this;
-	for(auto p_it = pp.begin(); p_it != pp.end(); ++p_it) {
-		for(auto e_it = pe.begin(); e_it != pe.end(); ++e_it) {
-			match_result mr = res;
-			if(cas::match(*e_it, *p_it, mr)) {
-				product p_rest{1,1}, e_rest{1,1};
-				copy_if(pp.begin(), pp.end(), std::inserter(p_rest, p_rest.end()), [p_it](auto e) {return e != *p_it; });
-				copy_if(pe.begin(), pe.end(), std::inserter(e_rest, e_rest.end()), [e_it](auto e) {return e != *e_it; });
-				if(cas::match(*e_rest, *p_rest, mr))	return res = mr;
-			}
-		}
-	}
-	return res.found = false;
-}
-
-bool sum::match(expr e, match_result& res) const {
-	if(!is<sum>(e))	return res.found = false;
-
-	const sum& pe = as<sum>(e);
-	const sum& pp = *this;
-	for(auto p_it = pp.begin(); p_it != pp.end(); ++p_it) {
-		for(auto e_it = pe.begin(); e_it != pe.end(); ++e_it) {
-			match_result mr = res;
-			if(cas::match(*e_it, *p_it, mr)) {
-				sum p_rest{0,0}, e_rest{0,0};
-				copy_if(pp.begin(), pp.end(), std::inserter(p_rest, p_rest.end()), [p_it](auto e) {return e != *p_it; });
-				copy_if(pe.begin(), pe.end(), std::inserter(e_rest, e_rest.end()), [e_it](auto e) {return e != *e_it; });
-				if(cas::match(*e_rest, *p_rest, mr))	return res = mr;
-			}
-		}
-	}
-	return res.found = false;
-}
-
 bool xset::match(expr e, match_result& res) const {
 	if(!is<xset>(e) || as<xset>(e).items().size() != _items.size())	return res.found = false;
 	auto pe = as<xset>(e).items().begin();

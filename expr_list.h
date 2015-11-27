@@ -3,6 +3,7 @@
 #include <iterator>
 
 namespace cas {
+struct match_result;
 namespace detail {
 
 template<class L> class expr_list_const_iterator : public std::iterator<std::forward_iterator_tag, typename L::value_type, ptrdiff_t, typename L::const_pointer, typename L::const_reference>
@@ -59,7 +60,7 @@ class expr_list
 protected:
 	E _left;
 	E _right;
-	void set(E& to, E& from) { E tmp = from; to = tmp;  }
+	void set(E& to, E& from) { E tmp = from; to = tmp; }
 
 public:
 	typedef E value_type;
@@ -96,7 +97,7 @@ public:
 	}
 
 	iterator insert(iterator it, const E& e)
-	{	
+	{
 		insert(e);
 		return it;
 	}
@@ -130,7 +131,24 @@ public:
 		}
 	}
 
-};
+	bool match(E e, match_result& res) const {
+		if(!is<T>(e))	return res.found = false;
 
+		const T& pe = as<T>(e);
+		const T& pp = static_cast<const T&>(*this);
+		for(auto p_it = pp.begin(); p_it != pp.end(); ++p_it) {
+			for(auto e_it = pe.begin(); e_it != pe.end(); ++e_it) {
+				match_result mr = res;
+				if(cas::match(*e_it, *p_it, mr)) {
+					T p_rest{T::unit(),T::unit()}, e_rest{T::unit(),T::unit()};
+					copy_if(pp.begin(), pp.end(), std::inserter(p_rest, p_rest.end()), [p_it](auto e) {return e != *p_it; });
+					copy_if(pe.begin(), pe.end(), std::inserter(e_rest, e_rest.end()), [e_it](auto e) {return e != *e_it; });
+					if(cas::match(*e_rest, *p_rest, mr))	return res = mr;
+				}
+			}
+		}
+		return res.found = false;
+	};
+};
 }
 }
