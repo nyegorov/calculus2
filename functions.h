@@ -5,9 +5,6 @@
 
 namespace cas {
 
-template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).f().type() == typeid(F); }
-template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).f()); }
-
 template<> static expr fn_base<fn_ln>::make(expr x);
 template<> static expr fn_base<fn_sin>::make(expr x);
 template<> static expr fn_base<fn_cos>::make(expr x);
@@ -106,9 +103,9 @@ template<> static expr fn_base<fn_user>::make(expr p) {
 
 expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 {
-	if(is<integer>(x))	return make_real(rfun((real_t)as<integer>(x).value()));
-	if(is<real>(x))		return make_real(rfun(as<real>(x).value()));
-	if(is<complex>(x))	return make_complex(cfun(as<complex>(x).value()));
+	if(is<numeric, int_t>(x))		return make_num(rfun((real_t)as<numeric, int_t>(x)));
+	if(is<numeric, real_t>(x))		return make_num(rfun(as<numeric, real_t>(x)));
+	if(is<numeric, complex_t>(x))	return make_num(cfun(as<numeric, complex_t>(x)));
 	return x;
 }
 template<class F> expr fn_base<F>::approx() const { return fn_base<F>::make(~_x); }
@@ -125,7 +122,7 @@ template<> expr fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos,
 template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
 template<> expr fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
 
-expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.f()); }						 
+expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.value()); }						 
 expr operator + (func lh, func rh) { return make_sum(*lh, *rh); }
 expr operator * (func lh, func rh) { return make_prod(*lh, *rh); }
 expr operator ^ (func lh, func rh) { return make_power(*lh, *rh); }
@@ -136,7 +133,7 @@ expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](aut
 expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
 bool func::match(expr e, match_result& res) const { 
 	return is<func>(e) ? 
-		boost::apply_visitor([fun = as<func>(e).f(), &res](auto f) { return f.match(fun, res); }, _func) :
+		boost::apply_visitor([fun = as<func>(e).value(), &res](auto f) { return f.match(fun, res); }, _func) :
 		res.found = false;
 }
 

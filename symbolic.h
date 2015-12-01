@@ -10,6 +10,7 @@
 namespace cas {
 
 expr make_power(expr x, expr y) {
+	if(is<numeric>(x) && is<numeric>(y))	return powr(as<numeric>(x).value(), as<numeric>(y).value());
 	if(y == zero)		return one;				// x^0 => 1
 	if(x == zero)		return zero;			// 0^y => 0
 	if(y == one)		return x;				// x^1 => x
@@ -18,6 +19,7 @@ expr make_power(expr x, expr y) {
 }
 
 expr make_sum(expr left, expr right) {
+	if(is<numeric>(left) && is<numeric>(right))	return add(as<numeric>(left).value(), as<numeric>(right).value());
 	if(left == zero)	return right;			// 0+x => x
 	if(right == zero)	return left;			// x+0 => x
 	if(right == empty)	return left;			// x+0 => x
@@ -28,6 +30,7 @@ expr make_sum(expr left, expr right) {
 
 expr make_prod(expr left, expr right)
 {
+	if(is<numeric>(left) && is<numeric>(right))	return mul(as<numeric>(left).value(), as<numeric>(right).value());
 	if(left == zero || right == zero)	return zero;	// 0*x => 0
 	if(left == one)		return right;			// 1*x => x
 	if(right == one)	return left;			// x*1 => x
@@ -96,13 +99,14 @@ expr operator ^ (product lh, product rh) {
 	if(lh.left() == one)	return make_power(lh.right(), *rh);
 	return (lh.left() ^ *rh) * (lh.right() ^ *rh); 
 }
-expr operator ^ (sum lh, integer n) {
-	if(n.value() <= 0)	return make_power(lh, n);
+expr operator ^ (sum lh, numeric n) {
+/*	if(n <= 0)	return make_power(lh, n);
 	expr s;
 	for(int k = 0; k <= n.value(); k++) {
 		s = s + binomial(n.value(), k) * (lh.left() ^ (n.value() - k)) * (lh.right() ^ k);	// C(n,k) * a^(n-k) * b^k
 	}
-	return s;
+	return s;*/
+	return zero;
 }
 expr operator ^ (sum lh, sum rh) { return make_power(*lh, *rh); }
 expr operator ^ (xset lh, xset rh) { return make_err(error_t::syntax); }

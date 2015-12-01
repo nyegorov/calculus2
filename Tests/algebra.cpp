@@ -23,14 +23,14 @@ template<> inline std::wstring ToString<expr>(const expr& e)
 
 real_t to_real(expr e)
 {
-	if(is<integer>(e))	return as<integer>(e).value();
-	if(is<real>(e))		return  as<real>(e).value();
+	if(is<numeric, int_t>(e))	return as<numeric, int_t>(e);
+	if(is<numeric, real_t>(e))	return as<numeric, real_t>(e);
 	return std::numeric_limits<double>::quiet_NaN();
 }
 
 complex_t to_complex(expr e)
 {
-	return is<complex>(e) ? as<complex>(e).value() : std::numeric_limits<complex_t>::quiet_NaN();
+	return is<numeric, complex_t>(e) ? as<numeric, complex_t>(e) : std::numeric_limits<complex_t>::quiet_NaN();
 }
 
 namespace Tests
@@ -43,24 +43,24 @@ namespace Tests
 		{
 			expr e;
 			auto err = make_err(error_t::invalid_args);
-			auto i = make_int(42), q = make_rat(1, 2), r = make_real(-1. / 3.), c = make_complex({ 1, -1 });
+			auto i = make_num(42), q = make_num(1, 2), r = make_num(-1. / 3.), c = make_num( 1, -1 );
 			Assert::IsFalse(has_sign(err));
 			Assert::IsFalse(has_sign(one));
 			Assert::IsTrue(has_sign(minus_one));
 			Assert::IsFalse(has_sign(q));
-			Assert::IsTrue(has_sign(q * minus_one));
-			Assert::IsFalse(has_sign(r * minus_one));
+			Assert::IsTrue(has_sign(q * -1));
+			Assert::IsFalse(has_sign(r * -1));
 			Assert::IsTrue(has_sign(r));
 			Assert::IsFalse(has_sign(c));
-			Assert::IsTrue(has_sign(c * minus_one));
+			Assert::IsTrue(has_sign(c * -1));
 			Assert::IsTrue(i == i);
 			Assert::IsTrue(q == q);
 			Assert::IsTrue(r == r);
 			Assert::IsTrue(c == c);
-			Assert::IsFalse(i == one);
-			Assert::IsFalse(q == make_rat(3, 2));
-			Assert::IsFalse(r == make_real(0.5));
-			Assert::IsFalse(c == make_complex({ 2, 2 }));
+			Assert::IsFalse(i == make_num(1));
+			Assert::IsFalse(q == make_num(3, 2));
+			Assert::IsFalse(r == make_num(0.5));
+			Assert::IsFalse(c == make_num(2, 2));
 
 			Assert::IsTrue(err + one == err);
 			Assert::IsTrue(err + err == err);
@@ -70,56 +70,55 @@ namespace Tests
 		}
 		TEST_METHOD(Integers)
 		{
-			integer three{ 3 }, five{ 5 };
+			numeric three{ 3 }, five{ 5 };
 			Assert::AreEqual("8",   to_string(three + five).c_str());
 			Assert::AreEqual("2",   to_string(five - three).c_str());
 			Assert::AreEqual("15",  to_string(five * three).c_str());
 			Assert::AreEqual("4",   to_string((five + three) / two).c_str());
 			Assert::AreEqual("125", to_string(five ^ three).c_str());
-			integer r = boost::get<integer>(three + five);
-			Assert::AreEqual(8, r.value());
+			int_t r = boost::get<int_t>(boost::get<numeric>(three + five).value());
+			Assert::AreEqual(8, r);
 			Assert::IsTrue(five - five == zero);
-			Assert::IsTrue(boost::get<integer>(minus_one).has_sign());
-			Assert::IsFalse(three.has_sign());
+			Assert::IsTrue(boost::get<numeric>(minus_one).has_sign());
 			Assert::IsTrue(one < two);
 			Assert::IsFalse(two < one);
 		}
 		TEST_METHOD(Rationals)
 		{
-			rational half{ 1, 2 }, minus_two_third{ -2, 3 };
-			Assert::AreEqual("3/2",  to_string(half + one).c_str());
+			numeric half{rational_t{ 1, 2 }}, minus_two_third{rational_t{-2, 3}};
+			Assert::AreEqual("3/2",  to_string(half + 1).c_str());
 			Assert::AreEqual("-1/6", to_string(half + minus_two_third).c_str());
 			Assert::AreEqual("7/6",  to_string(half - minus_two_third).c_str());
 			Assert::AreEqual("-1/3", to_string(half * minus_two_third).c_str());
 			Assert::AreEqual("-3/4", to_string(half / minus_two_third).c_str());
-			Assert::AreEqual("4/9",  to_string(minus_two_third ^ two).c_str());
-			Assert::AreEqual("-3/2", to_string(minus_two_third ^ minus_one).c_str());
-			Assert::AreEqual("2",    to_string(make_int(4) ^ half).c_str());
-			Assert::AreEqual("9",    to_string(make_rat(1, 27) ^ minus_two_third).c_str());
-			Assert::AreEqual("i",    to_string(make_int(-1) ^ half).c_str());
-			Assert::AreEqual("1",	 to_string(minus_one ^ two).c_str());
-			Assert::AreEqual("-1",   to_string(minus_one ^ make_rat(1, 3)).c_str());
+			Assert::AreEqual("4/9",  to_string(minus_two_third ^ 2).c_str());
+			Assert::AreEqual("-3/2", to_string(minus_two_third ^ -1).c_str());
+			Assert::AreEqual("2",    to_string(make_num(4) ^ half).c_str());
+			Assert::AreEqual("9",    to_string(make_num(1, 27) ^ minus_two_third).c_str());
+			Assert::AreEqual("i",    to_string(make_num(-1) ^ half).c_str());
+			Assert::AreEqual("1",	 to_string(-1 ^ two).c_str());
+			Assert::AreEqual("-1",   to_string(-1 ^ make_num(1, 3)).c_str());
 			Assert::AreEqual("2^1/2",to_string(two ^ half).c_str());
 			Assert::AreEqual("4^-1/3", to_string(two ^ minus_two_third).c_str());
 
-			Assert::IsTrue(make_rat(4, 6) == make_rat(2,3));
-			Assert::IsTrue(make_rat(2, -5) == make_rat(-2, 5));
-			Assert::IsTrue(make_rat(2, 2) == one);
-			rational r = boost::get<rational>(half / minus_two_third);
-			Assert::AreEqual(-3, r.numer());
-			Assert::AreEqual(4,  r.denom());
-			Assert::IsTrue(half + minus_two_third == make_rat(-1, 6));
-			Assert::IsTrue(minus_two_third.has_sign());
-			Assert::IsFalse(half.has_sign());
+			Assert::IsTrue(make_num(4, 6) == make_num(2,3));
+			Assert::IsTrue(make_num(2, -5) == make_num(-2, 5));
+			Assert::IsTrue(make_num(2, 2) == one);
+//			rational_t r = boost::get<rational_t>(half / minus_two_third);
+			//Assert::AreEqual(-3, r.numer());
+//			Assert::AreEqual(4,  r.denom());
+			Assert::IsTrue(half + minus_two_third == make_num(-1, 6));
+			Assert::IsTrue(numeric(minus_two_third).has_sign());
+			Assert::IsFalse(numeric(half).has_sign());
 //			Assert::IsTrue(expr{half} < two);
 //			Assert::IsFalse(two < expr{half});
 		}
 		TEST_METHOD(Real)
 		{
-			auto half = make_real(0.5), three_seconds = make_real(1.5);
+			auto half = make_num(0.5), three_seconds = make_num(1.5);
 			Assert::AreEqual("0.5", to_string(half).c_str());
 			Assert::AreEqual("1.5", to_string(three_seconds).c_str());
-			Assert::AreEqual("1", to_string(half + make_rat(1, 2)).c_str());
+			Assert::AreEqual("1", to_string(half + make_num(1, 2)).c_str());
 			Assert::AreEqual("2", to_string(half + three_seconds).c_str());
 			Assert::AreEqual("-1", to_string(half - three_seconds).c_str());
 			Assert::AreEqual("1", to_string(two * half).c_str());
@@ -131,7 +130,7 @@ namespace Tests
 		}
 		TEST_METHOD(Complex)
 		{
-			complex i{ {0., 1.} }, c1mi{ {1, -1} }, cm5i{ {0, -5.} }, c3p2i{ {3., 2.} };
+			numeric i{ complex_t{0., 1.} }, c1mi{complex_t{1, -1} }, cm5i{complex_t{0, -5.} }, c3p2i{complex_t{3., 2.} };
 			Assert::AreEqual("i", to_string(i).c_str());
 			Assert::AreEqual("1-i", to_string(c1mi).c_str());
 			Assert::AreEqual("-5i", to_string(cm5i).c_str());
@@ -139,9 +138,9 @@ namespace Tests
 			Assert::AreEqual("4+i", to_string(c1mi + c3p2i).c_str());
 			Assert::AreEqual("-2-3i", to_string(c1mi - c3p2i).c_str());
 			Assert::AreEqual("5-i", to_string(c1mi * c3p2i).c_str());
-			Assert::AreEqual("-2i", to_string(c1mi ^ make_int(2)).c_str());
-			Assert::IsTrue(c1mi + i == make_real(1.0));
-			Assert::IsTrue(c1mi - make_real(1.5) + i - make_rat(-1, 2) == zero);
+			Assert::AreEqual("-2i", to_string(c1mi ^ make_num(2)).c_str());
+			Assert::IsTrue(c1mi + i == make_num(1.0));
+			Assert::IsTrue(c1mi - make_num(1.5) + i - make_num(-1, 2) == zero);
 			Assert::IsTrue(i < c3p2i);
 			Assert::IsFalse(c3p2i < c1mi);
 		}
@@ -201,7 +200,7 @@ namespace Tests
 		}
 		TEST_METHOD(Approximation)
 		{
-			complex i{{0., 1.}};
+			numeric i{complex_t{0., 1.}};
 			symbol x{"x"};
 			auto pi_ = boost::math::constants::pi<double>();
 			Assert::AreEqual(1., to_real(~(two-1)));

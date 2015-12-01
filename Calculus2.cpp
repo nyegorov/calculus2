@@ -20,69 +20,21 @@ using namespace std::literals;
 
 extern void initStreams();
 
+typedef boost::variant<int, double, complex_t> myvar;
+//bool operator < (complex_t lh, complex_t rh) { return lh.real() < rh.real(); }
+
 int main()
 {
 	symbol x{"x"}, y{"y"}, a{"a"};
 
-	xset ll{x,y, 2, pi};
-	//cout << ll;
 
-	/*sum ms{2, pi};
-	//ms.insert(2);/
-	//ms.insert(pi);
-	ms.insert(1);
-	ms.insert(a);
-	ms.insert(x);
-
-	for(auto e : ms)	cout << e << endl;
-	cout << endl;
-	ms.erase(ms.begin());
-	for(auto e : ms)	cout << e << endl;
-	cout << endl;
-	auto it = find(ms.begin(), ms.end(), expr{x});
-	ms.erase(it);
-	for(auto e : ms)	cout << e << endl;
-	cout << endl;
-	it = find(ms.begin(), ms.end(), expr{pi});
-	ms.erase(it);
-	for(auto e : ms)	cout << e << endl;
-	cout << endl;
-	ms.erase(ms.begin());
-	for(auto e : ms)	cout << e << endl;
-	cout << endl;
-	ms.erase(++ms.begin());
-	for(auto e : ms)	cout << e << endl;
-	cout << endl;*/
-
-	cas::complex i{{0., 1.}};
-	//expr v = make_symb(x);
-	auto s = make_sum(x, y);
-	auto p = make_prod(x, y);
-
-/*	if(!(expr{0.5} < one))
-		cout << "wtf!" << endl;*/
-
-/*	cout << (x*x) << endl;
-	cout << ((x ^ 2) * (x ^ 3)) << endl;
-	cout << ((x ^ 2)^ 3) << endl;
-	cout << p << endl;
-	cout << (2 * x)*(3 * x) << endl;
-	cout << (2 * x * y)*(3 / x) << endl;
-	cout << ((x^y)*(x^y)) << endl;
-	cout << ((3 * x*y) ^ 3) << endl;*/
-
-
-	/*cout << (x+x) << endl;
-	cout << ((x * 2) * (x * 3)) << endl;
-	cout << ((x * 2) * 3) << endl;
-	cout << p << endl;
-	cout << (2 + x)*(3 + x) << endl;
-	cout << (2 + x + y)+(3 - x) << endl;
-	cout << ((x*y)+(x*y)) << endl;
-	cout << ((3 + x + y) * 3) << endl;*/
 	//p = (x - y) ^ 3;
 	//func f{fn_user{"f", x*y, x, y}};
 	//cout << (f(4, 5)) << end;
+	numeric i{complex_t{0., 1.}}, c1mi{complex_t{1, -1}}, cm5i{complex_t{0, -5.}}, c3p2i{complex_t{3., 2.}};
+	cout << c1mi + i << endl;
+
+	if(c1mi + i == make_num(1.0))
 
 	cout << (df(intf(sin(x)*tg(x), x), x)) << endl;
 

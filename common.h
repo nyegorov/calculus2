@@ -12,10 +12,12 @@ using std::ostream;
 using std::pair;
 
 namespace cas {
-class integer;
+class rational_t;
+/*class integer;
 class rational;
 class real;
-class complex;
+class complex;*/
+class numeric;
 class symbol;
 class func;
 class power;
@@ -39,18 +41,23 @@ struct fn_user;
 typedef int int_t;
 typedef double real_t;
 typedef std::complex<real_t> complex_t;
-typedef boost::variant<
-	integer, 
+
+typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
+
+typedef boost::variant <
+	error,
+	numeric,
+/*	integer, 
 	rational, 
 	real, 
-	complex, 
+	complex, */
 	boost::recursive_wrapper<symbol>, 
 	boost::recursive_wrapper<func>, 
 	boost::recursive_wrapper<power>, 
 	boost::recursive_wrapper<product>, 
 	boost::recursive_wrapper<sum>, 
-	boost::recursive_wrapper<xset>,
-	error>	expr;
+	boost::recursive_wrapper<xset>
+	>	expr;
 
 typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int, fn_dif, fn_user> function_t;
 typedef std::vector<expr> vec_expr;
@@ -71,8 +78,10 @@ struct match_result
 bool has_sign(expr e);
 bool is_numeric(expr e);
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
+template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
 template<class T> T& as(expr& e) { return boost::get<T>(e); }
 template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
+template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).value()); }
 
 template<class T> class base
 {
@@ -89,6 +98,7 @@ class error : public base<error>
 {
 	error_t	_error;
 public:
+	error() : _error(error_t::empty) {}
 	error(error_t err) : _error(err) {}
 	error_t get() const { return _error; }
 	expr d(expr dx) const;
@@ -98,11 +108,32 @@ bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
 bool operator < (error lh, error rh) { return lh.get() < rh.get(); }
 ostream& operator << (ostream& os, error e) { return os << error_msgs[(int)e.get()]; }
 
+class rational_t
+{
+	int_t	_numer = {0};
+	int_t	_denom = {1};
+public:
+	rational_t(int_t numer, int_t denom);
+	int_t numer() const { return _numer; }
+	int_t denom() const { return _denom; }
+	//operator real_t() const { return (real_t)_numer / _denom; }
+	real_t value() const { return (real_t)_numer / _denom; }
+};
+
+bool operator == (rational_t lh, rational_t rh) { return lh.numer() == rh.numer() && lh.denom() == rh.denom(); }
+bool operator < (rational_t lh, rational_t rh) { return lh.numer() * rh.denom() < rh.numer() * lh.denom(); }
+ostream& operator << (ostream& os, const rational_t& r) {
+	if(r.denom() == 0)	return os << (r.numer() > 0 ? "inf" : "-inf");
+	return os << r.numer() << "/" << r.denom();
+}
+
+
+/*
 class integer : public base<integer>
 {
 	int_t	_value;
 public:
-	integer() : _value(0) {}
+	//integer() : _value(0) {}
 	integer(int_t value) : _value(value) {}
 	int_t value() const { return _value; }
 	bool has_sign() const { return _value < 0; }
@@ -161,6 +192,29 @@ ostream& operator << (ostream& os, complex c) {
 	if(abs(c.value().imag()) != 1.)	os << abs(c.value().imag());
 	return os << 'i';
 }
+*/
+class numeric
+{
+	numeric_t _value;
+public:
+	numeric(numeric_t value) : _value(value) {}
+	numeric(int_t value) : _value(value) {}
+	numeric(real_t value) : _value(value) {}
+	numeric(rational_t value) : _value(value) {}
+	numeric(int_t numer, int_t denom) : _value(rational_t{numer, denom}) {}
+	numeric(complex_t value) : _value(value) {}
+
+	numeric_t value() const { return _value; }
+	bool has_sign() const { return _value < numeric_t{0}; }
+	expr d(expr dx) const;
+	expr integrate(expr dx, expr c) const;
+	expr subst(pair<expr, expr> s) const;
+	expr approx() const;
+	bool match(expr e, match_result& res) const;
+};
+bool operator == (numeric lh, numeric rh) { return lh.value() == rh.value(); }
+bool operator < (numeric lh, numeric rh) { return lh.value() < rh.value(); }
+ostream& operator << (ostream& os, numeric n) {	return os << n.value(); }
 
 class symbol
 {
@@ -259,12 +313,10 @@ public:
 	fn_base(expr x) : _x(x) {}
 	expr x() const { return _x; }
 	static expr make(expr x) { return x; };
-	expr param(unsigned i) const {
+	expr operator[] (unsigned i) const { 
 		if(is<xset>(_x))	return i < as<xset>(_x).items().size() ? as<xset>(_x).items()[i] : make_err(error_t::invalid_args);
 		else				return i == 0 ? _x : make_err(error_t::invalid_args);
 	}
-	size_t params_count() const { return is<xset>(_x) ? as<xset>(_x).items().size() : 1; }
-	expr operator[] (unsigned i) const { return param(i); }
 	size_t size() const { return is<xset>(_x) ? as<xset>(_x).items().size() : 1; }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
@@ -295,7 +347,7 @@ ostream& operator << (ostream& os, fn_base<fn_tg> f) { return os << "tg(" << f.x
 ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "arcsin(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f.param(0) << ',' << f.param(1) << ')'; }
+ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f[0] << ',' << f[1] << ')'; }
 ostream& operator << (ostream& os, fn_base<fn_dif> f) { return os << "d/d" << f[1] << " " << f[0]; }
 ostream& operator << (ostream& os, fn_base<fn_user> f) {
 	return os << f[0] << '(';
@@ -311,7 +363,7 @@ class func
 	function_t	_func;
 public:
 	func(function_t func) : _func(func) {}
-	function_t f() const { return _func; }
+	function_t value() const { return _func; }
 	bool has_sign() const { return false; }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
@@ -320,9 +372,9 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (func lh, func rh) { return lh.f() == rh.f(); }
-bool operator < (func lh, func rh) { return lh.f() < rh.f(); }
-ostream& operator << (ostream& os, func f) { return os << f.f(); }
+bool operator == (func lh, func rh) { return lh.value() == rh.value(); }
+bool operator < (func lh, func rh) { return lh.value() < rh.value(); }
+ostream& operator << (ostream& os, func f) { return os << f.value(); }
 
 class xset
 {
@@ -377,11 +429,11 @@ expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx()
 bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
 match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
 
-expr make_err(error_t err);
-expr make_int(int_t value);
-expr make_rat(int_t numer, int_t denom);
-expr make_real(real_t value);
-expr make_complex(complex_t value);
+expr make_err(error_t err) { return error{err}; }
+expr make_num(int_t value);
+expr make_num(int_t numer, int_t denom);
+expr make_num(real_t value);
+expr make_num(complex_t value);
 expr make_power(expr x, expr y);
 expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
@@ -394,8 +446,16 @@ template<class T> expr base<T>::approx() const { return {*static_cast<const T*>(
 template<class T> bool base<T>::match(expr e, match_result& res) const { if(e != expr{*static_cast<const T*>(this)}) res.found = false; return res; };
 expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }
 
-const expr e = symbol{"#e", make_real(boost::math::constants::e<double>())};
-const expr pi = symbol{"#p", make_real(boost::math::constants::pi<double>())};
+const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
+const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
 
+}
+
+bool operator < (cas::complex_t lh, cas::complex_t rh) { return lh.real() < rh.real(); }
+ostream& operator << (ostream& os, cas::complex_t c) {
+	if(abs(c.real()) >= std::numeric_limits<cas::real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
+	else if(c.imag() < 0)										os << '-';
+	if(abs(c.imag()) != 1.)	os << abs(c.imag());
+	return os << 'i';
 }
 

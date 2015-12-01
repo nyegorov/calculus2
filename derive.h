@@ -8,7 +8,7 @@ namespace cas {
 
 // Derivatives
 expr error::d(expr dx) const { return _error == error_t::empty ? zero : *this; }
-
+expr numeric::d(expr dx) const { return zero; }
 expr symbol::d(expr dx) const
 {
 	if(is<symbol>(dx) && as<symbol>(dx).name() == _name) return one;
@@ -50,7 +50,8 @@ expr make_integral(expr f, expr dx)
 }
 
 //expr error::integrate(symbol dx, expr c) const { return _error == error_t::empty ? zero : *this; }
-expr symbol::integrate(expr dx, expr c) const { 
+expr numeric::integrate(expr dx, expr c) const { return expr{_value} *dx + c; }
+expr symbol::integrate(expr dx, expr c) const {
 	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;
 }
 
