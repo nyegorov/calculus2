@@ -7,11 +7,11 @@
 namespace cas {
 
 // Derivatives
-expr error::d(expr dx) const { return _error == error_t::empty ? zero : *this; }
 expr numeric::d(expr dx) const { return zero; }
 expr symbol::d(expr dx) const
 {
 	if(is<symbol>(dx) && as<symbol>(dx).name() == _name) return one;
+	if(_value == empty)	return zero;
 	return df(_value, dx);
 }
 
@@ -28,7 +28,7 @@ template<class F> expr fn_base<F>::d(expr dx) const { return fn_base<fn_dif>::ma
 
 expr power::d(expr dx) const
 {
-	// (f^g)' = f^g * (g'*ln(f) + g*f'/f)
+	// (fᵍ)' = fᵍ∙[g'∙ln(f)+g∙f'/f]
 	return (_x^_y) * (df(_y, dx)*ln(_x) + _y / _x*df(_x, dx));
 }
 
@@ -69,7 +69,7 @@ template<class F> expr fn_base<F>::integrate(expr dx, expr c) const { return mak
 expr power::integrate(expr dx, expr c) const
 {
 	auto d_x = df(_x, dx);
-	if(d_x == zero && _y == dx)	return make_power(_x, _y) / ln(_x) + c;			// ∫ a^x dx => a^x / ln(a)
+	if(d_x == zero && _y == dx)	return (_x ^ _y) / ln(_x) + c;					// ∫ a^x dx => a^x / ln(a)
 	if(df(_y, dx) == zero && df(d_x, dx) == zero)	{
 		return _y == minus_one ? 
 			ln(_x) / d_x + c :													// ∫ 1/(ax+b) dx => ln(ax+b)/a
@@ -91,7 +91,7 @@ expr product::integrate(expr dx, expr c) const {
 		}
 	}
 
-	return make_integral(*p, dx) + c;
+	return make_integral(make_prod(p.left(), p.right()), dx) + c;
 }
 
 expr sum::integrate(expr dx, expr c) const { return cas::intf(_left, dx, c) + cas::intf(_right, dx, c); }

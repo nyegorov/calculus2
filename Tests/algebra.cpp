@@ -23,7 +23,7 @@ template<> inline std::wstring ToString<expr>(const expr& e)
 
 real_t to_real(expr e)
 {
-	if(is<numeric, int_t>(e))	return as<numeric, int_t>(e);
+	if(is<numeric, int_t>(e))	return (real_t)as<numeric, int_t>(e);
 	if(is<numeric, real_t>(e))	return as<numeric, real_t>(e);
 	return std::numeric_limits<double>::quiet_NaN();
 }
@@ -43,7 +43,7 @@ namespace Tests
 		{
 			expr e;
 			auto err = make_err(error_t::invalid_args);
-			auto i = make_num(42), q = make_num(1, 2), r = make_num(-1. / 3.), c = make_num( 1, -1 );
+			auto i = make_num(42), q = make_num(1, 2), r = make_num(-1. / 3.), c = make_num(1., -1.);
 			Assert::IsFalse(has_sign(err));
 			Assert::IsFalse(has_sign(one));
 			Assert::IsTrue(has_sign(minus_one));
@@ -104,14 +104,14 @@ namespace Tests
 			Assert::IsTrue(make_num(4, 6) == make_num(2,3));
 			Assert::IsTrue(make_num(2, -5) == make_num(-2, 5));
 			Assert::IsTrue(make_num(2, 2) == one);
-//			rational_t r = boost::get<rational_t>(half / minus_two_third);
-			//Assert::AreEqual(-3, r.numer());
-//			Assert::AreEqual(4,  r.denom());
+			rational_t r = as<numeric, rational_t>(half / minus_two_third);
+			Assert::AreEqual(-3, r.numer());
+			Assert::AreEqual(4,  r.denom());
 			Assert::IsTrue(half + minus_two_third == make_num(-1, 6));
 			Assert::IsTrue(numeric(minus_two_third).has_sign());
 			Assert::IsFalse(numeric(half).has_sign());
-//			Assert::IsTrue(expr{half} < two);
-//			Assert::IsFalse(two < expr{half});
+			Assert::IsTrue(expr{half} < two);
+			Assert::IsFalse(two < expr{half});
 		}
 		TEST_METHOD(Real)
 		{
@@ -125,8 +125,8 @@ namespace Tests
 			Assert::AreEqual("3", to_string(three_seconds / half).c_str());
 			Assert::AreEqual("2.25", to_string(three_seconds ^ two).c_str());
 			Assert::IsTrue(half + three_seconds == two);
-//			Assert::IsTrue(half < one);
-//			Assert::IsFalse(three_seconds < one);
+			Assert::IsTrue(half < one);
+			Assert::IsFalse(three_seconds < one);
 		}
 		TEST_METHOD(Complex)
 		{
@@ -205,10 +205,10 @@ namespace Tests
 			auto pi_ = boost::math::constants::pi<double>();
 			Assert::AreEqual(1., to_real(~(two-1)));
 			Assert::AreEqual(1., to_real(~(sin(pi/6)+cos(pi/3))));
-			Assert::AreEqual(3., to_real(~((sin(pi/3) + cos(pi/6))^2)));
+			Assert::AreEqual(3., to_real(~((sin(pi/3) + cos(pi/6))^2)), 1e-8);
 			Assert::AreEqual(sin(pi_/7.), to_real(~sin(pi/7)));
-			Assert::AreEqual(1., to_real(~(ln(x)|(x=e))));
-			Assert::AreEqual(-1.,to_real(~(i*(e^(i*pi/2)))));
+			Assert::AreEqual(1., to_real(~(ln(x)|(x=e))), 1e-8);
+			Assert::AreEqual(-1.,to_real(~(i*(e^(i*pi/2)))), 1e-8);
 			Assert::IsTrue(i/2 == (~(ln(i)/pi)));
 			Assert::AreEqual(0.5, to_real(~cos(pi/3)));
 			Assert::AreEqual(1., to_real(~tg(pi/4)), 1e-8);

@@ -13,10 +13,7 @@ using std::pair;
 
 namespace cas {
 class rational_t;
-/*class integer;
-class rational;
-class real;
-class complex;*/
+
 class numeric;
 class symbol;
 class func;
@@ -47,10 +44,6 @@ typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
 typedef boost::variant <
 	error,
 	numeric,
-/*	integer, 
-	rational, 
-	real, 
-	complex, */
 	boost::recursive_wrapper<symbol>, 
 	boost::recursive_wrapper<func>, 
 	boost::recursive_wrapper<power>, 
@@ -62,7 +55,6 @@ typedef boost::variant <
 typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int, fn_dif, fn_user> function_t;
 typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
-const unsigned numbers = 3;
 
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
 const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Syntax error", "Empty"};
@@ -77,36 +69,13 @@ struct match_result
 
 bool has_sign(expr e);
 bool is_numeric(expr e);
+bool less(numeric_t op1, numeric_t op2);
+
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
 template<class T> T& as(expr& e) { return boost::get<T>(e); }
 template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
 template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).value()); }
-
-template<class T> class base
-{
-public:
-	bool has_sign() const { return false; }
-	expr d(expr dx) const;
-	expr integrate(expr dx, expr c) const;
-	expr approx() const;
-	expr subst(pair<expr, expr> s) const;
-	bool match(expr e, match_result& res) const;
-};
-
-class error : public base<error>
-{
-	error_t	_error;
-public:
-	error() : _error(error_t::empty) {}
-	error(error_t err) : _error(err) {}
-	error_t get() const { return _error; }
-	expr d(expr dx) const;
-};
-
-bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
-bool operator < (error lh, error rh) { return lh.get() < rh.get(); }
-ostream& operator << (ostream& os, error e) { return os << error_msgs[(int)e.get()]; }
 
 class rational_t
 {
@@ -116,8 +85,14 @@ public:
 	rational_t(int_t numer, int_t denom);
 	int_t numer() const { return _numer; }
 	int_t denom() const { return _denom; }
-	//operator real_t() const { return (real_t)_numer / _denom; }
-	real_t value() const { return (real_t)_numer / _denom; }
+	operator real_t() const { return value(); }
+	real_t value() const { 
+		if(_denom == 0) {
+			if(_numer > 0)	return std::numeric_limits<double>::infinity();
+			else			return -std::numeric_limits<double>::infinity();
+		}
+		return (real_t)_numer / _denom; 
+	}
 };
 
 bool operator == (rational_t lh, rational_t rh) { return lh.numer() == rh.numer() && lh.denom() == rh.denom(); }
@@ -127,72 +102,25 @@ ostream& operator << (ostream& os, const rational_t& r) {
 	return os << r.numer() << "/" << r.denom();
 }
 
-
-/*
-class integer : public base<integer>
+class error
 {
-	int_t	_value;
+	error_t	_error;
 public:
-	//integer() : _value(0) {}
-	integer(int_t value) : _value(value) {}
-	int_t value() const { return _value; }
-	bool has_sign() const { return _value < 0; }
+	error() : _error(error_t::empty) {}
+	error(error_t err) : _error(err) {}
+	error_t get() const { return _error; }
+	bool has_sign() const { return false; }
+	expr d(expr dx) const;
+	expr integrate(expr dx, expr c) const;
 	expr approx() const;
-};
-bool operator == (integer lh, integer rh) { return lh.value() == rh.value(); }
-bool operator < (integer lh, integer rh) { return lh.value() < rh.value(); }
-ostream& operator << (ostream& os, integer n) { return os << n.value(); }
-
-class rational : public base<rational>
-{
-	int_t	_numer = {0};
-	int_t	_denom = {1};
-public:
-	rational(int_t numer, int_t denom) : _numer(numer), _denom(denom) {}
-	int_t numer() const { return _numer; }
-	int_t denom() const { return _denom; }
-	bool has_sign() const { return _numer * _denom < 0; }
-	expr approx() const;
+	expr subst(pair<expr, expr> s) const;
+	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (rational lh, rational rh) { return lh.numer() == rh.numer() && lh.denom() == rh.denom(); }
-bool operator < (rational lh, rational rh) { return lh.numer() * rh.denom() < rh.numer() * lh.denom(); }
-ostream& operator << (ostream& os, const rational& r) { 
-	if(r.denom() == 0)	return os << (r.numer() > 0 ? "inf" : "-inf");
-	return os << r.numer() << "/" << r.denom(); 
-}
+bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
+bool operator < (error lh, error rh) { return lh.get() < rh.get(); }
+ostream& operator << (ostream& os, error e) { return os << error_msgs[(int)e.get()]; }
 
-class real : public base<real>
-{
-	real_t	_value;
-public:
-	real(real_t value, real_t unused) : _value(value) {}
-	real_t value() const { return _value; }
-	bool has_sign() const { return _value < 0; }
-	expr approx() const;
-};
-bool operator == (real lh, real rh) { return fabs(lh.value() - rh.value()) < std::numeric_limits<real_t>::epsilon() * std::max({1.0, fabs(lh.value()), fabs(rh.value())}); }
-bool operator < (real lh, real rh) { return lh.value() < rh.value(); }
-ostream& operator << (ostream& os, real n) { return os << n.value(); }
-
-class complex : public base<complex>
-{
-	complex_t _value;
-public:
-	complex(complex_t value) : _value(value) {}
-	std::complex<real_t> value() const { return _value; }
-	bool has_sign() const { return _value.real() < 0; }
-	expr approx() const;
-};
-bool operator == (complex lh, complex rh) { return lh.value() == rh.value(); }
-bool operator < (complex lh, complex rh) { return abs(lh.value()) < abs(rh.value()); }
-ostream& operator << (ostream& os, complex c) {
-	if(abs(c.value().real()) >= std::numeric_limits<real_t>::epsilon())	os << c.value().real() << (c.value().imag() > 0 ? '+' : '-');
-	else if(c.value().imag() < 0)										os << '-';
-	if(abs(c.value().imag()) != 1.)	os << abs(c.value().imag());
-	return os << 'i';
-}
-*/
 class numeric
 {
 	numeric_t _value;
@@ -205,7 +133,7 @@ public:
 	numeric(complex_t value) : _value(value) {}
 
 	numeric_t value() const { return _value; }
-	bool has_sign() const { return _value < numeric_t{0}; }
+	bool has_sign() const { return less(_value, numeric_t{0}); }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
@@ -213,7 +141,7 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 bool operator == (numeric lh, numeric rh) { return lh.value() == rh.value(); }
-bool operator < (numeric lh, numeric rh) { return lh.value() < rh.value(); }
+bool operator < (numeric lh, numeric rh) { return less(lh.value(), rh.value()); }
 ostream& operator << (ostream& os, numeric n) {	return os << n.value(); }
 
 class symbol
@@ -418,7 +346,6 @@ expr operator | (expr op1, pair<expr, expr> op2);
 bool failed(expr e) { return e.type() == typeid(error); }
 string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
 bool has_sign(expr e) { return boost::apply_visitor([](auto x) { return x.has_sign(); }, e); }
-bool is_numeric(expr e) { return e.which() <= numbers; }
 expr subst(expr e, pair<expr, expr> s) { return boost::apply_visitor([s](auto x) { return x.subst(s); }, e); }
 expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
 expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
@@ -433,29 +360,35 @@ expr make_err(error_t err) { return error{err}; }
 expr make_num(int_t value);
 expr make_num(int_t numer, int_t denom);
 expr make_num(real_t value);
+expr make_num(real_t real, real_t imag);
 expr make_num(complex_t value);
 expr make_power(expr x, expr y);
 expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
 expr make_integral(expr f, expr dx);
 
-template<class T> expr base<T>::subst(pair<expr, expr> s) const { return {*static_cast<const T*>(this)}; };
-template<class T> expr base<T>::d(expr dx) const { return 0; };
-template<class T> expr base<T>::integrate(expr dx, expr c) const { return dx + c; };
-template<class T> expr base<T>::approx() const { return {*static_cast<const T*>(this)}; };
-template<class T> bool base<T>::match(expr e, match_result& res) const { if(e != expr{*static_cast<const T*>(this)}) res.found = false; return res; };
+expr error::subst(pair<expr, expr> s) const { return *this; };
+expr error::d(expr dx) const { return *this; };
+expr error::integrate(expr dx, expr c) const { return *this; };
+expr error::approx() const { return *this; };
+bool error::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
 expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }
 
 const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
 
+template<class T> struct is_expr : std::is_same<T, expr> {};
+
 }
 
-bool operator < (cas::complex_t lh, cas::complex_t rh) { return lh.real() < rh.real(); }
-ostream& operator << (ostream& os, cas::complex_t c) {
-	if(abs(c.real()) >= std::numeric_limits<cas::real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
-	else if(c.imag() < 0)										os << '-';
-	if(abs(c.imag()) != 1.)	os << abs(c.imag());
-	return os << 'i';
+namespace std {
+	using namespace cas;
+	//bool operator < (complex_t lh, complex_t rh) { return lh.real() < rh.real(); }
+	ostream& operator << (ostream& os, complex_t c) {
+		if(abs(c.real()) >= std::numeric_limits<real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
+		else if(c.imag() < 0)										os << '-';
+		if(abs(c.imag()) != 1.)	os << abs(c.imag());
+		return os << 'i';
+	}
 }
 

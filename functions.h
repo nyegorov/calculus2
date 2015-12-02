@@ -123,9 +123,9 @@ template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, 
 template<> expr fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
 
 expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.value()); }						 
-expr operator + (func lh, func rh) { return make_sum(*lh, *rh); }
-expr operator * (func lh, func rh) { return make_prod(*lh, *rh); }
-expr operator ^ (func lh, func rh) { return make_power(*lh, *rh); }
+//expr operator + (func lh, func rh) { return make_sum(*lh, *rh); }
+//expr operator * (func lh, func rh) { return make_prod(*lh, *rh); }
+//expr operator ^ (func lh, func rh) { return make_power(*lh, *rh); }
 
 expr func::d(expr dx) const { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, _func); }
 expr func::integrate(expr dx, expr c) const { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, _func); }

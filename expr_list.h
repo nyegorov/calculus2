@@ -143,7 +143,7 @@ public:
 					T p_rest{T::unit(),T::unit()}, e_rest{T::unit(),T::unit()};
 					copy_if(pp.begin(), pp.end(), std::inserter(p_rest, p_rest.end()), [p_it](auto e) {return e != *p_it; });
 					copy_if(pe.begin(), pe.end(), std::inserter(e_rest, e_rest.end()), [e_it](auto e) {return e != *e_it; });
-					if(cas::match(*e_rest, *p_rest, mr))	return res = mr;
+					if(cas::match(e_rest.left() == T::unit() ? e_rest.right() : e_rest, p_rest.left() == T::unit() ? p_rest.right() : p_rest, mr))	return res = mr;
 				}
 			}
 		}

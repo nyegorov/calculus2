@@ -2,6 +2,18 @@
 
 #include "common.h"
 
+namespace {
+	using namespace cas;
+	expr pow(int_t lh, int_t rh);
+	rational_t pow(rational_t lh, int_t rh);
+	expr pow(int_t x, rational_t rh);
+	real_t pow(rational_t lh, real_t rh);
+	real_t pow(real_t lh, rational_t rh);
+	complex_t pow(rational_t lh, complex_t rh);
+	complex_t pow(complex_t lh, rational_t rh);
+	expr pow(rational_t lh, rational_t rh);
+}
+
 namespace cas {
 
 	template<class T> T div(T x, T y, T& r) { T d = x / y; r = x - d*y; return d; }
@@ -44,6 +56,7 @@ namespace cas {
 		return numeric_t{rational_t{numer, denom}};
 	}
 	expr make_num(real_t value) { if(value - (int_t)value == 0) return numeric_t{(int_t)value}; else return numeric_t{value}; }
+	expr make_num(real_t real, real_t imag) { return make_num(complex_t{real, imag}); }
 	expr make_num(complex_t value) {
 		if(abs(value.imag()) <= std::numeric_limits<real_t>::epsilon())	return make_num(value.real());
 		return numeric_t{value};
@@ -97,7 +110,8 @@ namespace cas {
 	expr rational::approx() const { return make_real(_denom ? (real_t)_numer / (real_t)_denom : _numer > 0 ? std::numeric_limits<double>::infinity() : -std::numeric_limits<double>::infinity()); };
 	expr real::approx() const { return *this; };
 	expr complex::approx() const { return *this; };*/
-	expr numeric::approx() const { return *this; };
+
+	expr numeric::approx() const { return _value.type() == typeid(rational_t) ? make_num(boost::get<rational_t>(_value).value()) : *this; };
 	expr numeric::subst(pair<expr, expr> s) const { return{*this}; }
 	bool numeric::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
 
@@ -121,7 +135,24 @@ namespace cas {
 	complex_t operator * (complex_t lh, int_t rh) { return lh * (real_t)rh; }
 	complex_t operator * (int_t lh, complex_t rh) { return (real_t)lh * rh; }
 
-	numeric_t pow(int_t lh, int_t rh) { return rh < 0 ? numeric_t{rational_t{1, pwr(lh, -rh)}} : pwr(lh, rh); }
+	struct num_less : public boost::static_visitor<bool>
+	{
+	public:
+		template <typename T, typename U> bool operator()(T lh, U rh) const { return lh < rh; }
+		template <typename T> bool operator()(complex_t lh, T rh) const { return lh.real() < (real_t)rh; }
+		template <typename T> bool operator()(T lh, complex_t rh) const { return (real_t)lh < rh.real(); }
+		bool operator()(complex_t lh, complex_t rh) const { return abs(lh) < abs(rh); }
+	};
+
+	expr add(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x + y); }, op1, op2); }
+	expr mul(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x * y); }, op1, op2); }
+	expr powr(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(pow(x, y)); }, op1, op2); }
+	bool less(numeric_t op1, numeric_t op2) { return boost::apply_visitor(num_less(), op1, op2); }
+}
+
+namespace {
+	using namespace cas;
+	expr pow(int_t lh, int_t rh) { return rh < 0 ? make_num(1, pwr(lh, -rh)) : pwr(lh, rh); }
 	rational_t pow(rational_t lh, int_t rh) { return rh < 0 ? rational_t{pwr(lh.denom(), -rh), pwr(lh.numer(), -rh)} : rational_t{pwr(lh.numer(), rh), pwr(lh.denom(), rh)}; }
 	expr pow(int_t x, rational_t rh) {
 		int_t e, a = rh.numer(), b = rh.denom();
@@ -139,32 +170,4 @@ namespace cas {
 	complex_t pow(rational_t lh, complex_t rh) { return std::pow(lh.value(), rh); }
 	complex_t pow(complex_t lh, rational_t rh) { return std::pow(lh, rh.value()); }
 	expr pow(rational_t lh, rational_t rh) { return (expr{lh.numer()} ^ rh) / (expr{lh.denom()} ^ rh); }
-
-
-	struct num_pwr : public boost::static_visitor<expr>
-	{
-		template <typename T, typename U> expr operator()(T lh, U rh) const { return make_num(std::pow(lh, rh)); }
-		template <typename T> expr operator()(rational_t lh, T rh) const { return make_num(cas::pow(lh, rh)); }
-		template <typename T> expr operator()(T lh, rational_t rh) const { return make_num(cas::pow(lh, rh)); }
-		expr operator()(rational_t lh, rational_t rh) const { return make_num(cas::pow(lh, rh)); }
-		expr operator ()(int_t lh, int_t rh) const { return make_num(cas::pow(lh, rh)); }
-		//expr operator ()(int_t lh, real_t rh) const { return make_num(std::pow((real_t)lh, rh)); }
-		//expr operator ()(int_t lh, complex_t rh) const { return make_num(std::pow((real_t)lh, rh)); }
-	};
-
-	//expr add(numeric_t op1, numeric_t op2);
-	//expr mul(numeric_t op1, numeric_t op2);
-	expr add(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x + y); }, op1, op2); }
-	expr mul(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x * y); }, op1, op2); }
-	expr powr(numeric_t op1, numeric_t op2) { return boost::apply_visitor(num_pwr(), op1, op2); }
-	/*	numeric_t operator + (numeric_t op1, numeric_t op2) { return boost::apply_visitor(num_add(), op1, op2); }
-	numeric_t operator * (numeric_t op1, numeric_t op2) { return boost::apply_visitor(num_mul(), op1, op2); }
-	numeric_t operator ^ (numeric_t op1, numeric_t op2) { return boost::apply_visitor(num_pwr(), op1, op2); }
-	numeric_t operator - (numeric_t op1, numeric_t op2) { return op1 + -1 * op2; }
-	numeric_t operator / (numeric_t op1, numeric_t op2) { return op1 * (op2 ^ -1); }*/
-
-/*	expr operator + (numeric op1, numeric op2) { return apply_op<num_add>(op1.value(), op2.value()); }
-	expr operator * (numeric op1, numeric op2) { return apply_op<num_mul>(op1.value(), op2.value()); }
-	expr operator ^ (numeric op1, numeric op2) { return apply_op<num_pwr>(op1.value(), op2.value()); }*/
-
 }
