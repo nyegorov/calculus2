@@ -49,7 +49,6 @@ expr make_integral(expr f, expr dx)
 	return fn_base<fn_int>::make(list_t{f, dx});
 }
 
-//expr error::integrate(symbol dx, expr c) const { return _error == error_t::empty ? zero : *this; }
 expr numeric::integrate(expr dx, expr c) const { return expr{_value} *dx + c; }
 expr symbol::integrate(expr dx, expr c) const {
 	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;

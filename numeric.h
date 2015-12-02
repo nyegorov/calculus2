@@ -64,53 +64,6 @@ namespace cas {
 
 	rational_t::rational_t(int_t numer, int_t denom) : _numer(numer), _denom(denom) { normalize(_numer, _denom); }
 
-/*
-	expr make_int(int_t value) { return integer{ value }; }
-	expr make_rat(int_t numer, int_t denom) {
-		normalize(numer, denom);
-		if(numer == denom)	return one;
-		if(denom == 1) 		return{ numer };
-		if(denom < 0)		numer = -numer, denom = -denom;
-		return rational{ numer, denom };
-	}
-	expr make_real(real_t value) { if(value - (int_t)value == 0) return integer{ (int_t)value }; else return real{ value, 1.0 }; }
-	expr make_complex(complex_t value) {
-		if(abs(value.imag()) <= std::numeric_limits<real_t>::epsilon())	return make_real(value.real());
-		return complex{ value };
-	}
-
-	expr operator + (error lh, error rh) { return lh; }
-	expr operator + (integer lh, integer rh) { return make_int(lh.value() + rh.value()); }
-	expr operator + (rational lh, rational rh) { return make_rat(lh.numer() * rh.denom() + rh.numer() * lh.denom(), lh.denom() * rh.denom()); }
-	expr operator + (real lh, real rh) { return make_real(lh.value() + rh.value()); }
-	expr operator + (complex lh, complex rh) { return make_complex(lh.value() + rh.value()); }
-	expr operator * (error lh, error rh) { return lh; }
-	expr operator * (integer lh, integer rh) { return make_int(lh.value() * rh.value()); }
-	expr operator * (rational lh, rational rh) { return make_rat(lh.numer() * rh.numer(), lh.denom() * rh.denom()); }
-	expr operator * (real lh, real rh) { return make_real(lh.value() * rh.value()); }
-	expr operator * (complex lh, complex rh) { return make_complex(lh.value() * rh.value()); }
-	expr operator ^ (error lh, error rh) { return lh; }
-	expr operator ^ (integer lh, integer rh) { return rh.value() < 0 ? make_rat(1, pwr(lh.value(), -rh.value())) : make_int(pwr(lh.value(), rh.value())); }
-	expr operator ^ (rational lh, integer rh) { return rh.value() < 0 ? make_rat(pwr(lh.denom(), -rh.value()), pwr(lh.numer(), -rh.value())) : make_rat(pwr(lh.numer(), rh.value()), pwr(lh.denom(), rh.value())); }
-	expr operator ^ (integer lh, rational rh) {
-		int_t x = lh.value(), e, a = rh.numer(), b = rh.denom();
-		if(x == 1)	return one;
-		if(x == -1)	return b % 2 ? minus_one : expr{ complex{ { -1.0, 0.0 } } } ^ rh;
-		powerize(x, e);	 e *= abs(a);
-		normalize(e, b); x = pwr(x, e);
-		if(b == 1)	return a < 0 ? make_rat(1, x) : make_int(x);
-
-		return make_power(make_int(x), make_rat(a < 0 ? -1 : 1, b));
-	}
-	expr operator ^ (rational lh, rational rh) { return (expr(lh.numer()) ^ rh) / (expr(lh.denom()) ^ rh); }
-	expr operator ^ (real lh, real rh) { return make_real(pow(lh.value(), rh.value())); }
-	expr operator ^ (complex lh, complex rh) { return make_complex(pow(lh.value(), rh.value())); }
-
-	expr integer::approx() const { return *this; };
-	expr rational::approx() const { return make_real(_denom ? (real_t)_numer / (real_t)_denom : _numer > 0 ? std::numeric_limits<double>::infinity() : -std::numeric_limits<double>::infinity()); };
-	expr real::approx() const { return *this; };
-	expr complex::approx() const { return *this; };*/
-
 	expr numeric::approx() const { return _value.type() == typeid(rational_t) ? make_num(boost::get<rational_t>(_value).value()) : *this; };
 	expr numeric::subst(pair<expr, expr> s) const { return{*this}; }
 	bool numeric::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
@@ -144,9 +97,9 @@ namespace cas {
 		bool operator()(complex_t lh, complex_t rh) const { return abs(lh) < abs(rh); }
 	};
 
-	expr add(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x + y); }, op1, op2); }
-	expr mul(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x * y); }, op1, op2); }
-	expr powr(numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(pow(x, y)); }, op1, op2); }
+	expr operator + (numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x + y); }, op1, op2); }
+	expr operator * (numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(x * y); }, op1, op2); }
+	expr operator ^ (numeric_t op1, numeric_t op2) { return boost::apply_visitor([](auto x, auto y) {return make_num(pow(x, y)); }, op1, op2); }
 	bool less(numeric_t op1, numeric_t op2) { return boost::apply_visitor(num_less(), op1, op2); }
 }
 

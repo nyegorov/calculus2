@@ -377,8 +377,6 @@ expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), 
 const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
 
-template<class T> struct is_expr : std::is_same<T, expr> {};
-
 }
 
 namespace std {
