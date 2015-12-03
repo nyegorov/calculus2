@@ -197,6 +197,10 @@ namespace Tests
 			Assert::AreEqual("1", to_string((sin(3*x)^2)+(cos(3*x)^2)).c_str());
 			Assert::AreEqual("-sin(x^2)", to_string(sin(-x*x)).c_str());
 			Assert::AreEqual("cos(x^2)", to_string(cos(-x*x)).c_str());
+			// User
+			fun f{"f", x / y,{x,y}};
+			Assert::AreEqual(one / 5, f(1, 5));
+
 		}
 		TEST_METHOD(Approximation)
 		{
@@ -219,6 +223,7 @@ namespace Tests
 		TEST_METHOD(Derivative)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
+			fun f{"f", x / y, {x,y}};
 			Assert::AreEqual(3*(x^2), df(x^3, x));
 			Assert::AreEqual(ln(3)*(3^x), df(3^x, x));
 			Assert::AreEqual((x^x)+ln(x)*(x^x), df(x^x, x));
@@ -226,6 +231,9 @@ namespace Tests
 			Assert::AreEqual(2/x, df(ln(x^2), x));
 			Assert::AreEqual(-cos(1/x)/(x^2), df(sin(1/x), x));
 			Assert::AreEqual(-sin(tg(x))/(cos(x)^2), df(cos(tg(x)), x));
+			//Assert::AreEqual(1 / y, df(f, x));
+			//Assert::AreEqual(-1 / (y^2), df(f, y));
+			//Assert::AreEqual(1 / y, df(f, x));
 		}
 		TEST_METHOD(Integrals)
 		{
@@ -244,6 +252,8 @@ namespace Tests
 			Assert::AreEqual(-cos(x)/(cos(y)^2), df(intf(sin(x)*tg(y), x), y));
 			Assert::AreEqual(-ln(cos(y))*cos(x), df(intf(sin(x)*tg(y), y), x));
 			Assert::AreEqual("d/dy int(x^(xy),x)", to_string(df(intf(x^(x*y), x), y)).c_str());
+			symbol rho("rho"), phi("phi"), psi("psi"), R("R");
+			Assert::AreEqual(4/3*pi*(R^3), intf(intf(intf((rho^2)*sin(phi), rho, 0, R), phi, 0, pi), psi, 0, 2*pi));
 		}
 		TEST_METHOD(Matches)
 		{

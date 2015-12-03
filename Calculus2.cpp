@@ -20,24 +20,33 @@ using namespace std::literals;
 
 extern void initStreams();
 
-typedef boost::variant<int, double, complex_t> myvar;
-//bool operator < (complex_t lh, complex_t rh) { return lh.real() < rh.real(); }
-template<typename T, typename U, class = typename enable_if<!is_expr<T>::value && !is_expr<U>::value>::type> expr operator %(T x, U y) { cout << "[T, U](" << x << ',' << y << ')' << endl; return zero; }
-template<typename T, class = typename enable_if<!is_expr<T>::value>::type> expr operator %(T x, int y) { cout << "[T, int](" << x << ',' << y << ')' << endl;  return zero; }
-template<typename T, class = typename enable_if<!is_expr<T>::value>::type> expr operator %(int x, T y) { cout << "[int, T](" << x << ',' << y << ')' << endl; return zero; }
-
-expr operator %(expr x, expr y) { cout << "[expr, expr](" << x << ',' << y << ')' << endl; 
-return boost::apply_visitor([](auto x, auto y) {return x % y; }, x, y);
-}
-
 int main()
 {
 	symbol x{"x"}, y{"y"}, a{"a"};
 
 
 	//p = (x - y) ^ 3;
-	//func f{fn_user{"f", x*y, x, y}};
-	//cout << (f(4, 5)) << end;
+	fn_user f{"f", x/y, {x, y}};
+
+	auto f4 = f(4);
+	auto f45 = f(4, 5);
+	cout << f << endl;
+	cout << f(4) << endl;
+	cout << f(4, 5) << endl;
+	{
+		auto f = fn("f", x / y, {x, y});
+		cout << df(f, x) << endl;
+		cout << df(f, y) << endl;
+		cout << df(df(f, x), y) << endl;
+
+		cout << intf(f, x) << endl;
+		cout << intf(f, y) << endl;
+		cout << intf(intf(f, x), y) << endl;
+		symbol rho("rho"), phi("phi"), R("R");
+		cout << intf(intf(rho, phi, 0, 2 * pi), rho, 0, R) << endl;
+	}
+	
+
 	numeric i{complex_t{0., 1.}}, c1mi{complex_t{1, -1}}, cm5i{complex_t{0, -5.}}, c3p2i{complex_t{3., 2.}}, r(1,2), n(1);
 
 	/*expr e(42);

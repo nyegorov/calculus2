@@ -25,6 +25,7 @@ template <> expr fn_base<fn_arccos>::d(expr dx) const { return -df(_x, dx) / ((1
 template <> expr fn_base<fn_arctg>::d(expr dx) const { return df(_x, dx) / (1 + (_x ^ 2)); }
 template <> expr fn_base<fn_int>::d(expr dx) const { return dx == (*this)[1] ? (*this)[0] : fn_base<fn_dif>::make(list_t{**this, dx}); }
 template<class F> expr fn_base<F>::d(expr dx) const { return fn_base<fn_dif>::make(list_t{**this, dx}); }
+expr fn_user::d(expr dx) const { return fn(name(), df(body(), dx), args()); }
 
 expr power::d(expr dx) const
 {
@@ -64,6 +65,8 @@ template <> expr fn_base<fn_arccos>::integrate(expr dx, expr c) const { return _
 template <> expr fn_base<fn_arctg>::integrate(expr dx, expr c) const { return _x == dx ? _x * arctg(_x) - half * ln(1 + (_x ^ 2)) + c : make_integral(**this, dx) + c; }
 template <> expr fn_base<fn_dif>::integrate(expr dx, expr c) const { return dx == (*this)[1] ? (*this)[0] : make_integral(**this, dx) + c; }
 template<class F> expr fn_base<F>::integrate(expr dx, expr c) const { return make_integral(**this, dx) + c; }
+
+expr fn_user::integrate(expr dx, expr c) const { return fn(name(), intf(body(), dx, c), args()); }
 
 expr power::integrate(expr dx, expr c) const
 {

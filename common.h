@@ -40,8 +40,8 @@ typedef double real_t;
 typedef std::complex<real_t> complex_t;
 
 typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
-
-typedef boost::variant <
+typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int, fn_dif, fn_user> function_t;
+typedef boost::variant<
 	error,
 	numeric,
 	boost::recursive_wrapper<symbol>, 
@@ -52,7 +52,6 @@ typedef boost::variant <
 	boost::recursive_wrapper<xset>
 	>	expr;
 
-typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int, fn_dif, fn_user> function_t;
 typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
 
@@ -68,7 +67,6 @@ struct match_result
 };
 
 bool has_sign(expr e);
-bool is_numeric(expr e);
 bool less(numeric_t op1, numeric_t op2);
 
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
@@ -76,6 +74,8 @@ template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T)
 template<class T> T& as(expr& e) { return boost::get<T>(e); }
 template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
 template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).value()); }
+
+std::ostream& operator << (std::ostream& os, const list_t& l);
 
 class rational_t
 {
@@ -266,25 +266,19 @@ struct fn_arccos : public fn_base<fn_arccos> { using fn_base::fn_base; };
 struct fn_arctg : public fn_base<fn_arctg> { using fn_base::fn_base; };
 struct fn_int : public fn_base<fn_int> { using fn_base::fn_base; };
 struct fn_dif : public fn_base<fn_dif> { using fn_base::fn_base; };
-struct fn_user : public fn_base<fn_user> { using fn_base::fn_base; };
+struct fn_user : public fn_base<fn_user> { 
+	fn_user(expr x) : fn_base(x) {}
+	fn_user(string name, expr body, list_t args);
+	string name() const;
+	expr body() const;
+	list_t args() const;
 
-ostream& operator << (ostream& os, fn_base<fn_ln> f) { return os << "ln(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_sin> f) { return os << "sin(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_cos> f) { return os << "cos(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_tg> f) { return os << "tg(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "arcsin(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f[0] << ',' << f[1] << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_dif> f) { return os << "d/d" << f[1] << " " << f[0]; }
-ostream& operator << (ostream& os, fn_base<fn_user> f) {
-	return os << f[0] << '(';
-	for(size_t i = 2; i < f.size(); i++) {
-		if(i != 2)	os << ',';
-		os << f[i];
-	}
-	return os << ')';
-}
+	expr d(expr dx) const;
+	expr integrate(expr dx, expr c) const;
+	expr operator ()() const;
+	template <typename ... Params> expr operator ()(expr val, Params ... rest) const;
+};
+typedef fn_user	fun;
 
 class func
 {
@@ -322,14 +316,7 @@ public:
 
 bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
 bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
-ostream& operator << (ostream& os, xset l) {
-	os << '['; 
-	for(auto it = l.items().cbegin(); it != l.items().cend(); ++it) {
-		if(it != l.items().cbegin())	os << ',';
-		os << *it;
-	}
-	return os << ']';
-}
+ostream& operator << (ostream& os, xset l) { return os << '[' << l.items() << ']'; }
 
 const expr empty = error{error_t::empty};
 
@@ -376,6 +363,14 @@ expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), 
 
 const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
+
+std::ostream& operator << (std::ostream& os, const list_t& l) {
+	for(auto it = l.cbegin(); it != l.cend(); ++it) {
+		if(it != l.cbegin())	os << ',';
+		os << *it;
+	}
+	return os;
+}
 
 }
 
