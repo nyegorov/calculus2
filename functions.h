@@ -116,15 +116,7 @@ inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{name
 inline string fn_user::name() const { return as<symbol>((*this)[0]).name(); }
 inline expr fn_user::body() const { return (*this)[1]; }
 inline list_t fn_user::args() const { return as<xset>((*this)[2]).items(); }
-inline expr fn_user::call(expr values) const
-{
-	//if(!is<xset>(values))	return error{error_t::syntax};
-	//list_t list_val = as<xset>(values).items();
-	//list_t list_arg = args();
-	//if(list_val.size() != list_arg.size)
-
-	return body() | std::make_pair(as<xset>((*this)[2]), values);
-}
+inline expr fn_user::operator()(xset values) const { return body() | std::make_pair(as<xset>((*this)[2]), values); }
 inline expr fn_user::operator ()() const { return func{*this}; }
 template <typename ... Params> expr fn_user::operator ()(expr val, Params ... rest) const
 {

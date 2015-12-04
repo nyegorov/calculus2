@@ -275,7 +275,7 @@ struct fn_user : public fn_base<fn_user> {
 
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
-	expr call(expr params) const;
+	expr operator()(xset params) const;
 	expr operator ()() const;
 	template <typename ... Params> expr operator ()(expr val, Params ... rest) const;
 };

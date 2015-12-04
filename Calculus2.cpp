@@ -35,7 +35,8 @@ void run()
 
 int main()
 {
-	//run();
+	run();
+	return 0;
 
 	symbol x{"x"}, y{"y"}, a{"a"};
 

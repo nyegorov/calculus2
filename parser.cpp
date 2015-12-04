@@ -42,8 +42,7 @@ void OpNull(expr& op1, expr& op2, expr& result)	{}
 void OpCall(expr& op1, expr& op2, expr& result)	{
 	if(!is<func, fn_user>(op1))	throw error_t::syntax;
 	//result = as<func, fn_user>(op1).call(op2);
-	if(!is<xset>(op2))	result = as<func, fn_user>(op1)(op2);
-	else 				result = as<func, fn_user>(op1).call(op2);
+	else 				result = is<xset>(op2) ? as<func, fn_user>(op1)(as<xset>(op2)) : as<func, fn_user>(op1)(op2);
 }
 
 Context::vars_t	Context::_globals;
