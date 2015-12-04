@@ -253,7 +253,7 @@ namespace Tests
 			Assert::AreEqual(-ln(cos(y))*cos(x), df(intf(sin(x)*tg(y), y), x));
 			Assert::AreEqual("d/dy int(x^(xy),x)", to_string(df(intf(x^(x*y), x), y)).c_str());
 			symbol rho("rho"), phi("phi"), psi("psi"), R("R");
-			Assert::AreEqual(4/3*pi*(R^3), intf(intf(intf((rho^2)*sin(phi), rho, 0, R), phi, 0, pi), psi, 0, 2*pi));
+			Assert::AreEqual(4*pi*(R^3)/3, intf(intf(intf((rho^2)*sin(phi), rho, 0, R), phi, 0, pi), psi, 0, 2*pi));
 		}
 		TEST_METHOD(Matches)
 		{

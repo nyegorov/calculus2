@@ -42,8 +42,11 @@ int main()
 		cout << intf(f, x) << endl;
 		cout << intf(f, y) << endl;
 		cout << intf(intf(f, x), y) << endl;
-		symbol rho("rho"), phi("phi"), R("R");
-		cout << intf(intf(rho, phi, 0, 2 * pi), rho, 0, R) << endl;
+		symbol rho("rho"), phi("phi"), psi("psi"), R("R");
+		//cout << intf((rho ^ 2)*sin(phi), rho, 0, R) << endl;
+		//cout << intf(intf((rho ^ 2)*sin(phi), rho, 0, R), phi, 0, pi) << endl;
+		//cout << intf(intf(intf((rho ^ 2)*sin(phi), rho, 0, R), phi, 0, pi), psi, 0, 2 * pi) << endl;
+		cout << intf((R^3), psi, 0, 2 * pi) << endl;
 	}
 	
 

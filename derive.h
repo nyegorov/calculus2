@@ -71,18 +71,20 @@ expr fn_user::integrate(expr dx, expr c) const { return fn(name(), intf(body(), 
 expr power::integrate(expr dx, expr c) const
 {
 	auto d_x = df(_x, dx);
-	if(d_x == zero && _y == dx)	return (_x ^ _y) / ln(_x) + c;					// ∫ a^x dx => a^x / ln(a)
-	if(df(_y, dx) == zero && df(d_x, dx) == zero)	{
+	if(d_x == zero && _y == dx)	return (_x ^ _y) / ln(_x) + c;					// ∫ aˣ dx ⇒ aˣ / ln(a)
+	auto d_y = df(_y, dx);
+	if(d_y == zero && d_x == zero)	return *this * dx;							// ∫ aᵇ dx ⇒ aᵇ∙x
+	if(d_y == zero && df(d_x, dx) == zero)	{
 		return _y == minus_one ? 
-			ln(_x) / d_x + c :													// ∫ 1/(ax+b) dx => ln(ax+b)/a
-			(_x ^ (_y + 1)) / (d_x * (_y + 1)) + c;								// ∫ (ax+b)^n dx => (ax+b)^(n+1)/a(n+1)
+			ln(_x) / d_x + c :													// ∫ 1/(ax+b) dx ⇒ ln(ax+b)/a
+			(_x ^ (_y + 1)) / (d_x * (_y + 1)) + c;								// ∫ (ax+b)ⁿ dx ⇒ (ax+b)ⁿ⁺¹/a(n+1)
 	}
 	return make_integral(*this, dx) + c;
 }
 
 expr product::integrate(expr dx, expr c) const { 
-	if(df(_left, dx) == zero)	return _left * cas::intf(_right, dx, c);		// ∫ af(x) dx => a S f(x) dx
-	if(df(_right, dx) == zero)	return _right * cas::intf(_left, dx, c);		// ∫ f(x)a dx => a S f(x) dx
+	if(df(_left, dx) == zero)	return _left * cas::intf(_right, dx, c);		// ∫ a∙f(x) dx ⇒ a∙∫ f(x) dx
+	if(df(_right, dx) == zero)	return _right * cas::intf(_left, dx, c);		// ∫ f(x)∙a dx ⇒ a∙∫ f(x) dx
 
 	product p{*this};
 	for(auto it = p.begin(); it != p.end(); ++it) {

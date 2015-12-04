@@ -81,9 +81,9 @@ template<> static expr fn_base<fn_int>::make(expr p) {
 	if(df(f, dx) == zero)	return f * dx;												// ∫ y dx => yx
 	match_result mr;
 	symbol x{"x", dx}, y{"y"};
-	//if((mr = cas::match(f, x*ln(x))))	return (dx ^ 2)*ln(x) / 2 - (dx ^ 2) / 4;		// ∫ xln(x) dx => (x² lnx)/2 - x²/4
-	if((mr = cas::match(f, ln(x) / x)))	return half * (ln(dx) ^ 2);						// ∫ ln(x)/x dx => 1/2 ln(x)²
-	if(mr = cas::match(f, x*ln(y))) {													// ∫ xln(ax+b) dx => (a²x²-b²)ln(ax+b)/2a²-x(ax-2b)/4a
+	//if((mr = cas::match(f, x*ln(x))))	return (dx ^ 2)*ln(x) / 2 - (dx ^ 2) / 4;		// ∫ x∙ln(x) dx => (x²∙lnx)/2 - x²/4
+	if((mr = cas::match(f, ln(x) / x)))	return half * (ln(dx) ^ 2);						// ∫ ln(x)/x dx => 1/2∙ln²(x)
+	if(mr = cas::match(f, x*ln(y))) {													// ∫ x∙ln(ax+b) dx => (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
 		auto a = df(mr[y], dx), b = mr[y] - a*x;
 		if(df(a, dx) == zero)	return (((a*x) ^ 2) - (b ^ 2))*ln(a*x + b) / (2 * (a ^ 2)) - x*(a*x - 2 * b) / (4 * a);
 	}
