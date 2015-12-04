@@ -2,6 +2,7 @@
 //
 #include "stdafx.h"
 #include "calculus.h"
+#include "parser.h"
 
 #pragma execution_character_set("utf-8")
 
@@ -20,34 +21,38 @@ using namespace std::literals;
 
 extern void initStreams();
 
+void run()
+{
+	string s;
+	NScript ns;
+	while(true) {
+		cout << "> ";
+		getline(cin, s);
+		if(cin.fail() || s.empty())	break;
+		cout << "  " << ns.eval(s.c_str()) << endl;
+	}
+}
+
 int main()
 {
+	//run();
+
 	symbol x{"x"}, y{"y"}, a{"a"};
 
 
+	{
+		NScript ns;
+		cout << ns.eval("cos(y)") << endl;
+		cout << ns.eval("df(cos(y), y)") << endl;
+	}
+
 	//p = (x - y) ^ 3;
 	fn_user f{"f", x/y, {x, y}};
-
 	auto f4 = f(4);
 	auto f45 = f(4, 5);
 	cout << f << endl;
 	cout << f(4) << endl;
 	cout << f(4, 5) << endl;
-	{
-		auto f = fn("f", x / y, {x, y});
-		cout << df(f, x) << endl;
-		cout << df(f, y) << endl;
-		cout << df(df(f, x), y) << endl;
-
-		cout << intf(f, x) << endl;
-		cout << intf(f, y) << endl;
-		cout << intf(intf(f, x), y) << endl;
-		symbol rho("rho"), phi("phi"), psi("psi"), R("R");
-		//cout << intf((rho ^ 2)*sin(phi), rho, 0, R) << endl;
-		//cout << intf(intf((rho ^ 2)*sin(phi), rho, 0, R), phi, 0, pi) << endl;
-		//cout << intf(intf(intf((rho ^ 2)*sin(phi), rho, 0, R), phi, 0, pi), psi, 0, 2 * pi) << endl;
-		cout << intf((R^3), psi, 0, 2 * pi) << endl;
-	}
 	
 
 	numeric i{complex_t{0., 1.}}, c1mi{complex_t{1, -1}}, cm5i{complex_t{0, -5.}}, c3p2i{complex_t{3., 2.}}, r(1,2), n(1);

@@ -158,6 +158,7 @@
     <ClInclude Include="derive.h" />
     <ClInclude Include="expr_list.h" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="parser.h" />
     <ClInclude Include="symbolic.h" />
     <ClInclude Include="numeric.h" />
     <ClInclude Include="stdafx.h" />
@@ -165,6 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Calculus2.cpp" />
+    <ClCompile Include="parser.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

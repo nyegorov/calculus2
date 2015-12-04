@@ -5,16 +5,16 @@
 
 namespace cas {
 
-ostream& operator << (ostream& os, fn_base<fn_ln> f) { return os << "ln(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_sin> f) { return os << "sin(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_cos> f) { return os << "cos(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_tg> f) { return os << "tg(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "arcsin(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f[0] << ',' << f[1] << ')'; }
-ostream& operator << (ostream& os, fn_base<fn_dif> f) { return os << "d/d" << f[1] << " " << f[0]; }
-ostream& operator << (ostream& os, fn_user f) {
+inline ostream& operator << (ostream& os, fn_base<fn_ln> f) { return os << "ln(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_sin> f) { return os << "sin(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_cos> f) { return os << "cos(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_tg> f) { return os << "tg(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "arcsin(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f[0] << ',' << f[1] << ')'; }
+inline ostream& operator << (ostream& os, fn_base<fn_dif> f) { return os << "d/d" << f[1] << " " << f[0]; }
+inline ostream& operator << (ostream& os, fn_user f) {
 	return os << f.name() << '(' << f.args() << ')';
 }
 
@@ -99,17 +99,33 @@ template<> static expr fn_base<fn_int>::make(expr p) {
 
 template<> static expr fn_base<fn_dif>::make(expr p) {
 	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
-	return func{fn_dif{p}};
+	expr f = as<xset>(p).items().front(), dx = as<xset>(p).items().back();
+	return df(f, dx);
+	//return func{fn_dif{p}};
 }
 
 template<> static expr fn_base<fn_user>::make(expr x) {	return func{fn_user{x}}; };
 
+inline expr make_integral(expr f, expr dx)
+{
+	return fn_base<fn_int>::make(list_t{f, dx});
+}
+
 // User-defined functions
-fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{name, body, args}) {}
-string fn_user::name() const { return as<symbol>((*this)[0]).name(); }
-expr fn_user::body() const { return (*this)[1]; }
-list_t fn_user::args() const { return as<xset>((*this)[2]).items(); }
-expr fn_user::operator ()() const { return func{*this}; }
+inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{name, body, args}) {}
+inline string fn_user::name() const { return as<symbol>((*this)[0]).name(); }
+inline expr fn_user::body() const { return (*this)[1]; }
+inline list_t fn_user::args() const { return as<xset>((*this)[2]).items(); }
+inline expr fn_user::call(expr values) const
+{
+	//if(!is<xset>(values))	return error{error_t::syntax};
+	//list_t list_val = as<xset>(values).items();
+	//list_t list_arg = args();
+	//if(list_val.size() != list_arg.size)
+
+	return body() | std::make_pair(as<xset>((*this)[2]), values);
+}
+inline expr fn_user::operator ()() const { return func{*this}; }
 template <typename ... Params> expr fn_user::operator ()(expr val, Params ... rest) const
 {
 	list_t rest_args = args();
@@ -121,7 +137,7 @@ template <typename ... Params> expr fn_user::operator ()(expr val, Params ... re
 		fn_user{name(), body() | std::make_pair(arg, val), rest_args}(rest...);
 }
 
-expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
+static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 {
 	if(is<numeric, int_t>(x))		return make_num(rfun((real_t)as<numeric, int_t>(x)));
 	if(is<numeric, real_t>(x))		return make_num(rfun(as<numeric, real_t>(x)));
@@ -133,34 +149,34 @@ template<class F> expr fn_base<F>::subst(pair<expr, expr> s) const { return expr
 template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
 template<class F> expr operator *(fn_base<F> f) { return f.make(f.x()); }
 
-template<> expr fn_base<fn_ln>::approx() const { return apply_fun(~_x, log, [](complex_t x) {return log(x); }); }
-template<> expr fn_base<fn_sin>::approx() const { return apply_fun(~_x, std::sin, [](complex_t x) {return sin(x); }); }
-template<> expr fn_base<fn_cos>::approx() const { return apply_fun(~_x, std::cos, [](complex_t x) {return cos(x); }); }
-template<> expr fn_base<fn_tg>::approx() const { return apply_fun(~_x, tan, [](complex_t x) {return tan(x); }); }
-template<> expr fn_base<fn_arcsin>::approx() const { return apply_fun(~_x, asin, [](complex_t x) {return asin(x); }); }
-template<> expr fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
-template<> expr fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
-template<> expr fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
+template<> expr inline fn_base<fn_ln>::approx() const { return apply_fun(~_x, log, [](complex_t x) {return log(x); }); }
+template<> expr inline fn_base<fn_sin>::approx() const { return apply_fun(~_x, std::sin, [](complex_t x) {return sin(x); }); }
+template<> expr inline fn_base<fn_cos>::approx() const { return apply_fun(~_x, std::cos, [](complex_t x) {return cos(x); }); }
+template<> expr inline fn_base<fn_tg>::approx() const { return apply_fun(~_x, tan, [](complex_t x) {return tan(x); }); }
+template<> expr inline fn_base<fn_arcsin>::approx() const { return apply_fun(~_x, asin, [](complex_t x) {return asin(x); }); }
+template<> expr inline fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
+template<> expr inline fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
+template<> expr inline fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
 
-expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.value()); }						 
+inline expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.value()); }
 
-expr func::d(expr dx) const { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, _func); }
-expr func::integrate(expr dx, expr c) const { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, _func); }
-expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
-expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
-bool func::match(expr e, match_result& res) const { 
+inline expr func::d(expr dx) const { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, _func); }
+inline expr func::integrate(expr dx, expr c) const { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, _func); }
+inline expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
+inline expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
+inline bool func::match(expr e, match_result& res) const {
 	return is<func>(e) ? 
 		boost::apply_visitor([fun = as<func>(e).value(), &res](auto f) { return f.match(fun, res); }, _func) :
 		res.found = false;
 }
 
-expr ln(expr x) { return fn_ln::make(x); }
-expr sin(expr x) { return fn_sin::make(x); }
-expr cos(expr x) { return fn_cos::make(x); }
-expr tg(expr x) { return fn_tg::make(x); }
-expr arcsin(expr x) { return fn_arcsin::make(x); }
-expr arccos(expr x) { return fn_arccos::make(x); }
-expr arctg(expr x) { return fn_arctg::make(x); }
-expr fn(string name, expr body, list_t args) { return func{fn_user{name, body, args}}; }
+inline expr ln(expr x) { return fn_ln::make(x); }
+inline expr sin(expr x) { return fn_sin::make(x); }
+inline expr cos(expr x) { return fn_cos::make(x); }
+inline expr tg(expr x) { return fn_tg::make(x); }
+inline expr arcsin(expr x) { return fn_arcsin::make(x); }
+inline expr arccos(expr x) { return fn_arccos::make(x); }
+inline expr arctg(expr x) { return fn_arctg::make(x); }
+inline expr fn(string name, expr body, list_t args) { return func{fn_user{name, body, args}}; }
 
 }

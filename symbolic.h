@@ -12,7 +12,18 @@ namespace cas {
 using std::enable_if;
 using std::is_same;
 
-expr make_power(expr x, expr y) {
+static int_t binomial(int_t n, int_t k) {
+	int_t a = 1, b = 1;
+	for(int_t l = 1; l <= k; l++)	a *= (n - l + 1), b *= l;
+	return a / b;
+}
+
+inline expr product::op(const expr& lh, const expr& rh) { return lh * rh; }
+inline expr sum::op(const expr& lh, const expr& rh) { return lh + rh; }
+
+inline expr make_err(error_t err) { return error{err}; }
+
+inline expr make_power(expr x, expr y) {
 	if(is<error>(x))	return x;
 	if(is<error>(y))	return y;
 	if(is<numeric>(x) && is<numeric>(y))	return as<numeric>(x).value() ^ as<numeric>(y).value();
@@ -23,7 +34,7 @@ expr make_power(expr x, expr y) {
 	return power{x, y};
 }
 
-expr make_sum(expr left, expr right) {
+inline expr make_sum(expr left, expr right) {
 	if(is<error>(left))	return left;
 	if(is<error>(right))return right;
 	if(is<numeric>(left) && is<numeric>(right))	return as<numeric>(left).value() + as<numeric>(right).value();
@@ -45,7 +56,7 @@ expr make_sum(expr left, expr right) {
 	return sum{left, right};
 }
 
-expr make_prod(expr left, expr right)
+inline expr make_prod(expr left, expr right)
 {
 	if(is<error>(left))	return left;
 	if(is<error>(right))return right;
@@ -68,21 +79,18 @@ expr make_prod(expr left, expr right)
 	return product{left, right};
 }
 
-expr make_xset(std::initializer_list<expr> items)
+inline expr make_xset(std::initializer_list<expr> items)
 {
 	if(items.size() == 1)	return *items.begin();
 	return xset{items};
 }
 
-expr product::op(const expr& lh, const expr& rh) { return lh * rh; }
-expr sum::op(const expr& lh, const expr& rh) { return lh + rh; }
-
 // Addition
 template<typename T, typename U> typename enable_if<!is_same<T, expr>::value && !is_same<U, expr>::value, expr>::type operator + (T lh, U rh) { return make_sum(lh, rh); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (T e, sum s) { s.append(e); return s.left() == zero ? s.right() : s; }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (sum s, T e) { s.append(e); return s.left() == zero ? s.right() : s; }
-expr operator + (sum s, sum a) { for(auto& e : a) s.append(e);	return s.left() == zero ? s.right() : s; }
-expr operator + (power lh, power rh) {
+inline expr operator + (sum s, sum a) { for(auto& e : a) s.append(e);	return s.left() == zero ? s.right() : s; }
+inline expr operator + (power lh, power rh) {
 	if(lh.y() == two && rh.y() == two) {			// sin²(x)+cos²(x)=1
 		if(is<func, fn_sin>(lh.x()) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh.x()).x() == as<func, fn_cos>(rh.x()).x())	return one;
 		if(is<func, fn_sin>(rh.x()) && is<func, fn_cos>(lh.x()) && as<func, fn_sin>(rh.x()).x() == as<func, fn_cos>(lh.x()).x())	return one;
@@ -94,16 +102,16 @@ expr operator + (power lh, power rh) {
 template<typename T, typename U> typename enable_if<!is_same<T, expr>::value && !is_same<U, expr>::value, expr>::type operator * (T lh, U rh) { return make_prod(lh, rh); }
 template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (T e, product s) { s.append(e); return s.left() == one ? s.right() : s; }
 template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (product s, T e) { s.append(e); return s.left() == one ? s.right() : s; }
-expr operator * (product s, product a) { for(auto& e : a) s.append(e);	return s.left() == one ? s.right() : s; }
+inline expr operator * (product s, product a) { for(auto& e : a) s.append(e);	return s.left() == one ? s.right() : s; }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (T e, sum s) { return e * s.left() + e * s.right(); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (sum s, T e) { return s.left() * e + s.right() * e; }
-expr operator * (sum lh, sum rh) { return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right(); }
+inline expr operator * (sum lh, sum rh) { return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right(); }
 
 // Power
 template<typename T, typename U> typename enable_if<!is_same<T, expr>::value, expr>::type operator ^ (T x, U y) { return make_power(x, y); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator ^ (power p, T y) { return make_power(p.x(), p.y() * expr{y}); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator ^ (product p, T y) { return (p.left() ^ y) * (p.right() ^ y); }
-expr operator ^ (sum s, numeric num) {
+inline expr operator ^ (sum s, numeric num) {
 	if(num.value().type() != typeid(int_t) || num.value() == numeric_t{0} || num.has_sign())	return make_power(s, num);
 	int_t n = boost::get<int_t>(num.value());
 	expr res(0);
@@ -113,11 +121,11 @@ expr operator ^ (sum s, numeric num) {
 	return res;
 }
 
-expr operator + (expr op1, expr op2) { return boost::apply_visitor([](auto x, auto y) {return x + y; }, op1, op2); }
-expr operator * (expr op1, expr op2) { return boost::apply_visitor([](auto x, auto y) {return x * y; }, op1, op2); }
-expr operator ^ (expr op1, expr op2) { return boost::apply_visitor([](auto x, auto y) {return x ^ y; }, op1, op2); }
-expr operator - (expr op1, expr op2) { return op1 + -op2; }
-expr operator / (expr op1, expr op2) { return op1 * (op2 ^ minus_one); }
-expr operator - (expr op1) { return op1 * minus_one; }
+inline expr operator + (expr op1, expr op2) { return boost::apply_visitor([](auto x, auto y) {return x + y; }, op1, op2); }
+inline expr operator * (expr op1, expr op2) { return boost::apply_visitor([](auto x, auto y) {return x * y; }, op1, op2); }
+inline expr operator ^ (expr op1, expr op2) { return boost::apply_visitor([](auto x, auto y) {return x ^ y; }, op1, op2); }
+inline expr operator - (expr op1, expr op2) { return op1 + -op2; }
+inline expr operator / (expr op1, expr op2) { return op1 * (op2 ^ minus_one); }
+inline expr operator - (expr op1) { return op1 * minus_one; }
 
 }

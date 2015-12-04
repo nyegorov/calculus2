@@ -56,7 +56,7 @@ typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
 
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
-const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Syntax error", "Empty"};
+static const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Syntax error", "Empty"};
 
 struct match_result
 {
@@ -95,9 +95,9 @@ public:
 	}
 };
 
-bool operator == (rational_t lh, rational_t rh) { return lh.numer() == rh.numer() && lh.denom() == rh.denom(); }
-bool operator < (rational_t lh, rational_t rh) { return lh.numer() * rh.denom() < rh.numer() * lh.denom(); }
-ostream& operator << (ostream& os, const rational_t& r) {
+inline bool operator == (rational_t lh, rational_t rh) { return lh.numer() == rh.numer() && lh.denom() == rh.denom(); }
+inline bool operator < (rational_t lh, rational_t rh) { return lh.numer() * rh.denom() < rh.numer() * lh.denom(); }
+inline ostream& operator << (ostream& os, const rational_t& r) {
 	if(r.denom() == 0)	return os << (r.numer() > 0 ? "inf" : "-inf");
 	return os << r.numer() << "/" << r.denom();
 }
@@ -117,9 +117,9 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
-bool operator < (error lh, error rh) { return lh.get() < rh.get(); }
-ostream& operator << (ostream& os, error e) { return os << error_msgs[(int)e.get()]; }
+inline bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
+inline bool operator < (error lh, error rh) { return lh.get() < rh.get(); }
+inline ostream& operator << (ostream& os, error e) { return os << error_msgs[(int)e.get()]; }
 
 class numeric
 {
@@ -140,9 +140,9 @@ public:
 	expr approx() const;
 	bool match(expr e, match_result& res) const;
 };
-bool operator == (numeric lh, numeric rh) { return lh.value() == rh.value(); }
-bool operator < (numeric lh, numeric rh) { return less(lh.value(), rh.value()); }
-ostream& operator << (ostream& os, numeric n) {	return os << n.value(); }
+inline bool operator == (numeric lh, numeric rh) { return lh.value() == rh.value(); }
+inline bool operator < (numeric lh, numeric rh) { return less(lh.value(), rh.value()); }
+inline ostream& operator << (ostream& os, numeric n) {	return os << n.value(); }
 
 class symbol
 {
@@ -162,9 +162,9 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (symbol lh, symbol rh) { return lh.name() == rh.name(); }
-bool operator < (symbol lh, symbol rh) { return lh.name() < rh.name(); }
-ostream& operator << (ostream& os, symbol s) { return os << s.name(); }
+inline bool operator == (symbol lh, symbol rh) { return lh.name() == rh.name(); }
+inline bool operator < (symbol lh, symbol rh) { return lh.name() < rh.name(); }
+inline ostream& operator << (ostream& os, symbol s) { return os << s.name(); }
 
 class power
 {
@@ -182,9 +182,9 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (power lh, power rh) { return lh.x() == rh.x() && lh.y() == rh.y(); }
-bool operator < (power lh, power rh) { return lh.x() == rh.x() ? lh.y() < rh.y() : lh.x() < rh.x(); }
-ostream& operator << (ostream& os, power s) {
+inline bool operator == (power lh, power rh) { return lh.x() == rh.x() && lh.y() == rh.y(); }
+inline bool operator < (power lh, power rh) { return lh.x() == rh.x() ? lh.y() < rh.y() : lh.x() < rh.x(); }
+inline ostream& operator << (ostream& os, power s) {
 	if(is<sum>(s.x()) || is<product>(s.x())) os << '(' << s.x() << ')'; else os << s.x();
 	os << '^';
 	if(is<sum>(s.y()) || is<product>(s.y())) os << '(' << s.y() << ')'; else os << s.y();
@@ -205,9 +205,9 @@ public:
 	expr approx() const;
 };
 
-bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
-bool operator < (product lh, product rh) { return lh.right() < rh.right(); }
-ostream& operator << (ostream& os, product p) {
+inline bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
+inline bool operator < (product lh, product rh) { return lh.right() < rh.right(); }
+inline ostream& operator << (ostream& os, product p) {
 	if(p.left() == expr{-1})	os << '-'; else os << p.left();
 	return os << p.right();
 }
@@ -226,9 +226,9 @@ public:
 	expr approx() const;
 };
 
-bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
-bool operator < (sum lh, sum rh) { return lh.right() < rh.right(); }
-ostream& operator << (ostream& os, sum s) {
+inline bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
+inline bool operator < (sum lh, sum rh) { return lh.right() < rh.right(); }
+inline ostream& operator << (ostream& os, sum s) {
 	os << s.left();
 	if(!cas::has_sign(s.right()))	os << '+';
 	return os << s.right();
@@ -275,6 +275,7 @@ struct fn_user : public fn_base<fn_user> {
 
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
+	expr call(expr params) const;
 	expr operator ()() const;
 	template <typename ... Params> expr operator ()(expr val, Params ... rest) const;
 };
@@ -294,9 +295,9 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (func lh, func rh) { return lh.value() == rh.value(); }
-bool operator < (func lh, func rh) { return lh.value() < rh.value(); }
-ostream& operator << (ostream& os, func f) { return os << f.value(); }
+inline bool operator == (func lh, func rh) { return lh.value() == rh.value(); }
+inline bool operator < (func lh, func rh) { return lh.value() < rh.value(); }
+inline ostream& operator << (ostream& os, func f) { return os << f.value(); }
 
 class xset
 {
@@ -314,9 +315,9 @@ public:
 	bool match(expr e, match_result& res) const;
 };
 
-bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
-bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
-ostream& operator << (ostream& os, xset l) { return os << '[' << l.items() << ']'; }
+inline bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
+inline bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
+inline ostream& operator << (ostream& os, xset l) { return os << '[' << l.items() << ']'; }
 
 const expr empty = error{error_t::empty};
 
@@ -330,20 +331,20 @@ expr operator / (expr op1, expr op2);
 expr operator | (expr op1, symbol op2);
 expr operator | (expr op1, pair<expr, expr> op2);
 
-bool failed(expr e) { return e.type() == typeid(error); }
-string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
-bool has_sign(expr e) { return boost::apply_visitor([](auto x) { return x.has_sign(); }, e); }
-expr subst(expr e, pair<expr, expr> s) { return boost::apply_visitor([s](auto x) { return x.subst(s); }, e); }
-expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
-expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
-expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
-expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
-expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
-expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
-bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
-match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
+inline bool failed(expr e) { return e.type() == typeid(error); }
+inline string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
+inline bool has_sign(expr e) { return boost::apply_visitor([](auto x) { return x.has_sign(); }, e); }
+inline expr subst(expr e, pair<expr, expr> s) { return boost::apply_visitor([s](auto x) { return x.subst(s); }, e); }
+inline expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
+inline expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
+inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
+inline expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
+inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
+inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
+inline bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
+inline match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
 
-expr make_err(error_t err) { return error{err}; }
+expr make_err(error_t err);
 expr make_num(int_t value);
 expr make_num(int_t numer, int_t denom);
 expr make_num(real_t value);
@@ -354,17 +355,17 @@ expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
 expr make_integral(expr f, expr dx);
 
-expr error::subst(pair<expr, expr> s) const { return *this; };
-expr error::d(expr dx) const { return *this; };
-expr error::integrate(expr dx, expr c) const { return *this; };
-expr error::approx() const { return *this; };
-bool error::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
-expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }
+inline expr error::subst(pair<expr, expr> s) const { return *this; };
+inline expr error::d(expr dx) const { return *this; };
+inline expr error::integrate(expr dx, expr c) const { return *this; };
+inline expr error::approx() const { return *this; };
+inline bool error::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
+inline expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }
 
 const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
 
-std::ostream& operator << (std::ostream& os, const list_t& l) {
+inline std::ostream& operator << (std::ostream& os, const list_t& l) {
 	for(auto it = l.cbegin(); it != l.cend(); ++it) {
 		if(it != l.cbegin())	os << ',';
 		os << *it;
@@ -376,7 +377,7 @@ std::ostream& operator << (std::ostream& os, const list_t& l) {
 
 namespace std {
 	using namespace cas;
-	ostream& operator << (ostream& os, complex_t c) {
+	inline ostream& operator << (ostream& os, complex_t c) {
 		if(abs(c.real()) >= std::numeric_limits<real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
 		else if(c.imag() < 0)										os << '-';
 		if(abs(c.imag()) != 1.)	os << abs(c.imag());
