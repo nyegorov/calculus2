@@ -19,50 +19,57 @@ ostream& operator << (ostream& os, fn_user f) {
 }
 
 expr ln(expr x);
+expr sin(expr x);
+expr cos(expr x);
+expr tg(expr x);
+expr arcsin(expr x);
+expr arccos(expr x);
+expr arctg(expr x);
+expr fn(string name, expr body, list_t args);
 
 template<> static expr fn_base<fn_ln>::make(expr x)
 {
-	if(x == zero)		return minf;		// ln(0) => -inf
-	if(x == one)		return zero;		// ln(1) => 0
-	if(x == e)			return one;			// ln(e) => 1
-	if(is<product>(x))	return ln(as<product>(x).left()) + ln(as<product>(x).right());	// ln(x*y) => ln(x)+ln(y)
-	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());					// ln(x^y) => y*ln(x)
+	if(x == zero)		return minf;							// ln(0) ⇒ -inf
+	if(x == one)		return zero;							// ln(1) ⇒ 0
+	if(x == e)			return one;								// ln(e) ⇒ 1
+	if(is<product>(x))	return ln(as<product>(x).left()) + ln(as<product>(x).right());	// ln(x∙y) ⇒ ln(x)+ln(y)
+	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());					// ln(xʸ) ⇒ y∙ln(x)
 	return func{fn_ln{x}};
 }
 template<> static expr fn_base<fn_sin>::make(expr x)
 {
-	if(x == zero || x == pi || x == 2*pi)	return zero;	// sin(0), sin(π), sin(2π) => 0
-	if(x == pi/6 || x == 5*pi/6)	return half;			// sin(π/6), sin(5π/6) => 1/2
-	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;	// sin(π/3), sin(2π/3) => π3/2
-	if(x == 7*pi/6 || x == 11*pi/6)	return -half;			// sin(7π/6), sin(11π/6) => -1/2
-	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;	// sin(4π/3), sin(5π/3) => -π3/2
-	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;	// sin(π/4), sin(3π/4) => π2/2
-	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;	// sin(5π/4), sin(7π/4) => -π2/2
-	if(x == pi/2)					return one;				// sin(π/2) => 1
-	if(x == 2*pi/2)					return minus_one;		// sin(3π/2) => -1
-	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// sin(-x) => -sin(x)
-	if(is<func, fn_arcsin>(x))		return as<func, fn_arcsin>(x).x();									// sin(arcsin(x)) => x
+	if(x == zero || x == pi || x == 2*pi)	return zero;		// sin(0), sin(π), sin(2π) ⇒ 0
+	if(x == pi/6 || x == 5*pi/6)	return half;				// sin(π/6), sin(5π/6) ⇒ 1/2
+	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;		// sin(π/3), sin(2π/3) ⇒ √3/2
+	if(x == 7*pi/6 || x == 11*pi/6)	return -half;				// sin(7π/6), sin(11π/6) ⇒ -1/2
+	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;		// sin(4π/3), sin(5π/3) ⇒ -√3/2
+	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;		// sin(π/4), sin(3π/4) ⇒ √2/2
+	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;		// sin(5π/4), sin(7π/4) ⇒ -√2/2
+	if(x == pi/2)					return one;					// sin(π/2) ⇒ 1
+	if(x == 2*pi/2)					return minus_one;			// sin(3π/2) ⇒ -1
+	if(is<product>(x) && as<product>(x).left() == minus_one) return -sin(as<product>(x).right());	// sin(-x) ⇒ -sin(x)
+	if(is<func, fn_arcsin>(x))		return as<func, fn_arcsin>(x).x();								// sin(arcsin(x)) ⇒ x
 	return func{fn_sin{x}};
 }
 template<> static expr fn_base<fn_cos>::make(expr x)
 {
-	if(x == pi/2 || x == 3*pi/2)	return zero;			// cos(π/2), cos(3π/2) => 0
-	if(x == pi/3 || x == 5*pi/3)	return half;			// cos(π/3), cos(5π/3) => 1/2
-	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;	// cos(π/6), cos(11π/6) => π3/2
-	if(x == 2*pi/3 || x == 4*pi/3)	return -half;			// cos(2π/3), cos(4π/3) => -1/2
-	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;	// cos(5π/6), cos(7π/6) => -π3/2
-	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;	// cos(π/4), cos(7π/4) => π2/2
-	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;	// cos(3π/4), cos(5π/4) => -π2/2
-	if(x == zero || x == 2*pi)		return one;				// cos(0), cos(2π) => 1
-	if(x == pi)						return minus_one;		// cos(π) => -1
-	if(is<product>(x) && as<product>(x).left() == minus_one)return make(as<product>(x).right());		// cos(-x) => cos(x)
-	if(is<func, fn_arccos>(x))		return as<func, fn_arccos>(x).x();									// cos(arccos(x)) => x
+	if(x == pi/2 || x == 3*pi/2)	return zero;				// cos(π/2), cos(3π/2) ⇒ 0
+	if(x == pi/3 || x == 5*pi/3)	return half;				// cos(π/3), cos(5π/3) ⇒ 1/2
+	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;		// cos(π/6), cos(11π/6) ⇒ √3/2
+	if(x == 2*pi/3 || x == 4*pi/3)	return -half;				// cos(2π/3), cos(4π/3) ⇒ -1/2
+	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;		// cos(5π/6), cos(7π/6) ⇒ -√3/2
+	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;		// cos(π/4), cos(7π/4) ⇒ √2/2
+	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;		// cos(3π/4), cos(5π/4) ⇒ -√2/2
+	if(x == zero || x == 2*pi)		return one;					// cos(0), cos(2π) ⇒ 1
+	if(x == pi)						return minus_one;			// cos(π) ⇒ -1
+	if(is<product>(x) && as<product>(x).left() == minus_one)return cos(as<product>(x).right());		// cos(-x) ⇒ cos(x)
+	if(is<func, fn_arccos>(x))		return as<func, fn_arccos>(x).x();								// cos(arccos(x)) ⇒ x
 	return func{fn_cos{x}};
 }
 
 template<> static expr fn_base<fn_tg>::make(expr x) {
-	if(is<product>(x) && as<product>(x).left() == minus_one)return -1 * make(as<product>(x).right());	// tg(-x) => -tg(x)
-	if(is<func, fn_arctg>(x))		return as<func, fn_arctg>(x).x();									// tg(arctg(x)) => x
+	if(is<product>(x) && as<product>(x).left() == minus_one)return -tg(as<product>(x).right());		// tg(-x) ⇒ -tg(x)
+	if(is<func, fn_arctg>(x))		return as<func, fn_arctg>(x).x();								// tg(arctg(x)) ⇒ x
 	return func{fn_tg{x}};
 }
 template<> static expr fn_base<fn_arcsin>::make(expr x)	{

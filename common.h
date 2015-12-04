@@ -376,7 +376,6 @@ std::ostream& operator << (std::ostream& os, const list_t& l) {
 
 namespace std {
 	using namespace cas;
-	//bool operator < (complex_t lh, complex_t rh) { return lh.real() < rh.real(); }
 	ostream& operator << (ostream& os, complex_t c) {
 		if(abs(c.real()) >= std::numeric_limits<real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
 		else if(c.imag() < 0)										os << '-';
