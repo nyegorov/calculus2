@@ -101,7 +101,6 @@ template<> static expr fn_base<fn_dif>::make(expr p) {
 	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
 	expr f = as<xset>(p).items().front(), dx = as<xset>(p).items().back();
 	return df(f, dx);
-	//return func{fn_dif{p}};
 }
 
 template<> static expr fn_base<fn_user>::make(expr x) {	return func{fn_user{x}}; };

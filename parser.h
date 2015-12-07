@@ -14,6 +14,7 @@
 namespace cas	{
 
 // Container for storing named objects and variables
+
 class Context
 {
 public:
@@ -24,7 +25,7 @@ public:
 	bool Get(const string& name, expr& result) const;
 	void Set(const string& name, const expr& value)		{_locals.front()[name] = value;}
 private:
-	typedef std::map<string, expr>	vars_t;
+	struct vars_t : public std::map<string, expr> {};
 	static vars_t		_globals;
 	std::vector<vars_t>	_locals;
 };
@@ -76,7 +77,7 @@ public:
 	expr eval(const char* script);
 
 protected:
-	enum Precedence	{Statement, Assignment,Addition,Multiplication,Power,Unary,Functional,Primary,Term};
+	enum Precedence	{Statement, Approx, Assignment,Addition,Multiplication,Power,Unary,Functional,Primary,Term};
 	void Parse(Precedence level, expr& result);
 	void ParseVar(expr& result, bool local);
 

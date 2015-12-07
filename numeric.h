@@ -106,7 +106,7 @@ namespace {
 		int_t e, a = rh.numer(), b = rh.denom();
 		if(x == 0)	return zero;
 		if(x == 1)	return one;
-		if(x == -1)	return b % 2 ? minus_one : numeric_t{complex_t{-1.0, 0.0}} ^ rh;
+		if(x == -1)	return b % 2 ? minus_one : make_num(pow(complex_t{-1.0, 0.0}, rh));
 		powerize(x, e);	 e *= abs(a);
 		normalize(e, b); x = pwr(x, e);
 		if(b == 1)	return a < 0 ? numeric_t{rational_t{1, x}} : numeric_t{x};

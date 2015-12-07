@@ -15,29 +15,22 @@ inline expr symbol::d(expr dx) const
 	return df(_value, dx);
 }
 
-template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }
-template <> inline expr fn_base<fn_ln>::d(expr dx) const { return df(_x, dx) / _x; }
-template <> inline expr fn_base<fn_sin>::d(expr dx) const { return df(_x, dx) * cos(_x); }
-template <> inline expr fn_base<fn_cos>::d(expr dx) const { return -df(_x, dx) * sin(_x); }
-template <> inline expr fn_base<fn_tg>::d(expr dx) const { return df(_x, dx) / (cos(_x) ^ two); }
-template <> inline expr fn_base<fn_arcsin>::d(expr dx) const { return df(_x, dx) / ((1-(_x^2)) ^ half); }
-template <> inline expr fn_base<fn_arccos>::d(expr dx) const { return -df(_x, dx) / ((1 - (_x ^ 2)) ^ half); }
-template <> inline expr fn_base<fn_arctg>::d(expr dx) const { return df(_x, dx) / (1 + (_x ^ 2)); }
-template <> inline expr fn_base<fn_int>::d(expr dx) const { return dx == (*this)[1] ? (*this)[0] : fn_base<fn_dif>::make(list_t{**this, dx}); }
+template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }									// x' ⇒ x
+template <> inline expr fn_base<fn_ln>::d(expr dx) const { return df(_x, dx) / _x; }							// ln(f)' ⇒ f'/x
+template <> inline expr fn_base<fn_sin>::d(expr dx) const { return df(_x, dx) * cos(_x); }						// sin(f)' ⇒ f'∙cos(x)
+template <> inline expr fn_base<fn_cos>::d(expr dx) const { return -df(_x, dx) * sin(_x); }						// cos(f)' ⇒ -f'∙sin(x)
+template <> inline expr fn_base<fn_tg>::d(expr dx) const { return df(_x, dx) / (cos(_x) ^ two); }				// tg(f)' ⇒ f'/cos²(x)
+template <> inline expr fn_base<fn_arcsin>::d(expr dx) const { return df(_x, dx) / ((1-(_x^2)) ^ half); }		// arcsin(f)' ⇒ f'/√(1-x²)
+template <> inline expr fn_base<fn_arccos>::d(expr dx) const { return -df(_x, dx) / ((1 - (_x ^ 2)) ^ half); }	// arccos(f)' ⇒ -f'/√(1-x²)
+template <> inline expr fn_base<fn_arctg>::d(expr dx) const { return df(_x, dx) / (1 + (_x ^ 2)); }				// arctg(f)' ⇒ f'/√(1+x²)
+template <> inline expr fn_base<fn_int>::d(expr dx) const { return dx == (*this)[1] ? (*this)[0] : func{fn_dif{xset{**this, dx}}}; }
 template<class F> expr fn_base<F>::d(expr dx) const { return func{fn_dif{xset{**this, dx}}}; }
 inline expr fn_user::d(expr dx) const { return fn(name(), df(body(), dx), args()); }
 
-inline expr power::d(expr dx) const
-{
-	// (fᵍ)' = fᵍ∙[g'∙ln(f)+g∙f'/f]
-	return (_x^_y) * (df(_y, dx)*ln(_x) + _y / _x*df(_x, dx));
-}
-
-inline expr product::d(expr dx) const { return df(_left, dx) * _right + _left * df(_right, dx); }
-
-inline expr sum::d(expr dx) const { return df(_left, dx) + df(_right, dx); }
-
-inline expr xset::d(expr dx) const {
+inline expr power::d(expr dx) const { return (_x^_y) * (df(_y, dx)*ln(_x) + _y / _x*df(_x, dx)); }				// (fᵍ)' ⇒ fᵍ∙[g'∙ln(f)+g∙f'/f]
+inline expr product::d(expr dx) const { return df(_left, dx) * _right + _left * df(_right, dx); }				// (f∙g)' ⇒ f'∙g + f∙g'
+inline expr sum::d(expr dx) const { return df(_left, dx) + df(_right, dx); }									// (f+g)' ⇒ f' + g'
+inline expr xset::d(expr dx) const {																			// {f, g}' ⇒ {f', g'}
 	list_t ret;
 	transform(_items.begin(), _items.end(), back_inserter(ret), [dx](auto e) {return df(e, dx); });
 	return{ret};

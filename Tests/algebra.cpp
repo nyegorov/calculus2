@@ -3,7 +3,10 @@
 #include <complex>
 #include "CppUnitTest.h"
 
+#pragma warning(disable:4503)
+
 #include "../calculus.h"
+#include "../parser.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace cas;
@@ -100,6 +103,7 @@ namespace Tests
 			Assert::AreEqual("-1",   to_string(-1 ^ make_num(1, 3)).c_str());
 			Assert::AreEqual("2^1/2",to_string(two ^ half).c_str());
 			Assert::AreEqual("4^-1/3", to_string(two ^ minus_two_third).c_str());
+			Assert::AreEqual("2",	 to_string(1+half+1*half+(0^half)).c_str());
 
 			Assert::IsTrue(make_num(4, 6) == make_num(2,3));
 			Assert::IsTrue(make_num(2, -5) == make_num(-2, 5));
@@ -115,6 +119,7 @@ namespace Tests
 		}
 		TEST_METHOD(Real)
 		{
+			auto q = make_num(3, 4);
 			auto half = make_num(0.5), three_seconds = make_num(1.5);
 			Assert::AreEqual("0.5", to_string(half).c_str());
 			Assert::AreEqual("1.5", to_string(three_seconds).c_str());
@@ -124,12 +129,15 @@ namespace Tests
 			Assert::AreEqual("1", to_string(two * half).c_str());
 			Assert::AreEqual("3", to_string(three_seconds / half).c_str());
 			Assert::AreEqual("2.25", to_string(three_seconds ^ two).c_str());
+			Assert::AreEqual("2", to_string(q+half+q*half+half*q).c_str());
+			Assert::AreEqual(1.46062, to_real(~((q^half) + (half^q))), 0.0001);
 			Assert::IsTrue(half + three_seconds == two);
 			Assert::IsTrue(half < one);
 			Assert::IsFalse(three_seconds < one);
 		}
 		TEST_METHOD(Complex)
 		{
+			auto q = make_num(3, 4), r = make_num(0.5), n = make_num(1);
 			numeric i{ complex_t{0., 1.} }, c1mi{complex_t{1, -1} }, cm5i{complex_t{0, -5.} }, c3p2i{complex_t{3., 2.} };
 			Assert::AreEqual("i", to_string(i).c_str());
 			Assert::AreEqual("1-i", to_string(c1mi).c_str());
@@ -139,9 +147,12 @@ namespace Tests
 			Assert::AreEqual("-2-3i", to_string(c1mi - c3p2i).c_str());
 			Assert::AreEqual("5-i", to_string(c1mi * c3p2i).c_str());
 			Assert::AreEqual("-2i", to_string(c1mi ^ make_num(2)).c_str());
+			Assert::AreEqual("-0.707107+0.707107i", to_string(-1 ^ q).c_str());
+			Assert::AreEqual("3.5+6.25i", to_string((q+i)+(i+q)+(i+n)+(n+i)+r*i+q*i+n*i).c_str());
+			Assert::AreEqual("0.958904-0.28373i", to_string(q^i).c_str());
 			Assert::IsTrue(c1mi + i == make_num(1.0));
 			Assert::IsTrue(c1mi - make_num(1.5) + i - make_num(-1, 2) == zero);
-			Assert::IsTrue(i < c3p2i);
+			Assert::IsTrue(i < c3p2i && 0.5 < c3p2i);
 			Assert::IsFalse(c3p2i < c1mi);
 		}
 		TEST_METHOD(Symbolic)
@@ -219,6 +230,7 @@ namespace Tests
 			Assert::AreEqual(90., to_real(~(180/pi*arcsin(1))));
 			Assert::AreEqual(90., to_real(~(180/pi*arccos(0))));
 			Assert::AreEqual(45., to_real(~(180/pi*arctg(1))));
+			Assert::AreEqual(-1., to_real(~(e^(-i*pi))));
 		}
 		TEST_METHOD(Derivative)
 		{
@@ -266,6 +278,17 @@ namespace Tests
 			Assert::IsTrue(mr = match(sin(a+2*pi), sin(y)));
 			Assert::IsTrue(mr = match((cos(expr{3 / 2}) ^ 2) + (sin(expr{3 / 2}) ^ 2), (cos(x) ^ 2) + (sin(x) ^ 2)));
 			Assert::IsFalse(mr = match((cos(expr{3 / 2}) ^ 2) + (sin(expr{5 / 2}) ^ 2), (cos(x) ^ 2) + (sin(x) ^ 2)));
+		}
+		TEST_METHOD(Parser)
+		{
+			NScript ns;
+
+			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
+			Assert::AreEqual(2*x*x+3*x+1, ns.eval("2*x^2+3*x+1"));
+			Assert::AreEqual(cos(y^2), ns.eval("cos(y^2)"));
+			Assert::AreEqual(-2*y*sin(y^2), ns.eval("df(cos(y^2),y)"));
+			ns.eval("x=4"); ns.eval("y=5");
+			Assert::AreEqual(expr{20}, ns.eval("x*y"));
 		}
 
 	};

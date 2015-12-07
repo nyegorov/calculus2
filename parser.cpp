@@ -6,34 +6,20 @@
 #include <assert.h>
 #include "parser.h"
 
+#pragma warning(disable:4503)
+
 namespace cas	{
-
-// process list of argument
-/*HRESULT ProcessArgsList(const Parser::ArgList& args, const expr& params, NScript& script)	{
-	SafeArray a(const_cast<expr&>(params));
-	if(args.size() == 0)	{
-		script.AddObject(TEXT("@"),params);
-	}	else	{
-		if(args.size() != a.Count())	return DISP_E_BADPARAMCOUNT;
-		const expr *pargs = a.GetData();
-		for(int i = a.Count()-1; i>=0; i--)	script.AddObject(args[i].c_str(),pargs[i]);
-	}
-	return S_OK;
-}
-
-// Function
-
-STDMETHODIMP Function::Call(const expr& params, expr& result)	{
-	NScript script(_body.c_str(), &_context);
-	HRESULT hr = ProcessArgsList(_args, params, script);
-	return FAILED(hr) ? hr : script.Exec(NULL, result);
-}*/
 
 // Operators
 
-void OpAssign(expr& op1, expr& op2, expr& result){result = op1;}
+void OpAssign(expr& op1, expr& op2, expr& result){
+	if(!is<symbol>(op1))	throw error_t::syntax;
+	as<symbol>(op1) = op2;
+	result = op1;
+}
 void OpAdd(expr& op1, expr& op2, expr& result)	{result = op1 + op2;}
 void OpSub(expr& op1, expr& op2, expr& result)	{result = op1 - op2;}
+void OpNeg(expr& op1, expr& op2, expr& result)	{ result = -op2; }
 void OpMul(expr& op1, expr& op2, expr& result)	{result = op1 * op2;}
 void OpDiv(expr& op1, expr& op2, expr& result)	{result = op1 / op2;}
 void OpPow(expr& op1, expr& op2, expr& result)	{result = op1 ^ op2;}
@@ -60,6 +46,7 @@ Context::Context(const Context *base) : _locals(1)
 		symbol x{"x"}, f{"f"};
 		_globals.insert(pair("pi",		pi));
 		_globals.insert(pair("e",		e));
+		_globals.insert(pair("i",		numeric{complex_t{0.0, 1.0}}));
 		_globals.insert(pair("ln",		fn("ln", ln(x), {x})));
 		_globals.insert(pair("sin",		fn("sin", sin(x), {x})));
 		_globals.insert(pair("cos",		fn("cos", cos(x), {x})));
@@ -96,11 +83,12 @@ bool Context::Get(const string& name, expr& result) const
 // Operator precedence
 NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::comma,	&OpNull},	{Parser::end, NULL}},
+	{{Parser::not,		&OpApp},	{Parser::end, NULL}},
 	{{Parser::assign,	&OpAssign},	{Parser::end, NULL}},
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
 	{{Parser::pwr,		&OpPow},	{Parser::end, NULL}},
-	{{Parser::not,		&OpApp},	{Parser::end, NULL}},
+	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
 	{{Parser::lpar,		&OpCall},	{Parser::end, NULL}},
 };
 
@@ -169,10 +157,10 @@ void NScript::Parse(Precedence level, expr& result)
 		}
 	}	else	{
 		// all other
-		bool noop = true;
+		bool noop = true, is_unary = (level == Unary || level == Approx);
 
 		// parse left-hand operand (for binary operators)
-		if(level != Unary)	Parse((Precedence)((int)level+1), result);
+		if(!is_unary)	Parse((Precedence)((int)level+1), result);
 again:
 		if(_parser.GetToken() == Parser::end)	return;
 		for(OpInfo *pinfo = _operators[level];pinfo->op;pinfo++)	{
@@ -184,19 +172,19 @@ again:
 				result = empty;
 
 				// parse right-hand operand
-				if(level == Assignment || level == Unary)	Parse(level, right);		// right-associative operators
+				if(level == Assignment || is_unary)	Parse(level, right);							// right-associative operators
 				else Parse((Precedence)((int)level+1), level == Assignment ? result : right);		// left-associative operators
 
 				// perform operator's action
 				(*pinfo->op)(left, right, result);
 				noop = false;
 
-				if(level == Unary)	break;
+				if(is_unary)	break;
 				goto again;
 			}
 		}
 		// for unary operators, return right-hand expression if no operators were found
-		if(level == Unary && noop)	Parse((Precedence)((int)level+1), result);
+		if(is_unary && noop)	Parse((Precedence)((int)level+1), result);
 	}
 }
 
@@ -224,7 +212,7 @@ Parser::Token Parser::Next()
 		case '/':	_token = divide;break;
 		case '^':	_token = pwr;break;
 		case '~':	_token = not;break;
-		case '=':	_token = assign;break;
+		case '=':	_token = setvar;break;
 		case '|':	_token = or;break;
 		case ',':	_token = comma ; break;
 		case '(':	_token = lpar;break;

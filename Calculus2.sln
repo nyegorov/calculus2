@@ -1,11 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Calculus2", "Calculus2.vcxproj", "{3A0FF04D-E987-4056-AB02-F1197DD64C1F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{8CCAF2F7-7125-436D-9F59-DF94C48387B4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3A0FF04D-E987-4056-AB02-F1197DD64C1F} = {3A0FF04D-E987-4056-AB02-F1197DD64C1F}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
