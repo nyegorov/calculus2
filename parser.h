@@ -87,35 +87,5 @@ protected:
 	typedef void OpFunc(expr& op1, expr& op2, expr& result);
 	static struct OpInfo {Parser::Token token; OpFunc* op;}	_operators[Term][10];
 };
-/*
-// User-defined functions
-class Function	: public Object {
-public:
-	typedef Parser::ArgList	ArgList;
-	Function(const ArgList& args, const char* body, const Context *pcontext = NULL) : _args(args), _body(body), _context(pcontext)	{}
-	STDMETHODIMP Call(const expr& params, expr& result);
-protected:
-	~Function()			{}
-	const ArgList		_args;
-	const string		_body;
-	const Context		_context;
-};
 
-// Built-in functions
-class BuiltinFunction : public Object	{
-public:
-	typedef void FN(int n, const expr v[], expr& result);
-	BuiltinFunction(int count, FN *pfunc) : _count(count), _pfunc(pfunc)	{}
-	STDMETHODIMP Call(const expr& params, expr& result)	{
-		SafeArray a(const_cast<expr&>(params));
-		if(_count >= 0 && _count != a.Count())	return DISP_E_BADPARAMCOUNT;
-		(*_pfunc)(a.Count(), a.GetData(), result); 
-		return S_OK;
-	}
-protected:
-	~BuiltinFunction()	{}
-	const int			_count;
-	FN*					_pfunc;
-};
-*/
 }

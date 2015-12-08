@@ -15,7 +15,7 @@ inline expr symbol::d(expr dx) const
 	return df(_value, dx);
 }
 
-template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }									// x' ⇒ x
+template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }									// id(f)' ⇒ f'
 template <> inline expr fn_base<fn_ln>::d(expr dx) const { return df(_x, dx) / _x; }							// ln(f)' ⇒ f'/x
 template <> inline expr fn_base<fn_sin>::d(expr dx) const { return df(_x, dx) * cos(_x); }						// sin(f)' ⇒ f'∙cos(x)
 template <> inline expr fn_base<fn_cos>::d(expr dx) const { return -df(_x, dx) * sin(_x); }						// cos(f)' ⇒ -f'∙sin(x)

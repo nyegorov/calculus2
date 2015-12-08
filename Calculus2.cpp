@@ -37,7 +37,7 @@ int main()
 {
 	symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
 	numeric i{complex_t{0.0, 1.0}};
-	cout << (e^-i*pi) << endl;
+	//cout << (e^-i*pi) << endl;
 	run();
 	return 0;
 }

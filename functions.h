@@ -94,7 +94,8 @@ template<> static expr fn_base<fn_int>::make(expr p) {
 		auto a = df(mr[y], dx), b = mr[y] - a*x;
 		if(df(a, dx) == zero)	return (((a*x) ^ 2) - (b ^ 2))*ln(a*x + b) / (2 * (a ^ 2)) - x*(a*x - 2 * b) / (4 * a);
 	}
-	return func{fn_int{xset{f, dx}}};
+	//return func{fn_int{xset{f, dx}}};
+	return intf(f, dx);
 }
 
 template<> static expr fn_base<fn_dif>::make(expr p) {
