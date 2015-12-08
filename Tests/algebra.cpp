@@ -287,8 +287,13 @@ namespace Tests
 			Assert::AreEqual(2*x*x+3*x+1, ns.eval("2*x^2+3*x+1"));
 			Assert::AreEqual(cos(y^2), ns.eval("cos(y^2)"));
 			Assert::AreEqual(-2*y*sin(y^2), ns.eval("df(cos(y^2),y)"));
-			ns.eval("x=4"); ns.eval("y=5");
-			Assert::AreEqual(expr{20}, ns.eval("x*y"));
+			Assert::AreEqual(half, ns.eval("int(1/x^2,x,2,inf)"));
+			ns.eval("f(x)=empty"); ns.eval("g(x)=empty"); ns.eval("h(x,y)=x^2/y");
+			Assert::AreEqual((y ^ 2) / x, ns.eval("h(y,x)"));
+			Assert::AreEqual(expr{16}/5, ns.eval("h(4,5)"));
+			Assert::AreEqual("g'f+f'g", to_string(ns.eval("df(f*g,x)")).c_str());
+			ns.eval("xx=4"); ns.eval("yy=5");
+			Assert::AreEqual(expr{20}, ns.eval("xx*yy"));
 		}
 
 	};

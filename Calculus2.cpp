@@ -35,9 +35,10 @@ void run()
 
 int main()
 {
+	NScript ns;
 	symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
 	numeric i{complex_t{0.0, 1.0}};
-	//cout << (e^-i*pi) << endl;
+	//cout << ns.eval("int(1/x^2,x,2,inf)") << endl;
 	run();
 	return 0;
 }

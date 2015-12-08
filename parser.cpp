@@ -42,7 +42,8 @@ Context::Context(const Context *base) : _locals(1)
 		_globals.insert(pair("empty",	expr()));
 
 		// Math
-		symbol x{"x"}, f{"f"};
+		symbol x{"x"}, f{"f"}, a{"a"}, b{"b"};
+		_globals.insert(pair("inf",		inf));
 		_globals.insert(pair("pi",		pi));
 		_globals.insert(pair("e",		e));
 		_globals.insert(pair("i",		numeric{complex_t{0.0, 1.0}}));
@@ -54,7 +55,7 @@ Context::Context(const Context *base) : _locals(1)
 		_globals.insert(pair("arccos",	fn("arccos", arccos(x), {x})));
 		_globals.insert(pair("arctg",	fn("arctg", arctg(x), {x})));
 		_globals.insert(pair("df",		fn("df",  func{fn_dif{xset{f, x}}}, {f, x})));
-		_globals.insert(pair("int",		fn("int", func{fn_int{xset{f, x}}}, {f, x})));
+		_globals.insert(pair("int",		fn("int", func{fn_int{xset{f, x, a, b}}}, {f, x, a, b})));
 	}
 }
 

@@ -32,39 +32,39 @@ expr fn(string name, expr body, list_t args);
 
 template<> static expr fn_base<fn_ln>::make(expr x)
 {
-	if(x == zero)		return minf;							// ln(0) ⇒ -inf
-	if(x == one)		return zero;							// ln(1) ⇒ 0
-	if(x == e)			return one;								// ln(e) ⇒ 1
-	if(is<product>(x))	return ln(as<product>(x).left()) + ln(as<product>(x).right());	// ln(x∙y) ⇒ ln(x)+ln(y)
-	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());					// ln(xʸ) ⇒ y∙ln(x)
+	if(x == zero)		return minf;																// ln(0) ⇒ -inf
+	if(x == one)		return zero;																// ln(1) ⇒ 0
+	if(x == e)			return one;																	// ln(e) ⇒ 1
+	if(is<product>(x))	return ln(as<product>(x).left()) + ln(as<product>(x).right());				// ln(x∙y) ⇒ ln(x)+ln(y)
+	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());								// ln(xʸ) ⇒ y∙ln(x)
 	return func{fn_ln{x}};
 }
 template<> static expr fn_base<fn_sin>::make(expr x)
 {
-	if(x == zero || x == pi || x == 2*pi)	return zero;		// sin(0), sin(π), sin(2π) ⇒ 0
-	if(x == pi/6 || x == 5*pi/6)	return half;				// sin(π/6), sin(5π/6) ⇒ 1/2
-	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;		// sin(π/3), sin(2π/3) ⇒ √3/2
-	if(x == 7*pi/6 || x == 11*pi/6)	return -half;				// sin(7π/6), sin(11π/6) ⇒ -1/2
-	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;		// sin(4π/3), sin(5π/3) ⇒ -√3/2
-	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;		// sin(π/4), sin(3π/4) ⇒ √2/2
-	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;		// sin(5π/4), sin(7π/4) ⇒ -√2/2
-	if(x == pi/2)					return one;					// sin(π/2) ⇒ 1
-	if(x == 2*pi/2)					return minus_one;			// sin(3π/2) ⇒ -1
+	if(x == zero || x == pi || x == 2*pi)	return zero;											// sin(0), sin(π), sin(2π) ⇒ 0
+	if(x == pi/6 || x == 5*pi/6)	return half;													// sin(π/6), sin(5π/6) ⇒ 1/2
+	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;											// sin(π/3), sin(2π/3) ⇒ √3/2
+	if(x == 7*pi/6 || x == 11*pi/6)	return -half;													// sin(7π/6), sin(11π/6) ⇒ -1/2
+	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;											// sin(4π/3), sin(5π/3) ⇒ -√3/2
+	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;											// sin(π/4), sin(3π/4) ⇒ √2/2
+	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;											// sin(5π/4), sin(7π/4) ⇒ -√2/2
+	if(x == pi/2)					return one;														// sin(π/2) ⇒ 1
+	if(x == 2*pi/2)					return minus_one;												// sin(3π/2) ⇒ -1
 	if(is<product>(x) && as<product>(x).left() == minus_one) return -sin(as<product>(x).right());	// sin(-x) ⇒ -sin(x)
 	if(is<func, fn_arcsin>(x))		return as<func, fn_arcsin>(x).x();								// sin(arcsin(x)) ⇒ x
 	return func{fn_sin{x}};
 }
 template<> static expr fn_base<fn_cos>::make(expr x)
 {
-	if(x == pi/2 || x == 3*pi/2)	return zero;				// cos(π/2), cos(3π/2) ⇒ 0
-	if(x == pi/3 || x == 5*pi/3)	return half;				// cos(π/3), cos(5π/3) ⇒ 1/2
-	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;		// cos(π/6), cos(11π/6) ⇒ √3/2
-	if(x == 2*pi/3 || x == 4*pi/3)	return -half;				// cos(2π/3), cos(4π/3) ⇒ -1/2
-	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;		// cos(5π/6), cos(7π/6) ⇒ -√3/2
-	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;		// cos(π/4), cos(7π/4) ⇒ √2/2
-	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;		// cos(3π/4), cos(5π/4) ⇒ -√2/2
-	if(x == zero || x == 2*pi)		return one;					// cos(0), cos(2π) ⇒ 1
-	if(x == pi)						return minus_one;			// cos(π) ⇒ -1
+	if(x == pi/2 || x == 3*pi/2)	return zero;													// cos(π/2), cos(3π/2) ⇒ 0
+	if(x == pi/3 || x == 5*pi/3)	return half;													// cos(π/3), cos(5π/3) ⇒ 1/2
+	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;											// cos(π/6), cos(11π/6) ⇒ √3/2
+	if(x == 2*pi/3 || x == 4*pi/3)	return -half;													// cos(2π/3), cos(4π/3) ⇒ -1/2
+	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;											// cos(5π/6), cos(7π/6) ⇒ -√3/2
+	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;											// cos(π/4), cos(7π/4) ⇒ √2/2
+	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;											// cos(3π/4), cos(5π/4) ⇒ -√2/2
+	if(x == zero || x == 2*pi)		return one;														// cos(0), cos(2π) ⇒ 1
+	if(x == pi)						return minus_one;												// cos(π) ⇒ -1
 	if(is<product>(x) && as<product>(x).left() == minus_one)return cos(as<product>(x).right());		// cos(-x) ⇒ cos(x)
 	if(is<func, fn_arccos>(x))		return as<func, fn_arccos>(x).x();								// cos(arccos(x)) ⇒ x
 	return func{fn_cos{x}};
@@ -85,20 +85,16 @@ template<> static expr fn_base<fn_arctg>::make(expr x)	{
 	return func{fn_arctg{x}};
 }
 
+template<> static expr fn_base<fn_user>::make(expr x) { return func{fn_user{x}}; };
+
 template<> static expr fn_base<fn_int>::make(expr p) {
-	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
-	expr f = as<xset>(p).items().front(), dx = as<xset>(p).items().back();
-	if(df(f, dx) == zero)	return f * dx;												// ∫ y dx => yx
-	match_result mr;
-	symbol x{"x", dx}, y{"y"};
-	//if((mr = cas::match(f, x*ln(x))))	return (dx ^ 2)*ln(x) / 2 - (dx ^ 2) / 4;		// ∫ x∙ln(x) dx => (x²∙lnx)/2 - x²/4
-	if((mr = cas::match(f, ln(x) / x)))	return half * (ln(dx) ^ 2);						// ∫ ln(x)/x dx => 1/2∙ln²(x)
-	if(mr = cas::match(f, x*ln(y))) {													// ∫ x∙ln(ax+b) dx => (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
-		auto a = df(mr[y], dx), b = mr[y] - a*x;
-		if(df(a, dx) == zero)	return (((a*x) ^ 2) - (b ^ 2))*ln(a*x + b) / (2 * (a ^ 2)) - x*(a*x - 2 * b) / (4 * a);
+	if(!is<xset>(p) || as<xset>(p).items().size() < 2)	return make_err(error_t::syntax);
+	auto& params = as<xset>(p).items();
+	switch(params.size()) {
+	case 2:	return intf(params[0], params[1]);
+	case 3:	return intf(params[0], params[1], params[2]);
+	default:return intf(params[0], params[1], params[2], params[3]);
 	}
-	return func{fn_int{xset{f, dx}}};
-	//return intf(f, dx);
 }
 
 template<> static expr fn_base<fn_dif>::make(expr p) {
@@ -107,11 +103,10 @@ template<> static expr fn_base<fn_dif>::make(expr p) {
 	return df(f, dx);
 }
 
-template<> static expr fn_base<fn_user>::make(expr x) {	return func{fn_user{x}}; };
-
 inline expr make_integral(expr f, expr dx)
 {
-	return fn_base<fn_int>::make(list_t{f, dx});
+	//return fn_base<fn_int>::make(list_t{f, dx});
+	return func{fn_int{xset{f, dx}}};
 }
 
 // User-defined functions

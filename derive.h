@@ -43,9 +43,9 @@ inline expr xset::d(expr dx) const {																			// {f, g}' ⇒ {f', g'}
 
 // Integrals
 
-inline expr numeric::integrate(expr dx, expr c) const { return expr{_value} *dx + c; }
-inline expr symbol::integrate(expr dx, expr c) const {
-	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;
+inline expr numeric::integrate(expr dx, expr c) const { return expr{_value} *dx + c; }							// ∫ a dx ⇒ ax
+inline expr symbol::integrate(expr dx, expr c) const {															
+	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;				// ∫ x dx ⇒ x²/2
 }
 
 template <> inline expr fn_base<fn_id>::integrate(expr dx, expr c) const { return cas::intf(_x, dx, c); }
@@ -80,12 +80,20 @@ inline expr product::integrate(expr dx, expr c) const {
 	if(df(_right, dx) == zero)	return _right * cas::intf(_left, dx, c);		// ∫ f(x)∙a dx ⇒ a∙∫ f(x) dx
 
 	product p{*this};
-	for(auto it = p.begin(); it != p.end(); ++it) {
+	for(auto it = p.begin(); it != p.end(); ++it) {								// ∫ Πaᵢ∙f(x) dx ⇒ Πaᵢ∙∫ f(x) dx
 		if(df(*it, dx) == zero) {
 			auto e = *it;
 			p.erase(it);
 			return e * p.integrate(dx, c);
 		}
+	}
+
+	symbol y{"y"};
+	match_result mr;
+	if(_left == ln(dx) && _right == 1/dx)	return half * (ln(dx) ^ 2);			// ∫ ln(x)/x dx ⇒ 1/2∙ln²(x)
+	if(_left == dx && (mr=cas::match(_right, ln(y)))) {							// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
+		auto a = df(mr[y], dx), b = mr[y] - a*dx;
+		if(df(a, dx) == zero)	return (((a*dx) ^ 2) - (b ^ 2))*ln(a*dx + b) / (2 * (a ^ 2)) - dx*(a*dx - 2 * b) / (4 * a);
 	}
 
 	return make_integral(make_prod(p.left(), p.right()), dx) + c;
