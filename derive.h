@@ -25,7 +25,12 @@ template <> inline expr fn_base<fn_arccos>::d(expr dx) const { return -df(_x, dx
 template <> inline expr fn_base<fn_arctg>::d(expr dx) const { return df(_x, dx) / (1 + (_x ^ 2)); }				// arctg(f)' ⇒ f'/√(1+x²)
 template <> inline expr fn_base<fn_int>::d(expr dx) const { return dx == (*this)[1] ? (*this)[0] : func{fn_dif{xset{**this, dx}}}; }
 template<class F> expr fn_base<F>::d(expr dx) const { return func{fn_dif{xset{**this, dx}}}; }
-inline expr fn_user::d(expr dx) const { return fn(name(), df(body(), dx), args()); }
+inline expr fn_user::d(expr dx) const { 
+	if(body() == empty) {
+		auto& la = args();
+		return std::find(la.begin(), la.end(), dx) == la.end() ? zero : func{fn_dif{xset{func{*this}, dx}}};
+	}	else return df(body(), dx); 
+}
 
 inline expr power::d(expr dx) const { return (_x^_y) * (df(_y, dx)*ln(_x) + _y / _x*df(_x, dx)); }				// (fᵍ)' ⇒ fᵍ∙[g'∙ln(f)+g∙f'/f]
 inline expr product::d(expr dx) const { return df(_left, dx) * _right + _left * df(_right, dx); }				// (f∙g)' ⇒ f'∙g + f∙g'

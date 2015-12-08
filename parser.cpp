@@ -27,8 +27,7 @@ void OpApp(expr& op1, expr& op2, expr& result)	{result = ~op2;}
 void OpNull(expr& op1, expr& op2, expr& result)	{}
 void OpCall(expr& op1, expr& op2, expr& result)	{
 	if(!is<func, fn_user>(op1))	throw error_t::syntax;
-	//result = as<func, fn_user>(op1).call(op2);
-	else 				result = is<xset>(op2) ? as<func, fn_user>(op1)(as<xset>(op2)) : as<func, fn_user>(op1)(op2);
+	result = is<xset>(op2) ? as<func, fn_user>(op1)(as<xset>(op2)) : as<func, fn_user>(op1)(op2);
 }
 
 Context::vars_t	Context::_globals;
@@ -109,11 +108,20 @@ expr NScript::eval(const char* script)
 void NScript::ParseVar(expr& result, bool local)
 {
 	string name = _parser.GetName();
+	list_t params;
 	_parser.Next();
+	if(_parser.GetToken() == Parser::lpar) {
+		auto state = _parser.GetState();
+		_parser.Next();
+		Parse(Statement, result);
+		_parser.CheckPairedToken(Parser::lpar);
+		if(_parser.GetToken() != Parser::setvar)	_parser.SetState(state);
+		else params = is<xset>(result) ? as<xset>(result).items() : list_t{result};
+	}
 	if(_parser.GetToken() == Parser::setvar)	{
 		_parser.Next(); 
 		Parse(Assignment, result); 
-		_context.Set(name, result);
+		_context.Set(name, params.empty() ? result : fn(name, result, params));
 	}	else	{
 		result = _context.Get(name, local);
 	}

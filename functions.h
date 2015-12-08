@@ -13,9 +13,12 @@ inline ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return os << "
 inline ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "arccos(" << f.x() << ')'; }
 inline ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
 inline ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f[0] << ',' << f[1] << ')'; }
-inline ostream& operator << (ostream& os, fn_base<fn_dif> f) { return os << "d/d" << f[1] << " " << f[0]; }
+inline ostream& operator << (ostream& os, fn_base<fn_dif> f) { 
+	if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'';
+	else																	return os << "d/d" << f[1] << " " << f[0]; 
+}
 inline ostream& operator << (ostream& os, fn_user f) {
-	return os << f.name() << '(' << f.args() << ')';
+	return f.body() == empty ? os << f.name() : os << f.name() << '(' << f.args() << ')';
 }
 
 expr ln(expr x);
@@ -94,8 +97,8 @@ template<> static expr fn_base<fn_int>::make(expr p) {
 		auto a = df(mr[y], dx), b = mr[y] - a*x;
 		if(df(a, dx) == zero)	return (((a*x) ^ 2) - (b ^ 2))*ln(a*x + b) / (2 * (a ^ 2)) - x*(a*x - 2 * b) / (4 * a);
 	}
-	//return func{fn_int{xset{f, dx}}};
-	return intf(f, dx);
+	return func{fn_int{xset{f, dx}}};
+	//return intf(f, dx);
 }
 
 template<> static expr fn_base<fn_dif>::make(expr p) {

@@ -6,7 +6,14 @@
 
 namespace cas {
 	
-inline expr symbol::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : *this; }
+inline expr symbol::subst(pair<expr, expr> s) const { 
+	if(is<xset>(s.first) && is<xset>(s.second)) {
+		const auto& from = as<xset>(s.first).items(), to = as<xset>(s.second).items();
+		for(auto pi = from.cbegin(), pf = to.cbegin(); pi != from.cend(); pi++, pf++)
+			if(*pi == expr{*this})	return *pf;
+	}
+	return expr{*this} == s.first ? s.second : *this; 
+}
 inline expr power::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_x | s) ^ (_y | s); }
 inline expr product::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_left | s) * (_right | s); }
 inline expr sum::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (_left | s) + (_right | s); }
