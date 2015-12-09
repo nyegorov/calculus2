@@ -28,7 +28,8 @@ template<class F> expr fn_base<F>::d(expr dx) const { return func{fn_dif{xset{**
 inline expr fn_user::d(expr dx) const { 
 	if(body() == empty) {
 		auto& la = args();
-		return std::find(la.begin(), la.end(), dx) == la.end() ? zero : func{fn_dif{xset{func{*this}, dx}}};
+		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
+		return it == la.end() ? zero : df(*it, dx) * func{fn_dif{xset{func{*this}, dx}}};
 	}	else return df(body(), dx); 
 }
 
@@ -59,7 +60,13 @@ template <> inline expr fn_base<fn_arctg>::integrate(expr dx, expr c) const { re
 template <> inline expr fn_base<fn_dif>::integrate(expr dx, expr c) const { return dx == (*this)[1] ? (*this)[0] : make_integral(**this, dx) + c; }
 template<class F> expr fn_base<F>::integrate(expr dx, expr c) const { return make_integral(**this, dx) + c; }
 
-inline expr fn_user::integrate(expr dx, expr c) const { return fn(name(), intf(body(), dx, c), args()); }
+inline expr fn_user::integrate(expr dx, expr c) const { 
+	if(body() == empty) {
+		auto& la = args();														// ∫ f(y) dx ⇒ x∙f(y)
+		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
+		return it == la.end() ? dx * func{*this} + c : func{fn_int{xset{func{*this}, dx}}} + c;
+	} else return intf(body(), dx, c);
+}
 
 inline expr power::integrate(expr dx, expr c) const
 {
@@ -99,7 +106,9 @@ inline expr product::integrate(expr dx, expr c) const {
 	return make_integral(make_prod(p.left(), p.right()), dx) + c;
 }
 
-inline expr sum::integrate(expr dx, expr c) const { return cas::intf(_left, dx, c) + cas::intf(_right, dx, c); }
+inline expr sum::integrate(expr dx, expr c) const { 
+	return cas::intf(_left, dx, c) + cas::intf(_right, dx, c);					// ∫ f(x)+g(x) dx ⇒ ∫ f(x) dx + ∫ g(x) dx
+}
 
 inline expr xset::integrate(expr dx, expr c) const {
 	list_t ret;

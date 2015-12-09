@@ -79,7 +79,7 @@ public:
 protected:
 	enum Precedence	{Statement, Approx, Assignment,Addition,Multiplication,Power,Unary,Functional,Primary,Term};
 	void Parse(Precedence level, expr& result);
-	void ParseVar(expr& result, bool local);
+	void ParseVar(expr& result);
 
 	Parser				_parser;
 	Context				_context;

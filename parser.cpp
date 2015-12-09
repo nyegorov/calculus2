@@ -26,8 +26,10 @@ void OpPow(expr& op1, expr& op2, expr& result)	{result = op1 ^ op2;}
 void OpApp(expr& op1, expr& op2, expr& result)	{result = ~op2;}
 void OpNull(expr& op1, expr& op2, expr& result)	{}
 void OpCall(expr& op1, expr& op2, expr& result)	{
+	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
+	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
 	if(!is<func, fn_user>(op1))	throw error_t::syntax;
-	result = is<xset>(op2) ? as<func, fn_user>(op1)(as<xset>(op2)) : as<func, fn_user>(op1)(op2);
+	result = as<func, fn_user>(op1)(args);
 }
 
 Context::vars_t	Context::_globals;
@@ -106,7 +108,7 @@ expr NScript::eval(const char* script)
 }
 
 // Parse "var[:=]" statement
-void NScript::ParseVar(expr& result, bool local)
+void NScript::ParseVar(expr& result)
 {
 	string name = _parser.GetName();
 	list_t params;
@@ -124,7 +126,7 @@ void NScript::ParseVar(expr& result, bool local)
 		Parse(Assignment, result); 
 		_context.Set(name, params.empty() ? result : fn(name, result, params));
 	}	else	{
-		result = _context.Get(name, local);
+		result = _context.Get(name);
 	}
 }
 
@@ -134,13 +136,9 @@ void NScript::Parse(Precedence level, expr& result)
 	Parser::Token token = _parser.GetToken();
 	if(level == Primary)	{
 		// primary expressions
-		bool local = false;
 		switch(token)	{
 			case Parser::value:		result = _parser.GetValue();_parser.Next();break;
-			case Parser::my:	
-				if(_parser.Next() != Parser::name)	throw error_t::syntax;
-				local = true;
-			case Parser::name:		ParseVar(result, local);	break;
+			case Parser::name:		ParseVar(result);	break;
 			case Parser::lpar:
 				_parser.Next();
 				result = empty;

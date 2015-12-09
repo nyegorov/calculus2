@@ -291,7 +291,8 @@ namespace Tests
 			ns.eval("f(x)=empty"); ns.eval("g(x)=empty"); ns.eval("h(x,y)=x^2/y");
 			Assert::AreEqual((y ^ 2) / x, ns.eval("h(y,x)"));
 			Assert::AreEqual(expr{16}/5, ns.eval("h(4,5)"));
-			Assert::AreEqual("g'f+f'g", to_string(ns.eval("df(f*g,x)")).c_str());
+			Assert::AreEqual("g'(x)f(x)+f'(x)g(x)", to_string(ns.eval("df(f(x)*g(x),x)")).c_str());
+			Assert::AreEqual("f'(g(x))g'(x)", to_string(ns.eval("df(f(g(x)),x)")).c_str());
 			ns.eval("xx=4"); ns.eval("yy=5");
 			Assert::AreEqual(expr{20}, ns.eval("xx*yy"));
 		}

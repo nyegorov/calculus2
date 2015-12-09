@@ -14,12 +14,10 @@ inline ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return os << "
 inline ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return os << "arctg(" << f.x() << ')'; }
 inline ostream& operator << (ostream& os, fn_base<fn_int> f) { return os << "int(" << f[0] << ',' << f[1] << ')'; }
 inline ostream& operator << (ostream& os, fn_base<fn_dif> f) { 
-	if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'';
+	if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'' << '(' << as<func, fn_user>(f[0]).args() << ')';
 	else																	return os << "d/d" << f[1] << " " << f[0]; 
 }
-inline ostream& operator << (ostream& os, fn_user f) {
-	return f.body() == empty ? os << f.name() : os << f.name() << '(' << f.args() << ')';
-}
+inline ostream& operator << (ostream& os, fn_user f) { return os << f.name() << '(' << f.args() << ')'; }
 
 expr ln(expr x);
 expr sin(expr x);
@@ -114,7 +112,11 @@ inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{name
 inline string fn_user::name() const { return as<symbol>((*this)[0]).name(); }
 inline expr fn_user::body() const { return (*this)[1]; }
 inline list_t fn_user::args() const { return as<xset>((*this)[2]).items(); }
-inline expr fn_user::operator()(xset values) const { return body() | std::make_pair(as<xset>((*this)[2]), values); }
+inline expr fn_user::operator()(xset values) const { 
+	return body() == empty ?
+		make(x() | std::make_pair(as<xset>((*this)[2]), values)) : 
+		body() | std::make_pair(as<xset>((*this)[2]), values); 
+}
 inline expr fn_user::operator ()() const { return func{*this}; }
 template <typename ... Params> expr fn_user::operator ()(expr val, Params ... rest) const
 {
