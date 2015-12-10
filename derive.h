@@ -67,7 +67,7 @@ template<class F> expr fn_base<F>::integrate(expr dx, expr c) const { return mak
 
 inline expr fn_user::integrate(expr dx, expr c) const { 
 	if(body() == empty) {
-		auto& la = args();														// ∫ f(y) dx ⇒ x∙f(y)
+		auto& la = args();																						// ∫ f(y) dx ⇒ x∙f(y)
 		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
 		return it == la.end() ? dx * func{*this} + c : func{fn_int{xset{func{*this}, dx}}} + c;
 	} else return intf(body(), dx, c);
@@ -76,45 +76,51 @@ inline expr fn_user::integrate(expr dx, expr c) const {
 inline expr power::integrate(expr dx, expr c) const
 {
 	auto d_x = df(_x, dx);
-	if(d_x == zero && _y == dx)	return (_x ^ _y) / ln(_x) + c;					// ∫ aˣ dx ⇒ aˣ / ln(a)
+	if(d_x == zero && _y == dx)	return (_x ^ _y) / ln(_x) + c;													// ∫ aˣ dx ⇒ aˣ / ln(a)
 	auto d_y = df(_y, dx);
-	if(d_y == zero && d_x == zero)	return *this * dx;							// ∫ aᵇ dx ⇒ aᵇ∙x
+	if(d_y == zero && d_x == zero)	return *this * dx + c;														// ∫ aᵇ dx ⇒ aᵇ∙x
 	if(d_y == zero && df(d_x, dx) == zero)	{
 		return _y == minus_one ? 
-			ln(_x) / d_x + c :													// ∫ 1/(ax+b) dx ⇒ ln(ax+b)/a
-			(_x ^ (_y + 1)) / (d_x * (_y + 1)) + c;								// ∫ (ax+b)ⁿ dx ⇒ (ax+b)ⁿ⁺¹/a(n+1)
+			ln(_x) / d_x + c :																					// ∫ 1/(ax+b) dx ⇒ ln(ax+b)/a
+			(_x ^ (_y + 1)) / (d_x * (_y + 1)) + c;																// ∫ (ax+b)ⁿ dx ⇒ (ax+b)ⁿ⁺¹/a(n+1)
 	}
 	return make_integral(*this, dx) + c;
 }
 
 inline expr product::integrate(expr dx, expr c) const {
-	if(df(_left, dx) == zero)	return _left * cas::intf(_right, dx, c);		// ∫ a∙f(x) dx ⇒ a∙∫ f(x) dx
-	if(df(_right, dx) == zero)	return _right * cas::intf(_left, dx, c);		// ∫ f(x)∙a dx ⇒ a∙∫ f(x) dx
+	if(df(_left, dx) == zero)	return _left * cas::intf(_right, dx) + c;										// ∫ a∙f(x) dx ⇒ a∙∫ f(x) dx
+	if(df(_right, dx) == zero)	return _right * cas::intf(_left, dx) + c;										// ∫ f(x)∙a dx ⇒ a∙∫ f(x) dx
 
 	product p{*this};
-	for(auto it = p.begin(); it != p.end(); ++it) {								// ∫ Πaᵢ∙f(x) dx ⇒ Πaᵢ∙∫ f(x) dx
+	for(auto it = p.begin(); it != p.end(); ++it) {																// ∫ Πaᵢ∙f(x) dx ⇒ Πaᵢ∙∫ f(x) dx
 		if(df(*it, dx) == zero) {
 			auto e = *it;
 			p.erase(it);
-			return e * p.integrate(dx, c);
+			return e * p.integrate(dx, zero) + c;
 		}
 	}
 
-	symbol y{"y"}, x{"x", dx};
+	symbol y{"y"}, x{"x", dx}, n{"n"};
 	expr a, b;
 	match_result mr;
-	if(_left == ln(dx) && _right == 1/dx)	return half * (ln(dx) ^ 2);			// ∫ ln(x)/x dx ⇒ 1/2∙ln²(x)
-	if(_left == dx && _right == (e ^ dx))	return (_left - 1) * _right;		// ∫ x∙eˣ dx ⇒ (x-1)∙eˣ
-	if(_left == dx && cas::match(_right, e^(y*x), mr) && df(a = mr[y], dx) == zero)
-		return (x/a-1/(a^2)) * _right;											// ∫ x∙eᵃˣ dx ⇒ (x/a-1/a²)∙eᵃˣ
-	if(_left == dx && is<func, fn_ln>(_right) && is_linear(as<func, fn_ln>(_right).x(), dx, a, b))
-		return (((a*dx)^2)-(b^2))*ln(a*dx+b)/(2*(a^2))-dx*(a*dx-2*b)/(4*a);		// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
+
+	// Integrals with Logarithms
+	if(_left == ln(dx) && _right == 1/dx)	return half * (ln(dx) ^ 2) + c;										// ∫ ln(x)/x dx ⇒ 1/2∙ln²(x)
+	if((mr = cas::match(*this, (x^n)*ln(x))) && is<numeric, int_t>(b = mr[n]))									// ∫ xⁿ∙ln(x) dx ⇒ xⁿ⁺¹∙[ln(x)/(n+1)-1/(n+1)²], n≠-1
+		return (dx ^ (b + 1))*(ln(dx) / (b + 1) - ((b + 1) ^ -2)) + c;
+	if(_left == dx && is<func, fn_ln>(_right) && is_linear(as<func, fn_ln>(_right).x(), dx, a, b))				// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
+		return (((a*dx) ^ 2) - (b ^ 2))*_right / (2 * (a ^ 2)) - dx*(a*dx - 2 * b) / (4 * a) + c;
+
+	// Integrals with Exponents
+	if((mr = cas::match(*this, x*(e ^ (y*x)))) && df(a = mr[y], dx) == zero) return (x / a - (a^-2))*_right + c;// ∫ x∙eᵃˣ dx ⇒ (x/a-1/a²)∙eᵃˣ
+	if((mr = cas::match(*this, (x^n)*(e^(y*x)))) && df(a=mr[y], dx) == zero &&	is<numeric, int_t>(b = mr[n]) && b > zero)
+		return (dx^b)*(e^a*x)/a - b/a*intf((dx ^ (b - 1))*(e^a*x), dx) + c;										// ∫ xⁿ∙eᵃˣ dx ⇒ xⁿ∙eᵃˣ/a - n/a ∫ xⁿ⁻¹∙eᵃˣ dx
 
 	return make_integral(make_prod(p.left(), p.right()), dx) + c;
 }
 
 inline expr sum::integrate(expr dx, expr c) const { 
-	return cas::intf(_left, dx, c) + cas::intf(_right, dx, c);					// ∫ f(x)+g(x) dx ⇒ ∫ f(x) dx + ∫ g(x) dx
+	return cas::intf(_left, dx) + cas::intf(_right, dx) + c;													// ∫ f(x)+g(x) dx ⇒ ∫ f(x) dx + ∫ g(x) dx
 }
 
 inline expr xset::integrate(expr dx, expr c) const {

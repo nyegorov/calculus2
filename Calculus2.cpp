@@ -39,11 +39,6 @@ int main()
 	symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
 	numeric i{complex_t{0.0, 1.0}};
 
-	symbol X{"X", x};
-	auto res = cas::match(e ^ (2 * pi*x), e ^ (y*X));
-	if(res)
-		cout << res[X] << ", " << res[y] << endl;
-	//cout << ns.eval("int(1/x^2,x,2,inf)") << endl;
 	run();
 	return 0;
 }

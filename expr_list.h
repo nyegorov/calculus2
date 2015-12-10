@@ -132,10 +132,9 @@ public:
 	}
 
 	bool match(E e, match_result& res) const {
-		if(!is<T>(e))	return res.found = false;
-
-		const T& pe = as<T>(e);
 		const T& pp = static_cast<const T&>(*this);
+		if(!is<T>(e)) return cas::match(T{T::unit(), e}, pp, res);
+		const T& pe = as<T>(e);
 		for(auto p_it = pp.begin(); p_it != pp.end(); ++p_it) {
 			for(auto e_it = pe.begin(); e_it != pe.end(); ++e_it) {
 				match_result mr = res;
