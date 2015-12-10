@@ -77,7 +77,7 @@ public:
 	expr eval(const char* script);
 
 protected:
-	enum Precedence	{Statement, Approx, Assignment,Addition,Multiplication,Power,Unary,Functional,Primary,Term};
+	enum Precedence	{Statement, Approx, Assignment, Subst, Addition,Multiplication,Power,Unary,Functional,Primary,Term};
 	void Parse(Precedence level, expr& result);
 	void ParseVar(expr& result);
 

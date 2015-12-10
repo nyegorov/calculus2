@@ -6,6 +6,11 @@
 
 namespace cas {
 
+inline bool is_linear(expr e, expr x, expr& a, expr& b) {
+	a = df(e, x), b = e - a * x;
+	return df(a, x) == zero;
+}
+
 // Derivatives
 inline expr numeric::d(expr dx) const { return zero; }
 inline expr symbol::d(expr dx) const
@@ -95,13 +100,15 @@ inline expr product::integrate(expr dx, expr c) const {
 		}
 	}
 
-	symbol y{"y"};
+	symbol y{"y"}, x{"x", dx};
+	expr a, b;
 	match_result mr;
 	if(_left == ln(dx) && _right == 1/dx)	return half * (ln(dx) ^ 2);			// ∫ ln(x)/x dx ⇒ 1/2∙ln²(x)
-	if(_left == dx && (mr=cas::match(_right, ln(y)))) {							// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
-		auto a = df(mr[y], dx), b = mr[y] - a*dx;
-		if(df(a, dx) == zero)	return (((a*dx) ^ 2) - (b ^ 2))*ln(a*dx + b) / (2 * (a ^ 2)) - dx*(a*dx - 2 * b) / (4 * a);
-	}
+	if(_left == dx && _right == (e ^ dx))	return (_left - 1) * _right;		// ∫ x∙eˣ dx ⇒ (x-1)∙eˣ
+	if(_left == dx && cas::match(_right, e^(y*x), mr) && df(a = mr[y], dx) == zero)
+		return (x/a-1/(a^2)) * _right;											// ∫ x∙eᵃˣ dx ⇒ (x/a-1/a²)∙eᵃˣ
+	if(_left == dx && is<func, fn_ln>(_right) && is_linear(as<func, fn_ln>(_right).x(), dx, a, b))
+		return (((a*dx)^2)-(b^2))*ln(a*dx+b)/(2*(a^2))-dx*(a*dx-2*b)/(4*a);		// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
 
 	return make_integral(make_prod(p.left(), p.right()), dx) + c;
 }

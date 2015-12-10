@@ -25,6 +25,10 @@ void OpDiv(expr& op1, expr& op2, expr& result)	{result = op1 / op2;}
 void OpPow(expr& op1, expr& op2, expr& result)	{result = op1 ^ op2;}
 void OpApp(expr& op1, expr& op2, expr& result)	{result = ~op2;}
 void OpNull(expr& op1, expr& op2, expr& result)	{}
+void OpSubst(expr& op1, expr& op2, expr& result){
+	if(!is<xset>(op2) || as<xset>(op2).items().size() != 2)	throw error_t::syntax;
+	result = cas::subst(op1, as<xset>(op2).items()[0], as<xset>(op2).items()[1]);
+}
 void OpCall(expr& op1, expr& op2, expr& result)	{
 	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
 	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
@@ -87,6 +91,7 @@ NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::comma,	&OpNull},	{Parser::end, NULL}},
 	{{Parser::not,		&OpApp},	{Parser::end, NULL}},
 	{{Parser::assign,	&OpAssign},	{Parser::end, NULL}},
+	{{Parser::or,		&OpSubst},	{Parser::end, NULL}},
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
 	{{Parser::pwr,		&OpPow},	{Parser::end, NULL}},

@@ -37,7 +37,8 @@ inline expr xset::approx() const {
 inline bool symbol::match(expr e, match_result& res) const {
 	auto it = find(res.matches.begin(), res.matches.end(), *this);
 	if(it == res.matches.end()) {
-		res.matches.push_back({_name, e});
+		if(_value == empty || _value == e)	res.matches.push_back({_name, e});
+		else if(expr{*this} != e)	res.found = false;
 	} else {
 		if(e != it->value())	res.found = false;
 	}
