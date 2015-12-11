@@ -62,6 +62,7 @@ namespace cas {
 	inline expr numeric::approx() const { return _value.type() == typeid(rational_t) ? make_num(boost::get<rational_t>(_value).value()) : *this; };
 	inline expr numeric::subst(pair<expr, expr> s) const { return{*this}; }
 	inline bool numeric::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
+	inline unsigned numeric::exponents(const list_t& vars) const { return 0; }
 
 	inline rational_t operator + (rational_t lh, int_t rh) { return {lh.numer() + lh.denom() * rh, lh.denom()}; }
 	inline rational_t operator + (int_t lh, rational_t rh) { return {rh.numer() + rh.denom() * lh, rh.denom()}; }

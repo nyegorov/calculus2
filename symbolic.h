@@ -43,7 +43,8 @@ inline expr make_sum(expr left, expr right) {
 	if(right == empty)	return left;				// x+0 ⇒ x
 	if(left == right)	return two * left;			// x+x ⇒ 2x
 
-	if(left > right)	std::swap(left, right);
+	sum::key_comp comp;
+	if(!comp(left, right))	std::swap(left, right);
 	if(is<product>(right)) {
 		product &pr = as<product>(right);			// x+Ax ⇒ (A+1)x 
 		if(is<numeric>(pr.left()) && pr.right() == left)	return (one + pr.left()) * left;
@@ -66,7 +67,8 @@ inline expr make_prod(expr left, expr right)
 	if(right == one)	return left;				// x∙1 ⇒ x
 	if(left == right)	return left ^ two;			// x∙x ⇒ x²
 
-	if(left > right)	std::swap(left, right);
+	product::key_comp comp;
+	if(!comp(left, right))	std::swap(left, right);
 	if(is<power>(right)) {							// x∙xⁿ ⇒ xⁿ⁺¹
 		power &pr = as<power>(right);
 		if(pr.x() == left)	return pr.x() ^ (one + pr.y());

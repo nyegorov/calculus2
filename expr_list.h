@@ -54,29 +54,31 @@ public:
 	}
 };
 
-template<class T, class E>
+template<class T, class Expr, class Pred = std::less<Expr>>
 class expr_list
 {
 protected:
-	E _left;
-	E _right;
-	void set(E& to, E& from) { E tmp = from; to = tmp; }
+	Pred _comp;
+	Expr _left;
+	Expr _right;
+	void set(Expr& to, Expr& from) { Expr tmp = from; to = tmp; }
 
 public:
-	typedef E value_type;
+	typedef Expr value_type;
 	typedef T cont_type;
-	typedef E* pointer;
-	typedef E& reference;
-	typedef const E* const_pointer;
-	typedef const E& const_reference;
-	typedef expr_list_iterator<expr_list<T, E>> iterator;
-	typedef expr_list_const_iterator<expr_list<T, E>> const_iterator;
+	typedef Pred key_comp;
+	typedef Expr* pointer;
+	typedef Expr& reference;
+	typedef const Expr* const_pointer;
+	typedef const Expr& const_reference;
+	typedef expr_list_iterator<expr_list<T, Expr, Pred>> iterator;
+	typedef expr_list_const_iterator<expr_list<T, Expr, Pred>> const_iterator;
 	friend class iterator;
 	friend class const_iterator;
 
-	expr_list(E left, E right) : _left(left), _right(right) {}
-	E left() { return _left; }
-	E right() { return _right; }
+	expr_list(Expr left, Expr right) : _left(left), _right(right), _comp(Pred()) {}
+	Expr left() { return _left; }
+	Expr right() { return _right; }
 
 	iterator begin() { return iterator(this); }
 	iterator end() { return iterator(); }
@@ -96,23 +98,23 @@ public:
 		}
 	}
 
-	iterator insert(iterator it, const E& e)
+	iterator insert(iterator it, const Expr& e)
 	{
 		insert(e);
 		return it;
 	}
 
-	void insert(const E& e)
+	void insert(const Expr& e)
 	{
-		if(_right == T::unit())	_right = e;
-		else if(_left == T::unit() && e < T::unit())	_left = e;
-		else if(e < _left)		_right = T{_left, _right}, _left = e;
+		if(_right == T::unit())		_right = e;
+		else if(_left == T::unit()) { _left = e; if(!_comp(_left, _right)) swap(_left, _right); }
+		else if(_comp(e, _left))	_right = T{_left, _right}, _left = e;
 		else if(_right.type() == typeid(T))	boost::get<T>(_right).insert(e);
-		else if(e < _right)		_right = T{e, _right};
-		else					_right = T{_right, e};
+		else if(_comp(e, _right))	_right = T{e, _right};
+		else						_right = T{_right, e};
 	}
 
-	void append(E e)
+	void append(Expr e)
 	{
 		expr tmp;
 		while(e != T::unit()) {
@@ -131,7 +133,7 @@ public:
 		}
 	}
 
-	bool match(E e, match_result& res) const {
+	bool match(Expr e, match_result& res) const {
 		const T& pp = static_cast<const T&>(*this);
 		if(!is<T>(e)) return cas::match(T{T::unit(), e}, pp, res);
 		const T& pe = as<T>(e);

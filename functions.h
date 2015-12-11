@@ -139,6 +139,7 @@ static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x)
 template<class F> expr fn_base<F>::approx() const { return fn_base<F>::make(~_x); }
 template<class F> expr fn_base<F>::subst(pair<expr, expr> s) const { return expr{func{F{_x}}} == s.first ? s.second : make(_x | s); }
 template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
+template<class F> unsigned fn_base<F>::exponents(const list_t& vars) const { auto c = get_exps(_x, vars); return c ? 99 : 0; }
 template<class F> expr operator *(fn_base<F> f) { return f.make(f.x()); }
 
 template<> expr inline fn_base<fn_ln>::approx() const { return apply_fun(~_x, log, [](complex_t x) {return log(x); }); }
@@ -156,6 +157,7 @@ inline expr func::d(expr dx) const { return boost::apply_visitor([dx](auto x) { 
 inline expr func::integrate(expr dx, expr c) const { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, _func); }
 inline expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
 inline expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
+inline unsigned func::exponents(const list_t& vars) const { return boost::apply_visitor([&vars](auto x) { return x.exponents(vars); }, _func); }
 inline bool func::match(expr e, match_result& res) const {
 	return is<func>(e) ? 
 		boost::apply_visitor([fun = as<func>(e).value(), &res](auto f) { return f.match(fun, res); }, _func) :

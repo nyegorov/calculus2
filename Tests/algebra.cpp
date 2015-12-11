@@ -175,20 +175,16 @@ namespace Tests
 			Assert::AreEqual("4y", to_string((2*x*y)*(2/x)).c_str());
 			Assert::AreEqual("27x^3y^3", to_string((3*x*y)^3).c_str());
 			Assert::AreEqual("x^(2y)", to_string((x^y)*(x^y)).c_str());
-			Assert::AreEqual("x^2+y^2+2xy", to_string((x+y)^2).c_str());
-			Assert::AreEqual("x^2+y^2-2xy", to_string((-x+y)^2).c_str());
+			Assert::AreEqual("x^2+2xy+y^2", to_string((x+y)^2).c_str());
+			Assert::AreEqual("x^2-2xy+y^2", to_string((-x+y)^2).c_str());
 			Assert::AreEqual("x^2-y^2", to_string((x+y)*(x-y)).c_str());
-			Assert::AreEqual("x^3-y^3-3yx^2+3xy^2", to_string((x - y) ^ 3).c_str());
+			Assert::AreEqual("x^3-3yx^2+3xy^2-y^3", to_string((x - y) ^ 3).c_str());
 			Assert::AreEqual("x^3-y^3", to_string((x-y)*((x^2)+x*y+(y^2))).c_str());
 			Assert::AreEqual("x^3+y^3", to_string((x+y)*((x^2)-x*y+(y^2))).c_str());
 			Assert::IsTrue(x+y < x+y+a);
 			Assert::IsFalse(x+y+a < x+y);
 			Assert::AreEqual("y^2", to_string((x*y) | (x = expr{y})).c_str());
 			Assert::AreEqual("11", to_string(((x ^ 2) + 2 * x + 3) | (x = 2)).c_str());
-			//auto s = make_sum({ x,y,minus_one });
-			//auto p = make_prod({ x,y,one });
-			//Assert::AreEqual("x+y-1", to_string(s).c_str());
-			//Assert::AreEqual("x·y", to_string(p).c_str());
 		}
 		TEST_METHOD(Functions)
 		{
@@ -197,8 +193,8 @@ namespace Tests
 			Assert::AreEqual("1", to_string(ln(e)).c_str());
 			Assert::AreEqual("0", to_string(ln(1)).c_str());
 			Assert::AreEqual("-inf", to_string(ln(0)).c_str());
-			Assert::AreEqual("ln(x)+ln(y)", to_string(ln(x*y)).c_str());
-			Assert::AreEqual("yln(x)", to_string(ln(x^y)).c_str());
+			Assert::AreEqual(ln(x)+ln(y), ln(x*y));
+			Assert::AreEqual(y*ln(x), ln(x^y));
 			// Sine
 			Assert::AreEqual("0", to_string(sin(pi)).c_str());
 			Assert::AreEqual("3", to_string((sin(pi/3)^2)*4).c_str());
@@ -258,7 +254,7 @@ namespace Tests
 			Assert::AreEqual(ln(1+5*x)/5, intf((5 * x + 1) ^ -1, x));
 			Assert::AreEqual(-(x^2)/4+ln(x)*(x^2)/2, intf(x*ln(x), x));
 			Assert::AreEqual(two, intf(sin(x), x, 0, pi));
-			Assert::AreEqual("c+int(#e^x^2,x)", to_string(intf(e^(x^2), x, c)).c_str());
+			Assert::AreEqual("int(#e^x^2,x)+c", to_string(intf(e^(x^2), x, c)).c_str());
 			Assert::AreEqual((ln(x)^2)/2, intf(ln(x)/x, x));
 			Assert::AreEqual(sin(x)*tg(y), df(intf(sin(x)*tg(y), x), x));
 			Assert::AreEqual(-cos(x)/(cos(y)^2), df(intf(sin(x)*tg(y), x), y));
@@ -292,7 +288,7 @@ namespace Tests
 			ns.eval("f(x)=empty"); ns.eval("g(x)=empty"); ns.eval("h(x,y)=x^2/y");
 			Assert::AreEqual((y ^ 2) / x, ns.eval("h(y,x)"));
 			Assert::AreEqual(expr{16}/5, ns.eval("h(4,5)"));
-			Assert::AreEqual("g'(x)f(x)+f'(x)g(x)", to_string(ns.eval("df(f(x)*g(x),x)")).c_str());
+			Assert::AreEqual("g(x)f'(x)+f(x)g'(x)", to_string(ns.eval("df(f(x)*g(x),x)")).c_str());
 			Assert::AreEqual("f'(g(x))g'(x)", to_string(ns.eval("df(f(g(x)),x)")).c_str());
 			ns.eval("xx=4"); ns.eval("yy=5");
 			Assert::AreEqual(expr{20}, ns.eval("xx*yy"));

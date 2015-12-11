@@ -40,7 +40,7 @@ typedef double real_t;
 typedef std::complex<real_t> complex_t;
 
 typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
-typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_int, fn_dif, fn_user> function_t;
+typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_user, fn_int, fn_dif> function_t;
 typedef boost::variant<
 	error,
 	numeric,
@@ -68,6 +68,7 @@ struct match_result
 
 bool has_sign(expr e);
 bool less(numeric_t op1, numeric_t op2);
+unsigned get_exps(expr e, const list_t& vars);
 
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
@@ -115,6 +116,7 @@ public:
 	expr approx() const;
 	expr subst(pair<expr, expr> s) const;
 	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
@@ -139,6 +141,7 @@ public:
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 inline bool operator == (numeric lh, numeric rh) { return lh.value() == rh.value(); }
 inline bool operator < (numeric lh, numeric rh) { return less(lh.value(), rh.value()); }
@@ -160,6 +163,7 @@ public:
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (symbol lh, symbol rh) { return lh.name() == rh.name(); }
@@ -180,10 +184,11 @@ public:
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (power lh, power rh) { return lh.x() == rh.x() && lh.y() == rh.y(); }
-inline bool operator < (power lh, power rh) { return lh.x() == rh.x() ? lh.y() < rh.y() : lh.x() < rh.x(); }
+inline bool operator < (power lh, power rh) { return lh.y() == rh.y() ? lh.x() < rh.x() : lh.y() < rh.y(); }
 inline ostream& operator << (ostream& os, power s) {
 	if(is<sum>(s.x()) || is<product>(s.x())) os << '(' << s.x() << ')'; else os << s.x();
 	os << '^';
@@ -191,7 +196,8 @@ inline ostream& operator << (ostream& os, power s) {
 	return os;
 }
 
-class product : public detail::expr_list<product, expr>
+struct prod_comp { bool operator ()(const expr& left, const expr& right) const; };
+class product : public detail::expr_list<product, expr, prod_comp>
 {
 public:
 	static expr unit() { return{1}; }
@@ -203,16 +209,18 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
-inline bool operator < (product lh, product rh) { return lh.right() < rh.right(); }
+inline bool operator < (product lh, product rh) { return lh.right() == rh.right() ? lh.left() < rh.left() : lh.right() < rh.right(); }
 inline ostream& operator << (ostream& os, product p) {
 	if(p.left() == expr{-1})	os << '-'; else os << p.left();
 	return os << p.right();
 }
 
-class sum : public detail::expr_list<sum, expr>
+struct sum_comp { bool operator ()(const expr& left, const expr& right) const; };
+class sum : public detail::expr_list<sum, expr, sum_comp>
 {
 public:
 	static expr unit() { return{0}; }
@@ -224,10 +232,11 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
-inline bool operator < (sum lh, sum rh) { return lh.right() < rh.right(); }
+inline bool operator < (sum lh, sum rh) { return lh.right() == rh.right() ? lh.left() < rh.left() : lh.right() < rh.right(); }
 inline ostream& operator << (ostream& os, sum s) {
 	os << s.left();
 	if(!cas::has_sign(s.right()))	os << '+';
@@ -251,6 +260,7 @@ public:
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	bool match(function_t f, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 template<class F> bool operator == (fn_base<F> lh, fn_base<F> rh) { return lh.x() == rh.x(); }
 template<class F> bool operator < (fn_base<F> lh, fn_base<F> rh) { return lh.x() < rh.x(); }
@@ -293,6 +303,7 @@ public:
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (func lh, func rh) { return lh.value() == rh.value(); }
@@ -313,6 +324,7 @@ public:
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
 	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
 };
 
 inline bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
@@ -343,6 +355,7 @@ inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return
 inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 inline bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
 inline match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
+inline unsigned get_exps(expr e, const list_t& vars) { return boost::apply_visitor([&vars](auto x) { return x.exponents(vars); }, e); }
 
 expr make_err(error_t err);
 expr make_num(int_t value);
@@ -360,10 +373,12 @@ inline expr error::d(expr dx) const { return *this; };
 inline expr error::integrate(expr dx, expr c) const { return *this; };
 inline expr error::approx() const { return *this; };
 inline bool error::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
+inline unsigned error::exponents(const list_t& vars) const { return 0; }
 inline expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }
 
 const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
+const list_t variables = {symbol{"x"}, symbol{"y"}, symbol{"z"}};
 
 inline std::ostream& operator << (std::ostream& os, const list_t& l) {
 	for(auto it = l.cbegin(); it != l.cend(); ++it) {
