@@ -94,8 +94,8 @@ NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::or,		&OpSubst},	{Parser::end, NULL}},
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
-	{{Parser::pwr,		&OpPow},	{Parser::end, NULL}},
 	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
+	{{Parser::pwr,		&OpPow},	{Parser::end, NULL}},
 	{{Parser::lpar,		&OpCall},	{Parser::end, NULL}},
 };
 
