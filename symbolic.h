@@ -89,9 +89,12 @@ inline expr make_xset(std::initializer_list<expr> items)
 
 // Addition
 template<typename T, typename U> typename enable_if<!is_same<T, expr>::value && !is_same<U, expr>::value, expr>::type operator + (T lh, U rh) { return make_sum(lh, rh); }
-template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (T e, sum s) { s.append(e); return s.left() == zero ? s.right() : s; }
-template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (sum s, T e) { s.append(e); return s.left() == zero ? s.right() : s; }
-inline expr operator + (sum s, sum a) { for(auto& e : a) s.append(e);	return s.left() == zero ? s.right() : s; }
+template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (T e, sum s) { return s.append(e); }
+template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (sum s, T e) { return s.append(e); }
+inline expr operator + (sum s, sum a) { return s.append(a.left()) + a.right(); }
+//template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (T e, sum s) { s.append(e); return s.left() == zero ? s.right() : s; }
+//template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (sum s, T e) { s.append(e); return s.left() == zero ? s.right() : s; }
+//inline expr operator + (sum s, sum a) { for(auto& e : a) s.append(e);	return s.left() == zero ? s.right() : s; }
 inline expr operator + (power lh, power rh) {
 	if(lh.y() == two && rh.y() == two) {			// sin²(x)+cos²(x)=1
 		if(is<func, fn_sin>(lh.x()) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh.x()).x() == as<func, fn_cos>(rh.x()).x())	return one;
@@ -102,9 +105,9 @@ inline expr operator + (power lh, power rh) {
 
 // Product
 template<typename T, typename U> typename enable_if<!is_same<T, expr>::value && !is_same<U, expr>::value, expr>::type operator * (T lh, U rh) { return make_prod(lh, rh); }
-template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (T e, product s) { s.append(e); return s.left() == one ? s.right() : s; }
-template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (product s, T e) { s.append(e); return s.left() == one ? s.right() : s; }
-inline expr operator * (product s, product a) { for(auto& e : a) s.append(e);	return s.left() == one ? s.right() : s; }
+template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (T e, product s) { s.append_old(e); return s.left() == one ? s.right() : s; }
+template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (product s, T e) { s.append_old(e); return s.left() == one ? s.right() : s; }
+inline expr operator * (product s, product a) { for(auto& e : a) s.append_old(e);	return s.left() == one ? s.right() : s; }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (T e, sum s) { return e * s.left() + e * s.right(); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (sum s, T e) { return s.left() * e + s.right() * e; }
 inline expr operator * (sum lh, sum rh) { return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right(); }

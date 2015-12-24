@@ -114,7 +114,7 @@ public:
 		else						_right = T{_right, e};
 	}
 
-	void append(Expr e)
+	void append_old(Expr e)
 	{
 		expr tmp;
 		while(e != T::unit()) {
@@ -130,6 +130,37 @@ public:
 			}
 			erase(it);
 			e = tmp;
+		}
+	}
+
+	// try to append new element (summand or multiplicand) to the list
+	// returns unappendable remainder and modified list
+	std::pair<Expr, Expr> try_append(Expr& e) const
+	{
+		auto& t = T::op(_left, e);
+		if(t.type() != typeid(T)) return{t, _right};
+
+		if(is<T>(_right)) {
+			auto& r = as<T>(_right).try_append(e);
+			return{r.first, T{_left, r.second}};
+		}
+
+		t = T::op(_right, e);
+		if(t.type() != typeid(T)) return{t, _left};
+		return{e, static_cast<const T&>(*this)};
+	}
+
+	Expr append(Expr e) const
+	{
+		auto& r = try_append(e);
+		if(r.first == T::unit())	return r.second;
+
+		if(is<T>(r.second)) {
+			as<T>(r.second).insert(r.first);
+			return r.second;
+		} else {
+			if(!_comp(r.first, r.second))	std::swap(r.first, r.second);
+			return T{r.first, r.second};
 		}
 	}
 
