@@ -44,13 +44,13 @@ typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos
 typedef boost::variant<
 	error,
 	numeric,
-	boost::recursive_wrapper<symbol>, 
-	boost::recursive_wrapper<func>, 
-	boost::recursive_wrapper<power>, 
-	boost::recursive_wrapper<product>, 
-	boost::recursive_wrapper<sum>, 
+	boost::recursive_wrapper<symbol>,
+	boost::recursive_wrapper<func>,
+	boost::recursive_wrapper<power>,
+	boost::recursive_wrapper<product>,
+	boost::recursive_wrapper<sum>,
 	boost::recursive_wrapper<xset>
-	>	expr;
+>	expr;
 
 typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
@@ -69,6 +69,7 @@ struct match_result
 bool has_sign(expr e);
 bool less(numeric_t op1, numeric_t op2);
 unsigned get_exps(expr e, const list_t& vars);
+bool use_mml(ostream& os);
 
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
@@ -98,10 +99,6 @@ public:
 
 inline bool operator == (rational_t lh, rational_t rh) { return lh.numer() == rh.numer() && lh.denom() == rh.denom(); }
 inline bool operator < (rational_t lh, rational_t rh) { return lh.numer() * rh.denom() < rh.numer() * lh.denom(); }
-inline ostream& operator << (ostream& os, const rational_t& r) {
-	if(r.denom() == 0)	return os << (r.numer() > 0 ? "inf" : "-inf");
-	return os << r.numer() << "/" << r.denom();
-}
 
 class error
 {
@@ -121,7 +118,6 @@ public:
 
 inline bool operator == (error lh, error rh) { return lh.get() == rh.get(); }
 inline bool operator < (error lh, error rh) { return lh.get() < rh.get(); }
-inline ostream& operator << (ostream& os, error e) { return os << error_msgs[(int)e.get()]; }
 
 class numeric
 {
@@ -145,7 +141,6 @@ public:
 };
 inline bool operator == (numeric lh, numeric rh) { return lh.value() == rh.value(); }
 inline bool operator < (numeric lh, numeric rh) { return less(lh.value(), rh.value()); }
-inline ostream& operator << (ostream& os, numeric n) {	return os << n.value(); }
 
 class symbol
 {
@@ -168,7 +163,6 @@ public:
 
 inline bool operator == (symbol lh, symbol rh) { return lh.name() == rh.name(); }
 inline bool operator < (symbol lh, symbol rh) { return lh.name() < rh.name(); }
-inline ostream& operator << (ostream& os, symbol s) { return os << s.name(); }
 
 class power
 {
@@ -189,12 +183,7 @@ public:
 
 inline bool operator == (power lh, power rh) { return lh.x() == rh.x() && lh.y() == rh.y(); }
 inline bool operator < (power lh, power rh) { return lh.y() == rh.y() ? lh.x() < rh.x() : lh.y() < rh.y(); }
-inline ostream& operator << (ostream& os, power s) {
-	if(is<sum>(s.x()) || is<product>(s.x())) os << '(' << s.x() << ')'; else os << s.x();
-	os << '^';
-	if(is<sum>(s.y()) || is<product>(s.y())) os << '(' << s.y() << ')'; else os << s.y();
-	return os;
-}
+inline ostream& operator << (ostream& os, power p);
 
 struct prod_comp { bool operator ()(const expr& left, const expr& right) const; };
 class product : public detail::expr_list<product, expr, prod_comp>
@@ -214,10 +203,7 @@ public:
 
 inline bool operator == (product lh, product rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
 inline bool operator < (product lh, product rh) { return lh.right() == rh.right() ? lh.left() < rh.left() : lh.right() < rh.right(); }
-inline ostream& operator << (ostream& os, product p) {
-	if(p.left() == expr{-1})	os << '-'; else os << p.left();
-	return os << p.right();
-}
+inline ostream& operator << (ostream& os, product p);
 
 struct sum_comp { bool operator ()(const expr& left, const expr& right) const; };
 class sum : public detail::expr_list<sum, expr, sum_comp>
@@ -238,9 +224,15 @@ public:
 inline bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
 inline bool operator < (sum lh, sum rh) { return lh.right() == rh.right() ? lh.left() < rh.left() : lh.right() < rh.right(); }
 inline ostream& operator << (ostream& os, sum s) {
-	os << s.left();
-	if(!cas::has_sign(s.right()))	os << '+';
-	return os << s.right();
+	if(use_mml(os)) {
+		os << "<mrow>" << s.left();
+		if(!has_sign(s.right()))	os << "<mo>&plus;</mo>";
+		return os << s.right() << "</mrow>";
+	} else {
+		os << s.left();
+		if(!has_sign(s.right()))	os << '+';
+		return os << s.right();
+	}
 }
 
 template<class F> class fn_base
@@ -329,7 +321,6 @@ public:
 
 inline bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
 inline bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
-inline ostream& operator << (ostream& os, xset l) { return os << '[' << l.items() << ']'; }
 
 const expr empty = error{error_t::empty};
 
@@ -380,23 +371,4 @@ const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
 const list_t variables = {symbol{"x"}, symbol{"y"}, symbol{"z"}};
 
-inline std::ostream& operator << (std::ostream& os, const list_t& l) {
-	for(auto it = l.cbegin(); it != l.cend(); ++it) {
-		if(it != l.cbegin())	os << ',';
-		os << *it;
-	}
-	return os;
 }
-
-}
-
-namespace std {
-	using namespace cas;
-	inline ostream& operator << (ostream& os, complex_t c) {
-		if(abs(c.real()) >= std::numeric_limits<real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
-		else if(c.imag() < 0)										os << '-';
-		if(abs(c.imag()) != 1.)	os << abs(c.imag());
-		return os << 'i';
-	}
-}
-
