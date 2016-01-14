@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxpro
 		{3A0FF04D-E987-4056-AB02-F1197DD64C1F} = {3A0FF04D-E987-4056-AB02-F1197DD64C1F}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SymCalc", "SymCalc\symcalc.vcxproj", "{EC20C194-653D-47BF-84DC-F500CABC57DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,6 +36,14 @@ Global
 		{8CCAF2F7-7125-436D-9F59-DF94C48387B4}.Release|x64.Build.0 = Release|x64
 		{8CCAF2F7-7125-436D-9F59-DF94C48387B4}.Release|x86.ActiveCfg = Release|Win32
 		{8CCAF2F7-7125-436D-9F59-DF94C48387B4}.Release|x86.Build.0 = Release|Win32
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Debug|x64.ActiveCfg = Debug|x64
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Debug|x64.Build.0 = Debug|x64
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Debug|x86.ActiveCfg = Debug|Win32
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Debug|x86.Build.0 = Debug|Win32
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Release|x64.ActiveCfg = Release|x64
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Release|x64.Build.0 = Release|x64
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Release|x86.ActiveCfg = Release|Win32
+		{EC20C194-653D-47BF-84DC-F500CABC57DC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
