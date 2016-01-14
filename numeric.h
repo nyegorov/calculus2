@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "printer.h"
 
 namespace {
 	using namespace cas;

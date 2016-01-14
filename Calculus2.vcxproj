@@ -159,6 +159,7 @@
     <ClInclude Include="expr_list.h" />
     <ClInclude Include="functions.h" />
     <ClInclude Include="parser.h" />
+    <ClInclude Include="printer.h" />
     <ClInclude Include="symbolic.h" />
     <ClInclude Include="numeric.h" />
     <ClInclude Include="stdafx.h" />

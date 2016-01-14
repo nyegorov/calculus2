@@ -39,6 +39,9 @@ int main()
 	symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
 	numeric i{complex_t{0.0, 1.0}};
 
+	rational_t r(3, 4);
+	//cout << r << endl << mml(true) << r << endl;
+
 	run();
 	return 0;
 }
