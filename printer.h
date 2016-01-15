@@ -25,7 +25,7 @@ inline ostream& operator << (ostream& os, const rational_t& r) {
 	if(use_mml(os)) {
 		if(r.denom())	return os << (r.numer() < 0 ? "<mo>&minus;</mo>" : "") << "<mfrac><mn>" << abs(r.numer()) << "</mn><mn>" << r.denom() << "</mn></mfrac>";
 		if(r.numer() < 0) os << "<mo>&minus;</mo>"; 
-		return os << "<infinity/>";
+		return os << "<mn>&infin;</mn>";
 	} else {
 		if(r.denom() == 0)	return os << (r.numer() > 0 ? "inf" : "-inf");
 		return os << r.numer() << "/" << r.denom();
@@ -42,30 +42,34 @@ inline ostream& operator << (ostream& os, numeric n) {
 }
 
 inline ostream& operator << (ostream& os, symbol s) { 
-	if(use_mml(os)) return os << "<mi>" << s.name() << "</mi>";
+	if(use_mml(os)) {
+		if(s.name() == "#p")	return os << "<mi>&pi;</mi>";
+		if(s.name() == "#e")	return os << "<mi>e</mi>";
+		return os << "<mi>" << s.name() << "</mi>";
+	}
 	else			return os << s.name();
 }
-/*
-inline void print_xy(ostream& os, expr x, expr y) {
-	if(y == one)	os << x;
+
+inline void print_xn(ostream& os, expr x, int_t n) {
+	if(n == 1)	os << x;
 	else {
-		os << "<msup>" << x << y << "</msup>";
+		os << "<msup>" << x << "<mn>" << n << "</mn></msup>";
 	}
-}*/
+}
 
 inline ostream& operator << (ostream& os, power p) {
 	if(use_mml(os)) {
 		if(is<numeric, int_t>(p.y())) {
 			int n = as<numeric, int_t>(p.y());
-			if(n < 0)	return os << "<mfrac><mn>1</mn>" << "<msup>" << p.x() << "<mn>" << abs(n) << "</mn></msup></mfrac>";
-			else		return os << "<msup>" << p.x() << p.y() << "</msup>";
+			if(n < 0)	{ os << "<mfrac><mn>1</mn>"; print_xn(os, p.x(), abs(n)); return os << "</mfrac>"; }
+			else		return print_xn(os, p.x(), n), os;
 		} else if(is<numeric, rational_t>(p.y())) {
 			int_t d = as<numeric, rational_t>(p.y()).denom(), n = as<numeric, rational_t>(p.y()).numer();
 			if(n < 0)	os << "<mfrac><mn>1</mn>";
 			if(d == 2) {
-				os << "<msqrt><msup>" << p.x() << "<mn>" << abs(n) << "</mn></msup></msqrt>";
+				os << "<msqrt>"; print_xn(os, p.x(), abs(n)); os << "</msqrt>";
 			} else {
-				os << "<mroot><msup>" << p.x() << "<mn>" << abs(n) << "</mn></msup><mn>" << d << "</mn></mroot>";
+				os << "<mroot>"; print_xn(os, p.x(), abs(n)); os << "<mn>" << d << "</mn></mroot>";
 			}
 			if(n < 0)	os << "</mfrac>";
 			return os;
@@ -86,7 +90,7 @@ inline ostream& operator << (ostream& os, product p) {
 		os << "<mrow>";
 		if(p.left() == expr{-1})	os << "<mo>&minus;</mo>";
 		else						os << p.left();
-		os << "<mo>&InvisibleTimes;</mo>";
+		//os << "<mo>&it;</mo>";
 		return os << p.right() << "</mrow>";
 	} else {
 		if(p.left() == expr{-1})	os << '-'; else os << p.left();
@@ -121,12 +125,12 @@ inline ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return print_f
 inline ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return print_fun(os, "arccos", f.x()); }
 inline ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return print_fun(os, "arctg", f.x()); }
 inline ostream& operator << (ostream& os, fn_base<fn_int> f) { 
-	if(use_mml(os))	return os << "<mrow><mo>&#x222B;</mo>" << f[0] << f[1] << "</mrow>";
+	if(use_mml(os))	return os << "<mrow><mo>&int;</mo>" << f[0] << "<mi>d</mi>" << f[1] << "</mrow>";
 	else			return os << "int(" << f[0] << ',' << f[1] << ')'; 
 }
 inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
 	if(use_mml(os)) {
-		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << "<mrow><mi>" << as<func, fn_user>(f[0]).name() << "</mi>&prime;<mfenced>" << as<func, fn_user>(f[0]).args() << "</mfenced></mrow>";
+		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << "<mrow><mi>" << as<func, fn_user>(f[0]).name() << "</mi><mo>&prime;</mo><mfenced>" << as<func, fn_user>(f[0]).args() << "</mfenced></mrow>";
 		else																	return os << "<mfract><mrow><mi>d</mi>" << f[1] << "</mrow><mrow><mi>d</mi>" << f[0] << "</mrow></mfract>";
 	} else {
 		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'' << '(' << as<func, fn_user>(f[0]).args() << ')';
@@ -134,7 +138,7 @@ inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
 	}
 }
 inline ostream& operator << (ostream& os, fn_user f) { 
-	if(use_mml(os)) return print_fun(os, f.name().c_str(), f.x());
+	if(use_mml(os)) return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << f.args() << "</mfenced></mrow>";
 	else			return os << f.name() << '(' << f.args() << ')';
 }
 
@@ -165,9 +169,9 @@ inline ostream& operator << (ostream& os, complex_t c) {
 	if(use_mml(os)) {
 		os << "<mrow>";
 		if(abs(c.real()) >= std::numeric_limits<real_t>::epsilon())	os << "<mn>" << c.real() << "</mn><mo>" << (c.imag() > 0 ? "&plus;" : "&minus;") << "</mo>";
-		else if(c.imag() < 0)										os << "<mo>&minus;</mo><mrow>";
+		else if(c.imag() < 0)										os << "<mo>&minus;</mo>";
 		if(abs(c.imag()) != 1.)	os << "<mn>" << abs(c.imag()) << "</mn>";
-		return os << "<mo>&InvisibleTimes;</mo><mi>&ImaginaryI;</mi></mrow>";
+		return os << "<mi>&ImaginaryI;</mi></mrow>";
 	} else {
 		if(abs(c.real()) >= std::numeric_limits<real_t>::epsilon())	os << c.real() << (c.imag() > 0 ? '+' : '-');
 		else if(c.imag() < 0)										os << '-';

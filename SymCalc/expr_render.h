@@ -1,25 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-#include <functional>
-
-#pragma comment(lib, "msimg32.lib")
-
-#include "other/libreformath.h"
-#pragma comment(lib, "other/reformath/libreformath.lib")
-
-#define NANOSVG_IMPLEMENTATION
-#define NANOSVGRAST_IMPLEMENTATION
-#include "other/nanosvg.h"
-#include "other/nanosvgrast.h"
-#include "other/entities.h"
+#include "../calculus.h"
 
 using std::string;
-
-class expr
-{
-};
 
 typedef std::unique_ptr<NSVGimage, std::function<void(NSVGimage*)>> image_ptr;
 typedef std::unique_ptr<NSVGrasterizer, std::function<void(NSVGrasterizer*)>> rasterizer_ptr;
@@ -41,6 +24,13 @@ class expr_renderer
 {
 	rasterizer_ptr	_prasterizer;
 	mhandle_ptr		_mhandle;
+
+	string exp2mml(expr e)
+	{
+		std::ostringstream oss;
+		oss << mml(true) << e;
+		return oss.str();
+	}
 
 	string mml2svg(string mml)
 	{
@@ -99,11 +89,12 @@ public:
 	{
 	}
 
-	expr_info create(string text)
+	expr_info create(string src, expr e)
 	{
 		expr_info me;
-		me.text = text;
-		me.mml = text;
+		me.expr = e;
+		me.text = src;
+		me.mml = exp2mml(e);
 		me.svg = mml2svg(me.mml);
 		me.pimage = image_ptr(svg2img(me.svg), nsvgDelete);
 		return me;
@@ -111,6 +102,7 @@ public:
 
 	void render(const expr_info& me, HDC hdc, int x, int y)
 	{
+		if(me.pimage->shapes == nullptr)	return;
 		unsigned width = me.width();
 		unsigned height = me.height();
 		std::vector<uint32_t> image_data(width * height);

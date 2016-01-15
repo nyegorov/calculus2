@@ -5,6 +5,8 @@
 #include "symbolic.h"
 #include "derive.h"
 
+#include <algorithm>
+
 namespace cas {
 	
 inline expr symbol::subst(pair<expr, expr> s) const { 
@@ -63,18 +65,18 @@ inline unsigned power::exponents(const list_t& vars) const {
 				is<numeric, rational_t>(_y) ? (real_t)as<numeric, rational_t>(_y) :
 				is<numeric, real_t>(_y) ? as<numeric, real_t>(_y) : 9.;
 
-	int n = (int)(e > 1 ? std::min(99., e+70) : e > -1 ? e*20+50 : std::max(0., 30 + e));
+	int n = (int)(e > 1 ? std::min<>(99., e+70) : e > -1 ? e*20+50 : std::max<>(0., 30 + e));
 
 	for(auto c = get_exps(_x, vars), i = 0u; c; c /= 100, i++) {
-		res += pwr(100u, i) * std::min(99u, (c % 100) * n / 70);
+		res += pwr(100u, i) * std::min<>(99u, (c % 100) * n / 70);
 	}
 
 	return res; 
 }
 inline unsigned product::exponents(const list_t& vars) const { return get_exps(_left, vars) + get_exps(_right, vars); }
-inline unsigned sum::exponents(const list_t& vars) const { return std::max(get_exps(_left, vars), get_exps(_right, vars)); }
+inline unsigned sum::exponents(const list_t& vars) const { return std::max<>(get_exps(_left, vars), get_exps(_right, vars)); }
 inline unsigned xset::exponents(const list_t& vars) const { 
-	return std::accumulate(_items.begin(), _items.end(), 0u, [&vars](unsigned s, expr e) {return std::max(get_exps(e, vars), s); });
+	return std::accumulate(_items.begin(), _items.end(), 0u, [&vars](unsigned s, expr e) {return std::max<>(get_exps(e, vars), s); });
 }
 
 inline bool prod_comp::operator ()(const expr& left, const expr& right) const

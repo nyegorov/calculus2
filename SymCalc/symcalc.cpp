@@ -4,6 +4,12 @@
 #include "stdafx.h"
 #include "resource.h"
 
+#define NANOSVG_IMPLEMENTATION
+#define NANOSVGRAST_IMPLEMENTATION
+
+#include "other/nanosvg.h"
+#include "other/nanosvgrast.h"
+
 #include "MainDlg.h"
 
 CAppModule _Module;
