@@ -11,7 +11,8 @@ typedef std::unique_ptr<std::remove_pointer<mml_handle>::type, std::function<voi
 
 struct expr_info
 {
-	expr		expr;
+	expr		source;
+	expr		result;
 	string		text;
 	string		mml;
 	string		svg;
@@ -89,12 +90,13 @@ public:
 	{
 	}
 
-	expr_info create(string src, expr e)
+	expr_info create(string src, expr e, expr res)
 	{
 		expr_info me;
-		me.expr = e;
+		me.source = e;
+		me.result = res;
 		me.text = src;
-		me.mml = exp2mml(e);
+		me.mml = exp2mml(e) + "<mo>&rArr;</mo>" + exp2mml(res);
 		me.svg = mml2svg(me.mml);
 		me.pimage = image_ptr(svg2img(me.svg), nsvgDelete);
 		return me;

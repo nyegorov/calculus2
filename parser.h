@@ -18,7 +18,7 @@ namespace cas	{
 class Context
 {
 public:
-	Context(const Context *base);
+	Context(bool evaluate, const Context *base);
 	void Push()		{_locals.push_back(vars_t());}
 	void Pop()		{_locals.pop_back();}
 	expr& Get(const string& name, bool local = false);
@@ -72,7 +72,10 @@ private:
 class NScript
 {
 public:
-	NScript(const char* script = NULL, const Context *pcontext = NULL) : _context(pcontext)	{_parser.Init(script);}
+	NScript(bool evaluate = true, const char* script = NULL, const Context *pcontext = NULL) : _context(evaluate, pcontext)	{
+		_operators = evaluate ? &_operators_exec : &_operators_nonexec;
+		_parser.Init(script);
+	}
 	~NScript(void)						{};
 	expr eval(const char* script);
 
@@ -85,7 +88,10 @@ protected:
 	Context				_context;
 
 	typedef void OpFunc(expr& op1, expr& op2, expr& result);
-	static struct OpInfo {Parser::Token token; OpFunc* op;}	_operators[Term][10];
+	struct OpInfo { Parser::Token token; OpFunc* op; };
+	OpInfo (*_operators)[Term][10];
+	static OpInfo _operators_exec[Term][10];
+	static OpInfo _operators_nonexec[Term][10];
 };
 
 }

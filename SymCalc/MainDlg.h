@@ -178,9 +178,11 @@ public:
 
 	LRESULT OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 	{
-		ATL::CString text;
-		_inputCtrl.GetWindowTextW(text);
-		_history.push_back(_renderer.create(string(CW2A(text)), _parser.eval(CW2A(text))));
+		ATL::CString wtext;
+		_inputCtrl.GetWindowTextW(wtext);
+		NScript builder(false);
+		string text = CW2A(wtext);
+		_history.push_back(_renderer.create(text, builder.eval(text.c_str()), _parser.eval(text.c_str())));
 		_listCtrl.InsertString(-1, (LPCTSTR)(_history.size() - 1));
 		_listCtrl.SetCurSel(_listCtrl.GetCount() - 1);
 		return 0;

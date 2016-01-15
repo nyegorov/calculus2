@@ -28,9 +28,22 @@ extern CAppModule _Module;
 #include <atldlgs.h>
 #include <atlcrack.h>
 
-#include <memory>
-#include <vector>
+#include <assert.h>
+
+#include <algorithm>
+#include <complex>
 #include <functional>
+#include <iostream>
+#include <limits>
+#include <locale>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <boost/variant.hpp>
+#include <boost/math/constants/constants.hpp>
 
 #include "WtlAero.h"
 

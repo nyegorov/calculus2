@@ -125,18 +125,25 @@ inline ostream& operator << (ostream& os, fn_base<fn_arcsin> f) { return print_f
 inline ostream& operator << (ostream& os, fn_base<fn_arccos> f) { return print_fun(os, "arccos", f.x()); }
 inline ostream& operator << (ostream& os, fn_base<fn_arctg> f) { return print_fun(os, "arctg", f.x()); }
 inline ostream& operator << (ostream& os, fn_base<fn_int> f) { 
-	if(use_mml(os))	return os << "<mrow><mo>&int;</mo>" << f[0] << "<mi>d</mi>" << f[1] << "</mrow>";
-	else			return os << "int(" << f[0] << ',' << f[1] << ')'; 
+	if(use_mml(os)) {
+		if(f.size() == 4)
+			return os << "<mrow><munderover><mo>&int;</mo>" << f[2] << f[3] << "</munderover>" << f[0] << "<mspace width=\"thinmathspace\"/><mi>d</mi>" << f[1] << "</mrow>";
+		else
+			return os << "<mrow><mo>&int;</mo>" << f[0] << "<mspace width=\"thinmathspace\"/><mi>d</mi>" << f[1] << "</mrow>";
+	}	else
+		return os << "int(" << f[0] << ',' << f[1] << ')'; 
 }
+
 inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
 	if(use_mml(os)) {
 		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << "<mrow><mi>" << as<func, fn_user>(f[0]).name() << "</mi><mo>&prime;</mo><mfenced>" << as<func, fn_user>(f[0]).args() << "</mfenced></mrow>";
-		else																	return os << "<mfract><mrow><mi>d</mi>" << f[1] << "</mrow><mrow><mi>d</mi>" << f[0] << "</mrow></mfract>";
+		else																	return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << f[1] << "</mrow></mfrac>" << f[0] << "</mrow>";
 	} else {
 		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'' << '(' << as<func, fn_user>(f[0]).args() << ')';
 		else																	return os << "d/d" << f[1] << " " << f[0];
 	}
 }
+
 inline ostream& operator << (ostream& os, fn_user f) { 
 	if(use_mml(os)) return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << f.args() << "</mfenced></mrow>";
 	else			return os << f.name() << '(' << f.args() << ')';

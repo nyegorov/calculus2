@@ -9,12 +9,19 @@
 
 #include <stdio.h>
 #include <tchar.h>
+#include <assert.h>
 
-// TODO: reference additional headers your program requires here
-#include <boost\variant.hpp>
-#include <boost/math/constants/constants.hpp>
 #include <algorithm>
+#include <complex>
+#include <functional>
 #include <iostream>
+#include <limits>
+#include <locale>
+#include <memory>
 #include <sstream>
 #include <string>
-#include <complex>
+#include <unordered_set>
+#include <vector>
+
+#include <boost/variant.hpp>
+#include <boost/math/constants/constants.hpp>

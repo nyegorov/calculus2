@@ -17,6 +17,13 @@ void OpAssign(expr& op1, expr& op2, expr& result){
 	as<symbol>(op1) = op2;
 	result = op1;
 }
+
+void OpAddNE(expr& op1, expr& op2, expr& result) { result = sum{op1, op2}; }
+void OpSubNE(expr& op1, expr& op2, expr& result) { result = sum{op1, -op2}; }
+void OpMulNE(expr& op1, expr& op2, expr& result) { result = product{op1, op2}; }
+void OpDivNE(expr& op1, expr& op2, expr& result) { result = product{op1, op2 ^ -1}; }
+void OpPowNE(expr& op1, expr& op2, expr& result) { result = power{op1, op2}; }
+
 void OpAdd(expr& op1, expr& op2, expr& result)	{result = op1 + op2;}
 void OpSub(expr& op1, expr& op2, expr& result)	{result = op1 - op2;}
 void OpNeg(expr& op1, expr& op2, expr& result)	{ result = -op2; }
@@ -36,8 +43,25 @@ void OpCall(expr& op1, expr& op2, expr& result)	{
 	result = as<func, fn_user>(op1)(args);
 }
 
+void OpCallNE(expr& op1, expr& op2, expr& result) {
+	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
+	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
+	if(!is<func, fn_user>(op1))	throw error_t::syntax;
+	auto name = as<func, fn_user>(op1).name();
+	if(name == "ln")			result = func{fn_ln{op2}};
+	else if(name == "sin")		result = func{fn_sin{op2}};
+	else if(name == "cos")		result = func{fn_cos{op2}};
+	else if(name == "tg")		result = func{fn_tg{op2}};
+	else if(name == "arcsin")	result = func{fn_arcsin{op2}};
+	else if(name == "arccos")	result = func{fn_arccos{op2}};
+	else if(name == "arctg")	result = func{fn_arctg{op2}};
+	else if(name == "df")		result = func{fn_dif{op2}};
+	else if(name == "int")		result = func{fn_int{op2}};
+	else						result = fn(name, empty, args.items());
+}
+
 Context::vars_t	Context::_globals;
-Context::Context(const Context *base) : _locals(1)
+Context::Context(bool evaluate, const Context *base) : _locals(1)
 {
 	if(base)	
 		_locals.assign(base->_locals.begin(), base->_locals.end());
@@ -87,7 +111,7 @@ bool Context::Get(const string& name, expr& result) const
 }
 
 // Operator precedence
-NScript::OpInfo NScript::_operators[Term][10] = {
+NScript::OpInfo NScript::_operators_exec[Term][10] = {
 	{{Parser::comma,	&OpNull},	{Parser::end, NULL}},
 	{{Parser::not,		&OpApp},	{Parser::end, NULL}},
 	{{Parser::assign,	&OpAssign},	{Parser::end, NULL}},
@@ -97,6 +121,18 @@ NScript::OpInfo NScript::_operators[Term][10] = {
 	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
 	{{Parser::pwr,		&OpPow},	{Parser::end, NULL}},
 	{{Parser::lpar,		&OpCall},	{Parser::end, NULL}},
+};
+
+NScript::OpInfo NScript::_operators_nonexec[Term][10] = {
+	{{Parser::comma,	&OpNull},{Parser::end, NULL}},
+	{{Parser::not,		&OpApp},{Parser::end, NULL}},
+	{{Parser::assign,	&OpAssign},{Parser::end, NULL}},
+	{{Parser:: or ,		&OpSubst},{Parser::end, NULL}},
+	{{Parser::plus,		&OpAddNE},{Parser::minus,	&OpSub},{Parser::end, NULL}},
+	{{Parser::multiply,	&OpMulNE},{Parser::divide,&OpDiv},{Parser::end, NULL}},
+	{{Parser::minus,	&OpNeg},{Parser::end, NULL}},
+	{{Parser::pwr,		&OpPowNE},{Parser::end, NULL}},
+	{{Parser::lpar,		&OpCallNE},{Parser::end, NULL}},
 };
 
 expr NScript::eval(const char* script)
@@ -175,7 +211,7 @@ void NScript::Parse(Precedence level, expr& result)
 		if(!is_unary)	Parse((Precedence)((int)level+1), result);
 again:
 		if(_parser.GetToken() == Parser::end)	return;
-		for(OpInfo *pinfo = _operators[level];pinfo->op;pinfo++)	{
+		for(OpInfo *pinfo = (*_operators)[level];pinfo->op;pinfo++)	{
 			token = pinfo->token;
 			if(token == _parser.GetToken())	{
 				if(token != Parser::lpar)	_parser.Next();
