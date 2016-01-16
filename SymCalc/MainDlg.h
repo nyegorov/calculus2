@@ -185,6 +185,7 @@ public:
 		_history.push_back(_renderer.create(text, builder.eval(text.c_str()), _parser.eval(text.c_str())));
 		_listCtrl.InsertString(-1, (LPCTSTR)(_history.size() - 1));
 		_listCtrl.SetCurSel(_listCtrl.GetCount() - 1);
+		_inputCtrl.SetSel(0, -1, FALSE);
 		return 0;
 	}
 

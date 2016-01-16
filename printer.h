@@ -5,16 +5,30 @@
 
 namespace cas {
 
-inline int get_idx() {
+enum class pwr_print {def = 0, pos = 1, neg = 2};
+
+inline int get_fmt_idx() {
 	static int i = std::ios_base::xalloc();
 	return i;
 }
 
-inline ostream& fmt_mml(ostream& os) { os.iword(get_idx()) = 1; return os; }
-inline ostream& fmt_plain(ostream& os) { os.iword(get_idx()) = 0; return os; }
+inline int get_pwr_idx() {
+	static int i = std::ios_base::xalloc();
+	return i;
+}
+
+inline ostream& fmt_mml(ostream& os) { os.iword(get_fmt_idx()) = 1; return os; }
+inline ostream& fmt_plain(ostream& os) { os.iword(get_fmt_idx()) = 0; return os; }
+
+inline ostream& pwr_pos(ostream& os) { os.iword(get_pwr_idx()) = (long)pwr_print::pos; return os; }
+inline ostream& pwr_neg(ostream& os) { os.iword(get_pwr_idx()) = (long)pwr_print::neg; return os; }
+inline ostream& pwr_def(ostream& os) { os.iword(get_pwr_idx()) = (long)pwr_print::def; return os; }
 
 const auto mml = [](bool use_mml) -> decltype(&fmt_mml) {return use_mml ? fmt_mml : fmt_plain; };
-inline bool use_mml(ostream& os) { return os.iword(get_idx()) != 0; }
+inline bool use_mml(ostream& os) { return os.iword(get_fmt_idx()) != 0; }
+inline pwr_print pwr_type(ostream& os) { return (pwr_print)os.iword(get_fmt_idx()); }
+
+template <class T> ostream& mml_fence(ostream& os, bool fence, T lambda) { if(fence) os << "<mfenced>"; lambda(); if(fence) os << "</mfenced>"; return os; }
 
 inline ostream& operator << (ostream& os, error e) {
 	if(use_mml(os)) return os << "<merror><mtext>" << error_msgs[(int)e.get()] << "</mtext></merror>";
@@ -51,18 +65,15 @@ inline ostream& operator << (ostream& os, symbol s) {
 }
 
 inline void print_xn(ostream& os, expr x, int_t n) {
-	if(n == 1)	os << x;
-	else {
-		os << "<msup>" << x << "<mn>" << n << "</mn></msup>";
-	}
+	os << "<msup>" << x << "<mn>" << n << "</mn></msup>";
 }
 
 inline ostream& operator << (ostream& os, power p) {
 	if(use_mml(os)) {
 		if(is<numeric, int_t>(p.y())) {
 			int n = as<numeric, int_t>(p.y());
-			if(n < 0)	{ os << "<mfrac><mn>1</mn>"; print_xn(os, p.x(), abs(n)); return os << "</mfrac>"; }
-			else		return print_xn(os, p.x(), n), os;
+			if(n  == -1)	return os << "<mfrac><mn>1</mn>" << p.x() << "</mfrac>";
+			if(n < 0)		return os << "<mfrac><mn>1</mn><msup>" << p.x() << "<mn>" << abs(n) << "</mn></msup></mfrac>";
 		} else if(is<numeric, rational_t>(p.y())) {
 			int_t d = as<numeric, rational_t>(p.y()).denom(), n = as<numeric, rational_t>(p.y()).numer();
 			if(n < 0)	os << "<mfrac><mn>1</mn>";
@@ -73,9 +84,8 @@ inline ostream& operator << (ostream& os, power p) {
 			}
 			if(n < 0)	os << "</mfrac>";
 			return os;
-		} else {
-			return os << "<msup>" << p.x() << p.y() << "</msup>";
 		}
+		return os << "<msup>" << p.x() << p.y() << "</msup>";
 	} else {
 		if(is<sum>(p.x()) || is<product>(p.x())) os << '(' << p.x() << ')'; else os << p.x();
 		os << '^';
@@ -88,10 +98,13 @@ inline ostream& operator << (ostream& os, power p) {
 inline ostream& operator << (ostream& os, product p) {
 	if(use_mml(os)) {
 		os << "<mrow>";
-		if(p.left() == expr{-1})	os << "<mo>&minus;</mo>";
-		else						os << p.left();
-		//os << "<mo>&it;</mo>";
-		return os << p.right() << "</mrow>";
+		mml_fence(os, is<sum>(p.left()), [&]() {
+			if(p.left() == expr{-1})	os << "<mo>&minus;</mo>";
+			else						os << p.left();
+		});
+		//if(!is<numeric>(p.left()))	os << "<mo>&dot;</mo>";
+		mml_fence(os, is<sum>(p.right()), [&]() {os << p.right(); });
+		return os << "</mrow>";
 	} else {
 		if(p.left() == expr{-1})	os << '-'; else os << p.left();
 		return os << p.right();
@@ -142,6 +155,23 @@ inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
 		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'' << '(' << as<func, fn_user>(f[0]).args() << ')';
 		else																	return os << "d/d" << f[1] << " " << f[0];
 	}
+}
+
+inline ostream& operator << (ostream& os, fn_base<fn_assign> f) {
+	if(use_mml(os)) {
+		return os << "<mrow>" << f[0] << "<mo>=</mo>" << f[1] << "</mrow>";
+	} else
+		return os << f[0] << '=' << f[1];
+}
+
+inline ostream& operator << (ostream& os, fn_base<fn_subst> f) {
+	auto subs = f[1];
+	if(!is<xset>(subs) || as<xset>(subs).items().size() != 2)	return os;
+	auto& s = as<xset>(subs).items();
+	if(use_mml(os)) {
+		return os << "<mrow><msub><mrow>" << f[0] << "<mo stretchy=\"true\">|</mo></mrow><mrow>" << s[0] << "<mo>=</mo>" << s[1] << "</mrow></msub></mrow>";
+	} else
+		return os << f[0] << '|' << s[0] << '=' << s[1];
 }
 
 inline ostream& operator << (ostream& os, fn_user f) { 

@@ -96,7 +96,7 @@ public:
 		me.source = e;
 		me.result = res;
 		me.text = src;
-		me.mml = exp2mml(e) + "<mo>&rArr;</mo>" + exp2mml(res);
+		me.mml = exp2mml(e) + (src.find('~') == string::npos ? "<mo mathcolor=\"red\">&rArr;</mo>" : "<mo>&asymp;</mo>") + exp2mml(res);
 		me.svg = mml2svg(me.mml);
 		me.pimage = image_ptr(svg2img(me.svg), nsvgDelete);
 		return me;

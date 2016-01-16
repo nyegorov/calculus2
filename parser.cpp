@@ -12,37 +12,15 @@ namespace cas	{
 
 // Operators
 
-void OpAssign(expr& op1, expr& op2, expr& result){
-	if(!is<symbol>(op1))	throw error_t::syntax;
-	as<symbol>(op1) = op2;
-	result = op1;
-}
-
 void OpAddNE(expr& op1, expr& op2, expr& result) { result = sum{op1, op2}; }
 void OpSubNE(expr& op1, expr& op2, expr& result) { result = sum{op1, -op2}; }
 void OpMulNE(expr& op1, expr& op2, expr& result) { result = product{op1, op2}; }
-void OpDivNE(expr& op1, expr& op2, expr& result) { result = product{op1, op2 ^ -1}; }
+void OpDivNE(expr& op1, expr& op2, expr& result) { result = op1 == one ? op2 ^ -1 : product{op1, op2 ^ -1}; }
 void OpPowNE(expr& op1, expr& op2, expr& result) { result = power{op1, op2}; }
+void OpAppNE(expr& op1, expr& op2, expr& result) { result = op2; }
 
-void OpAdd(expr& op1, expr& op2, expr& result)	{result = op1 + op2;}
-void OpSub(expr& op1, expr& op2, expr& result)	{result = op1 - op2;}
-void OpNeg(expr& op1, expr& op2, expr& result)	{ result = -op2; }
-void OpMul(expr& op1, expr& op2, expr& result)	{result = op1 * op2;}
-void OpDiv(expr& op1, expr& op2, expr& result)	{result = op1 / op2;}
-void OpPow(expr& op1, expr& op2, expr& result)	{result = op1 ^ op2;}
-void OpApp(expr& op1, expr& op2, expr& result)	{result = ~op2;}
-void OpNull(expr& op1, expr& op2, expr& result)	{}
-void OpSubst(expr& op1, expr& op2, expr& result){
-	if(!is<xset>(op2) || as<xset>(op2).items().size() != 2)	throw error_t::syntax;
-	result = cas::subst(op1, as<xset>(op2).items()[0], as<xset>(op2).items()[1]);
-}
-void OpCall(expr& op1, expr& op2, expr& result)	{
-	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
-	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
-	if(!is<func, fn_user>(op1))	throw error_t::syntax;
-	result = as<func, fn_user>(op1)(args);
-}
-
+void OpSubstNE(expr& op1, expr& op2, expr& result) { result = func{fn_subst{xset{op1, op2}}}; }
+void OpAssignNE(expr& op1, expr& op2, expr& result) { result = func{fn_assign{xset{op1, op2}}}; }
 void OpCallNE(expr& op1, expr& op2, expr& result) {
 	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
 	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
@@ -58,6 +36,32 @@ void OpCallNE(expr& op1, expr& op2, expr& result) {
 	else if(name == "df")		result = func{fn_dif{op2}};
 	else if(name == "int")		result = func{fn_int{op2}};
 	else						result = fn(name, empty, args.items());
+}
+
+
+void OpAdd(expr& op1, expr& op2, expr& result)	{result = op1 + op2;}
+void OpSub(expr& op1, expr& op2, expr& result)	{result = op1 - op2;}
+void OpNeg(expr& op1, expr& op2, expr& result)	{ result = -op2; }
+void OpMul(expr& op1, expr& op2, expr& result)	{result = op1 * op2;}
+void OpDiv(expr& op1, expr& op2, expr& result)	{result = op1 / op2;}
+void OpPow(expr& op1, expr& op2, expr& result)	{result = op1 ^ op2;}
+void OpApp(expr& op1, expr& op2, expr& result)	{result = ~op2;}
+void OpNull(expr& op1, expr& op2, expr& result)	{}
+void OpSubst(expr& op1, expr& op2, expr& result){
+	if(!is<xset>(op2) || as<xset>(op2).items().size() != 2)	throw error_t::syntax;
+	result = cas::subst(op1, as<xset>(op2).items()[0], as<xset>(op2).items()[1]);
+}
+void OpAssign(expr& op1, expr& op2, expr& result) {
+	if(!is<symbol>(op1))	throw error_t::syntax;
+	as<symbol>(op1) = op2;
+	result = op1;
+}
+
+void OpCall(expr& op1, expr& op2, expr& result)	{
+	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
+	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
+	if(!is<func, fn_user>(op1))	throw error_t::syntax;
+	result = as<func, fn_user>(op1)(args);
 }
 
 Context::vars_t	Context::_globals;
@@ -118,21 +122,21 @@ NScript::OpInfo NScript::_operators_exec[Term][10] = {
 	{{Parser::or,		&OpSubst},	{Parser::end, NULL}},
 	{{Parser::plus,		&OpAdd},	{Parser::minus,	&OpSub},	{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMul},	{Parser::divide,&OpDiv},	{Parser::end, NULL}},
-	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
 	{{Parser::pwr,		&OpPow},	{Parser::end, NULL}},
+	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
 	{{Parser::lpar,		&OpCall},	{Parser::end, NULL}},
 };
 
 NScript::OpInfo NScript::_operators_nonexec[Term][10] = {
-	{{Parser::comma,	&OpNull},{Parser::end, NULL}},
-	{{Parser::not,		&OpApp},{Parser::end, NULL}},
-	{{Parser::assign,	&OpAssign},{Parser::end, NULL}},
-	{{Parser:: or ,		&OpSubst},{Parser::end, NULL}},
-	{{Parser::plus,		&OpAddNE},{Parser::minus,	&OpSub},{Parser::end, NULL}},
-	{{Parser::multiply,	&OpMulNE},{Parser::divide,&OpDiv},{Parser::end, NULL}},
-	{{Parser::minus,	&OpNeg},{Parser::end, NULL}},
-	{{Parser::pwr,		&OpPowNE},{Parser::end, NULL}},
-	{{Parser::lpar,		&OpCallNE},{Parser::end, NULL}},
+	{{Parser::comma,	&OpNull},	{Parser::end, NULL}},
+	{{Parser::not,		&OpAppNE},	{Parser::end, NULL}},
+	{{Parser::assign,	&OpAssignNE},{Parser::end, NULL}},
+	{{Parser::or ,		&OpSubstNE},{Parser::end, NULL}},
+	{{Parser::plus,		&OpAddNE},	{Parser::minus,	&OpSubNE},{Parser::end, NULL}},
+	{{Parser::multiply,	&OpMulNE},	{Parser::divide,&OpDivNE},{Parser::end, NULL}},
+	{{Parser::pwr,		&OpPowNE},	{Parser::end, NULL}},
+	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
+	{{Parser::lpar,		&OpCallNE},	{Parser::end, NULL}},
 };
 
 expr NScript::eval(const char* script)
@@ -165,7 +169,8 @@ void NScript::ParseVar(expr& result)
 	if(_parser.GetToken() == Parser::setvar)	{
 		_parser.Next(); 
 		Parse(Assignment, result); 
-		_context.Set(name, params.empty() ? result : fn(name, result, params));
+		if(_evaluate)	_context.Set(name, params.empty() ? result : fn(name, result, params));
+		else			result = func{fn_assign{xset{params.empty() ? name : fn(name, empty, params), result}}};
 	}	else	{
 		result = _context.Get(name);
 	}

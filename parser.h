@@ -73,6 +73,7 @@ class NScript
 {
 public:
 	NScript(bool evaluate = true, const char* script = NULL, const Context *pcontext = NULL) : _context(evaluate, pcontext)	{
+		_evaluate = evaluate;
 		_operators = evaluate ? &_operators_exec : &_operators_nonexec;
 		_parser.Init(script);
 	}
@@ -80,12 +81,13 @@ public:
 	expr eval(const char* script);
 
 protected:
-	enum Precedence	{Statement, Approx, Assignment, Subst, Addition,Multiplication,Unary,Power,Functional,Primary,Term};
+	enum Precedence	{Statement, Approx, Assignment, Subst, Addition,Multiplication,Power,Unary,Functional,Primary,Term};
 	void Parse(Precedence level, expr& result);
 	void ParseVar(expr& result);
 
 	Parser				_parser;
 	Context				_context;
+	bool				_evaluate;
 
 	typedef void OpFunc(expr& op1, expr& op2, expr& result);
 	struct OpInfo { Parser::Token token; OpFunc* op; };

@@ -33,6 +33,8 @@ struct fn_arccos;
 struct fn_arctg;
 struct fn_int;
 struct fn_dif;
+struct fn_assign;
+struct fn_subst;
 struct fn_user;
 
 typedef int int_t;
@@ -40,7 +42,7 @@ typedef double real_t;
 typedef std::complex<real_t> complex_t;
 
 typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
-typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_user, fn_int, fn_dif> function_t;
+typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_user, fn_int, fn_dif, fn_assign, fn_subst> function_t;
 typedef boost::variant<
 	error,
 	numeric,
@@ -268,7 +270,9 @@ struct fn_arccos : public fn_base<fn_arccos> { using fn_base::fn_base; };
 struct fn_arctg : public fn_base<fn_arctg> { using fn_base::fn_base; };
 struct fn_int : public fn_base<fn_int> { using fn_base::fn_base; };
 struct fn_dif : public fn_base<fn_dif> { using fn_base::fn_base; };
-struct fn_user : public fn_base<fn_user> { 
+struct fn_assign : public fn_base<fn_assign> { using fn_base::fn_base; };
+struct fn_subst : public fn_base<fn_subst> { using fn_base::fn_base; };
+struct fn_user : public fn_base<fn_user> {
 	fn_user(expr x) : fn_base(x) {}
 	fn_user(string name, expr body, list_t args);
 	string name() const;

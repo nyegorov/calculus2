@@ -87,6 +87,19 @@ template<> static expr fn_base<fn_dif>::make(expr p) {
 	return df(f, dx);
 }
 
+template<> static expr fn_base<fn_assign>::make(expr p) { 
+	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
+	auto& params = as<xset>(p).items();
+	return params[1];
+};
+template<> static expr fn_base<fn_subst>::make(expr p) { 
+	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
+	auto& params = as<xset>(p).items();
+	if(!is<xset>(params[1]) || as<xset>(params[1]).items().size() != 2)	throw error_t::syntax;
+	return cas::subst(params[0], as<xset>(params[1]).items()[0], as<xset>(params[1]).items()[1]);
+};
+
+
 inline expr make_integral(expr f, expr dx)
 {
 	//return fn_base<fn_int>::make(list_t{f, dx});
@@ -136,6 +149,8 @@ template<> expr inline fn_base<fn_arcsin>::approx() const { return apply_fun(~_x
 template<> expr inline fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
 template<> expr inline fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
 template<> expr inline fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
+template<> expr inline fn_base<fn_assign>::approx() const { return make(~_x); }
+template<> expr inline fn_base<fn_subst>::approx() const { return make(~_x); }
 
 inline expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.value()); }
 
