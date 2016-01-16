@@ -65,7 +65,8 @@ inline ostream& operator << (ostream& os, symbol s) {
 }
 
 inline void print_xn(ostream& os, expr x, int_t n) {
-	os << "<msup>" << x << "<mn>" << n << "</mn></msup>";
+	if(n == 1)	os << x;
+	else		os << "<msup>" << x << "<mn>" << n << "</mn></msup>";
 }
 
 inline ostream& operator << (ostream& os, power p) {
