@@ -116,7 +116,7 @@ public:
 		pLoop->AddIdleHandler(this);
 
 		UIAddChildWindowContainer(m_hWnd);
-
+		
 		return TRUE;
 	}
 
@@ -161,6 +161,7 @@ public:
 
 	void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	{
+		if(lpDrawItemStruct->itemData >= _history.size())	return;
 		auto& ei = _history[lpDrawItemStruct->itemData];
 		HDC hDCPaint;
 

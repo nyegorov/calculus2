@@ -31,6 +31,7 @@ inline expr make_power(expr x, expr y) {
 	if(x == zero)		return zero;				// 0ⁿ ⇒ 0
 	if(y == one)		return x;					// x¹ ⇒ x
 	if(x == one)		return one;					// 1ⁿ ⇒ 1
+	if(x == e && is<func, fn_ln>(y))		return as<func, fn_ln>(y).x();	// eˡⁿ⁽ˣ⁾ ⇒ x
 	return power{x, y};
 }
 
@@ -87,14 +88,27 @@ inline expr make_xset(std::initializer_list<expr> items)
 	return xset{items};
 }
 
+
+template<class T> struct is_algebraic : std::false_type {};
+template<> struct is_algebraic<int_t> : std::true_type  {};
+template<> struct is_algebraic<real_t> : std::true_type {};
+template<> struct is_algebraic<rational_t> : std::true_type {};
+template<> struct is_algebraic<complex_t> : std::true_type {};
+template<> struct is_algebraic<string> : std::true_type {};
+template<> struct is_algebraic<error> : std::true_type {};
+template<> struct is_algebraic<numeric> : std::true_type {};
+template<> struct is_algebraic<symbol> : std::true_type {};
+template<> struct is_algebraic<func> : std::true_type {};
+template<> struct is_algebraic<power> : std::true_type {};
+template<> struct is_algebraic<product> : std::true_type {};
+template<> struct is_algebraic<sum> : std::true_type {};
+template<> struct is_algebraic<xset> : std::true_type {};
+
 // Addition
-template<typename T, typename U> typename enable_if<!is_same<T, expr>::value && !is_same<U, expr>::value, expr>::type operator + (T lh, U rh) { return make_sum(lh, rh); }
+template<typename T, typename U> typename enable_if<is_algebraic<T>::value && is_algebraic<U>::value, expr>::type operator + (T lh, U rh) { return make_sum(lh, rh); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (T e, sum s) { return s.append(e); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (sum s, T e) { return s.append(e); }
 inline expr operator + (sum s, sum a) { return s.append(a.left()) + a.right(); }
-//template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (T e, sum s) { s.append(e); return s.left() == zero ? s.right() : s; }
-//template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator + (sum s, T e) { s.append(e); return s.left() == zero ? s.right() : s; }
-//inline expr operator + (sum s, sum a) { for(auto& e : a) s.append(e);	return s.left() == zero ? s.right() : s; }
 inline expr operator + (power lh, power rh) {
 	if(lh.y() == two && rh.y() == two) {			// sin²(x)+cos²(x)=1
 		if(is<func, fn_sin>(lh.x()) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh.x()).x() == as<func, fn_cos>(rh.x()).x())	return one;
@@ -104,7 +118,7 @@ inline expr operator + (power lh, power rh) {
 }
 
 // Product
-template<typename T, typename U> typename enable_if<!is_same<T, expr>::value && !is_same<U, expr>::value, expr>::type operator * (T lh, U rh) { return make_prod(lh, rh); }
+template<typename T, typename U> typename enable_if<is_algebraic<T>::value && is_algebraic<U>::value, expr>::type operator * (T lh, U rh) { return make_prod(lh, rh); }
 template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (T e, product s) { s.append_old(e); return s.left() == one ? s.right() : s; }
 template<typename T> typename enable_if<!is_same<T, expr>::value && !is_same<T, sum>::value, expr>::type operator * (product s, T e) { s.append_old(e); return s.left() == one ? s.right() : s; }
 inline expr operator * (product s, product a) { for(auto& e : a) s.append_old(e);	return s.left() == one ? s.right() : s; }
@@ -113,7 +127,7 @@ template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type op
 inline expr operator * (sum lh, sum rh) { return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right(); }
 
 // Power
-template<typename T, typename U> typename enable_if<!is_same<T, expr>::value, expr>::type operator ^ (T x, U y) { return make_power(x, y); }
+template<typename T, typename U> typename enable_if<is_algebraic<T>::value, expr>::type operator ^ (T x, U y) { return make_power(x, y); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator ^ (power p, T y) { return make_power(p.x(), p.y() * expr{y}); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator ^ (product p, T y) { return (p.left() ^ y) * (p.right() ^ y); }
 inline expr operator ^ (sum s, numeric num) {

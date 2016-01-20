@@ -44,6 +44,7 @@ extern CAppModule _Module;
 
 #include <boost/variant.hpp>
 #include <boost/math/constants/constants.hpp>
+#include <boost/format.hpp>
 
 #include "WtlAero.h"
 

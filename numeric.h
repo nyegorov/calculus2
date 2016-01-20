@@ -46,8 +46,8 @@ namespace cas {
 	inline expr make_num(int_t numer, int_t denom) {
 		normalize(numer, denom);
 		if(numer == denom)	return 1;
-		if(denom == 1) 		return{numer};
 		if(denom < 0)		numer = -numer, denom = -denom;
+		if(denom == 1) 		return{numer};
 		return numeric_t{rational_t{numer, denom}};
 	}
 	inline expr make_num(real_t value) { if(value - (int_t)value == 0) return numeric_t{(int_t)value}; else return numeric_t{value}; }

@@ -107,7 +107,7 @@ inline expr make_integral(expr f, expr dx)
 }
 
 // User-defined functions
-inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{name, body, args}) {}
+inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{symbol{name}, body, args}) {}
 inline string fn_user::name() const { return as<symbol>((*this)[0]).name(); }
 inline expr fn_user::body() const { return (*this)[1]; }
 inline list_t fn_user::args() const { return as<xset>((*this)[2]).items(); }

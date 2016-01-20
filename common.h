@@ -57,6 +57,7 @@ typedef boost::variant<
 typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
 
+enum class print_type { all = 0, num = 1, den = 2 };
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
 static const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Syntax error", "Empty"};
 
@@ -149,7 +150,7 @@ class symbol
 	string	_name;
 	expr	_value;
 public:
-	symbol(string name) : _name(name), _value(error_t::empty) {}
+	explicit symbol(string name) : _name(name), _value(error_t::empty) {}
 	symbol(string name, expr value) : _name(name), _value(value) {}
 	string name() const { return _name; }
 	expr value() const { return _value; }
@@ -225,8 +226,10 @@ public:
 
 inline bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
 inline bool operator < (sum lh, sum rh) { return lh.right() == rh.right() ? lh.left() < rh.left() : lh.right() < rh.right(); }
+bool print_part(ostream& os, print_type type);
 inline ostream& operator << (ostream& os, sum s) {
 	if(use_mml(os)) {
+		if(print_part(os, print_type::den))	return os;
 		os << "<mrow>" << s.left();
 		if(!has_sign(s.right()))	os << "<mo>&plus;</mo>";
 		return os << s.right() << "</mrow>";

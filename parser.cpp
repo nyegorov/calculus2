@@ -13,9 +13,18 @@ namespace cas	{
 // Operators
 
 void OpAddNE(expr& op1, expr& op2, expr& result) { result = sum{op1, op2}; }
+void OpNegNE(expr& op1, expr& op2, expr& result) { result = product{minus_one, op2}; }
 void OpSubNE(expr& op1, expr& op2, expr& result) { result = sum{op1, -op2}; }
-void OpMulNE(expr& op1, expr& op2, expr& result) { result = product{op1, op2}; }
-void OpDivNE(expr& op1, expr& op2, expr& result) { result = op1 == one ? op2 ^ -1 : product{op1, op2 ^ -1}; }
+void OpMulNE(expr& op1, expr& op2, expr& result) { 
+	if(is<product>(op1)) {
+		auto p = as<product>(op1);
+		result = product{p.left(), product{p.right(), op2}};
+	}	else
+		result = product{op1, op2}; 
+}
+void OpDivNE(expr& op1, expr& op2, expr& result) { 
+	if(op1 == one)	result = power{op2, -1}; else OpMulNE(op1, expr{power{op2, -1}}, result);
+}
 void OpPowNE(expr& op1, expr& op2, expr& result) { result = power{op1, op2}; }
 void OpAppNE(expr& op1, expr& op2, expr& result) { result = op2; }
 
@@ -102,7 +111,7 @@ expr& Context::Get(const string& name, bool local)
 			if(p != plane.end()) return	p->second;
 		}
 	}
-	return _locals.back()[name] = symbol{name};
+	return _locals.back()[name] = symbol{name.c_str()};
 }
 
 bool Context::Get(const string& name, expr& result) const
@@ -135,7 +144,7 @@ NScript::OpInfo NScript::_operators_nonexec[Term][10] = {
 	{{Parser::plus,		&OpAddNE},	{Parser::minus,	&OpSubNE},{Parser::end, NULL}},
 	{{Parser::multiply,	&OpMulNE},	{Parser::divide,&OpDivNE},{Parser::end, NULL}},
 	{{Parser::pwr,		&OpPowNE},	{Parser::end, NULL}},
-	{{Parser::minus,	&OpNeg},	{Parser::end, NULL}},
+	{{Parser::minus,	&OpNegNE},	{Parser::end, NULL}},
 	{{Parser::lpar,		&OpCallNE},	{Parser::end, NULL}},
 };
 
@@ -170,7 +179,7 @@ void NScript::ParseVar(expr& result)
 		_parser.Next(); 
 		Parse(Assignment, result); 
 		if(_evaluate)	_context.Set(name, params.empty() ? result : fn(name, result, params));
-		else			result = func{fn_assign{xset{params.empty() ? name : fn(name, empty, params), result}}};
+		else			result = func{fn_assign{xset{params.empty() ? symbol{name} : fn(name, empty, params), result}}};
 	}	else	{
 		result = _context.Get(name);
 	}
