@@ -92,13 +92,14 @@ public:
 
 	expr_info create(string src, expr e, expr res)
 	{
+		const char header[] = "<math xmlns='http://www.w3.org/1998/Math/MathML'>", footer[] = "</math>";
 		expr_info me;
 		me.source = e;
 		me.result = res;
 		me.text = src;
 		auto mml_src = exp2mml(e);
 		auto mml_res = exp2mml(res);
-		me.mml = mml_src + (src.find('~') == string::npos ? "<mo mathcolor=\"red\">&rArr;</mo>" : "<mo>&asymp;</mo>") + mml_res;
+		me.mml = mml_src + (src.find('~') == string::npos ? "<mo mathcolor='red'>&rArr;</mo>" : "<mo>&asymp;</mo>") + mml_res;
 		me.svg = mml2svg(me.mml);
 		me.pimage = image_ptr(svg2img(me.svg), nsvgDelete);
 		return me;

@@ -223,7 +223,7 @@ inline ostream& operator << (ostream& os, fn_base<fn_subst> f) {
 	auto& s = as<xset>(subs).items();
 	if(use_mml(os)) {
 		if(print_part(os, print_type::den))					return os;
-		return os << "<mrow><msub><mrow>" << f[0] << "<mo form=\"postfix\">|</mo></mrow><mrow>" << s[0] << "<mo>=</mo>" << s[1] << "</mrow></msub></mrow>";
+		return os << "<mrow><msub><mfenced open='' close='|'>" << f[0] << "</mfenced><mrow>" << s[0] << "<mo>=</mo>" << s[1] << "</mrow></msub></mrow>";
 	} else
 		return os << f[0] << '|' << s[0] << '=' << s[1];
 }
