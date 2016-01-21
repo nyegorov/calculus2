@@ -1,6 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
+  <Type Name="cas::error">
+    <DisplayString>[{_error}]</DisplayString>
+  </Type>
+
+  <Type Name="cas::numeric">
+    <DisplayString>{_value}</DisplayString>
+  </Type>
+
+  <Type Name="cas::rational_t">
+    <DisplayString>{{{_numer}/{_denom}}}</DisplayString>
+  </Type>
+
+  <Type Name="cas::fn_id"><DisplayString>id({_x})</DisplayString></Type>
+  <Type Name="cas::fn_ln"><DisplayString>ln({_x})</DisplayString></Type>
+  <Type Name="cas::fn_sin"><DisplayString>sin({_x})</DisplayString></Type>
+  <Type Name="cas::fn_cos"><DisplayString>cos({_x})</DisplayString></Type>
+  <Type Name="cas::fn_tg"><DisplayString>tg({_x})</DisplayString></Type>
+  <Type Name="cas::fn_arcsin"><DisplayString>arcsin({_x})</DisplayString></Type>
+  <Type Name="cas::fn_arccos"><DisplayString>arccos({_x})</DisplayString></Type>
+  <Type Name="cas::fn_arctg"><DisplayString>arctg({_x})</DisplayString></Type>
+  <Type Name="cas::fn_df"><DisplayString>df{_x}</DisplayString></Type>
+  <Type Name="cas::fn_int"><DisplayString>int{_x}</DisplayString></Type>
+  <Type Name="cas::fn_assign"><DisplayString>assign{_x}</DisplayString></Type>
+  <Type Name="cas::fn_subst"><DisplayString>subst{_x}</DisplayString></Type>
+  <Type Name="cas::fn_user">
+    <DisplayString>{(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[0]}{(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[2]}: {(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[1]}</DisplayString>
+    <Expand>
+      <Item Name="[name]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[0]</Item>
+      <Item Name="[args]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[2]</Item>
+      <Item Name="[body]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[1]</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="cas::func">
+    <DisplayString>{_func}</DisplayString>
+    <Expand>
+      <Item Name="[func]">_func</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="cas::symbol">
+    <DisplayString Condition="_value.which_ == 0">{_name,sb}</DisplayString>
+    <DisplayString Condition="_value.which_ != 0">{_name,sb}:{_value}</DisplayString>
+  </Type>
+  
+  <Type Name="cas::power">
+    <DisplayString>[{_x} ^ {_y}]</DisplayString>
+    <Expand>
+      <Item Name="[x]">_x</Item>
+      <Item Name="[y]">_y</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="cas::product">
+    <DisplayString>[{_left} * {_right}]</DisplayString>
+    <Expand>
+      <Item Name="[left]">_left</Item>
+      <Item Name="[right]">_right</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="cas::sum">
+    <DisplayString>[{_left} + {_right}]</DisplayString>
+    <Expand>
+      <Item Name="[left]">_left</Item>
+      <Item Name="[right]">_right</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="cas::xset">
+      <DisplayString Condition="_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst == 0">()</DisplayString>
+      <DisplayString Condition="_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst == 1">({*_items._Mypair._Myval2._Myfirst})</DisplayString>
+      <DisplayString Condition="_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst == 2">({*_items._Mypair._Myval2._Myfirst}, {*(_items._Mypair._Myval2._Myfirst+1)})</DisplayString>
+      <DisplayString Condition="_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst == 3">({*_items._Mypair._Myval2._Myfirst}, {*(_items._Mypair._Myval2._Myfirst+1)}, {*(_items._Mypair._Myval2._Myfirst+2)})</DisplayString>
+      <DisplayString Condition="_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst == 4">({*_items._Mypair._Myval2._Myfirst}, {*(_items._Mypair._Myval2._Myfirst+1)}, {*(_items._Mypair._Myval2._Myfirst+2)}, {*(_items._Mypair._Myval2._Myfirst+3)})</DisplayString>
+      <DisplayString>{{ size={_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst} }}</DisplayString>
+      <Expand>
+          <ArrayItems>
+              <Size>_items._Mypair._Myval2._Mylast - _items._Mypair._Myval2._Myfirst</Size>
+              <ValuePointer>_items._Mypair._Myval2._Myfirst</ValuePointer>
+          </ArrayItems>
+      </Expand>
+  </Type>
+  
   <!-- boost::detail::variant::recursive_flag not completly supported because -->
   <!-- cannot detect when boost::variant use boost::recursive_wrapper -->
 
