@@ -1,10 +1,4 @@
 #pragma once
-#include <boost/variant.hpp>
-#include <boost/math/constants/constants.hpp>
-#include <iostream>
-#include <vector>
-#include <complex>
-#include <unordered_set>
 #include "expr_list.h"
 
 using std::string;

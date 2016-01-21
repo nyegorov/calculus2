@@ -40,6 +40,9 @@ int main()
 	numeric i{complex_t{0.0, 1.0}};
 
 	rational_t r(3, 4);
+	auto v = factorize(250);
+	auto v1 = factorize(137);
+	auto v2 = factorize(64);
 	//cout << r << endl << mml(true) << r << endl;
 
 	run();

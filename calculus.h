@@ -1,11 +1,18 @@
 #pragma once
 
+#include <boost/variant.hpp>
+#include <boost/math/constants/constants.hpp>
+#include <boost/math/special_functions/prime.hpp>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <complex>
+#include <unordered_set>
+
 #include "numeric.h"
 #include "printer.h"
 #include "symbolic.h"
 #include "derive.h"
-
-#include <algorithm>
 
 namespace cas {
 	

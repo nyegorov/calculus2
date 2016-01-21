@@ -99,6 +99,7 @@ Context::Context(bool evaluate, const Context *base) : _locals(1)
 		_globals.insert(pair("arctg",	fn("arctg", arctg(x), {x})));
 		_globals.insert(pair("df",		fn("df",  func{fn_dif{xset{f, x}}}, {f, x})));
 		_globals.insert(pair("int",		fn("int", func{fn_int{xset{f, x, a, b}}}, {f, x, a, b})));
+		_globals.insert(pair("sqrt",	fn("sqrt", x^half, {x})));
 	}
 }
 

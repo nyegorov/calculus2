@@ -101,8 +101,9 @@ inline ostream& operator << (ostream& os, power p) {
 									else			print_pwr(os, p.x(), n, d, true);
 			}
 			return os;
-		}
-		if(get_part(os) != print_type::den)	os << "<msup>" << p.x() << p.y() << "</msup>";
+		}	
+		else if(get_part(os) == print_type::all)	os << "<msup>" << p.x() << p.y() << "</msup>";
+		else if(get_part(os) == print_type::num)	os << print_all << "<msup>" << p.x() << p.y() << "</msup>" << print_num;
 		return os;
 	} else {
 		if(is<sum>(p.x()) || is<product>(p.x())) os << '(' << p.x() << ')'; else os << p.x();

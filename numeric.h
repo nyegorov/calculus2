@@ -16,6 +16,7 @@ namespace {
 
 namespace cas {
 
+	template<class T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 	template<class T> T div(T x, T y, T& r) { T d = x / y; r = x - d*y; return d; }
 	template<class T> T pwr(T x, T y) { T t; return y == 0 ? 1 : y % 2 == 0 ? t = pwr(x, y / 2), t*t : x*pwr(x, y - 1); }
 	static int_t gcd(int_t a, int_t b) { return b == 0 ? labs(a) : gcd(b, a % b); }
@@ -30,6 +31,16 @@ namespace cas {
 		for(x = 2; x <= n; x++)
 			for(e = n + 1; e>1; e--)	if(pwr(x, e) == y)	return;
 		x = y; e = 1;
+	}
+	static std::vector<std::pair<int_t, int_t>> factorize(int_t x) {
+		std::vector<std::pair<int_t, int_t>> res;
+		int_t r, prime, count = 0;
+		while((prime = (int_t)boost::math::prime(count++)) <= x) {
+			int_t tmp = x, c = 0;
+			while(tmp = div(tmp, prime, r), r == 0)	c++;
+			if(c)	res.emplace_back(prime, c);
+		}
+		return res;
 	}
 
 	const expr zero = numeric{ 0 };
@@ -108,11 +119,16 @@ namespace {
 		if(x == 0)	return zero;
 		if(x == 1)	return one;
 		if(x == -1)	return b % 2 ? minus_one : make_num(pow(complex_t{-1.0, 0.0}, rh));
-		powerize(x, e);	 e *= abs(a);
-		normalize(e, b); x = pwr(x, e);
-		if(b == 1)	return a < 0 ? numeric_t{rational_t{1, x}} : numeric_t{x};
-
-		return power{x, make_num(a < 0 ? -1 : 1, b)};
+		int_t out = 1, in = 1, r, n;
+		for(auto f : factorize(x)) {
+			n = div(f.second, b, r);
+			out *= pwr(f.first, n * abs(a));
+			in  *= pwr(f.first, r * abs(a));
+		}
+		if(in == 1)	return a < 0 ? numeric_t{rational_t{1, out}} : numeric_t{out};
+		powerize(in, e); 
+		normalize(e, b); in = pwr(in, e);
+		return make_prod(out, power{in, make_num(sgn(a), b)});
 	}
 	real_t pow(rational_t lh, real_t rh) { return std::pow(lh.value(), rh); }
 	real_t pow(real_t lh, rational_t rh) { return std::pow(lh, rh.value()); }

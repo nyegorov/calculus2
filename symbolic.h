@@ -72,7 +72,7 @@ inline expr make_prod(expr left, expr right)
 	if(!comp(left, right))	std::swap(left, right);
 	if(is<power>(right)) {							// x∙xⁿ ⇒ xⁿ⁺¹
 		power &pr = as<power>(right);
-		if(pr.x() == left)	return pr.x() ^ (one + pr.y());
+		if(pr.x() == left && !is<numeric>(left))	return pr.x() ^ (one + pr.y());
 		if(is<power>(left)) {
 			power &pl = as<power>(left);			// xⁿ∙xᵐ ⇒ xⁿ⁺ᵐ
 			if(pl.x() == pr.x())	return pl.x() ^ (pl.y() + pr.y());
