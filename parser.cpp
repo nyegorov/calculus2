@@ -35,14 +35,7 @@ void OpCallNE(expr& op1, expr& op2, expr& result) {
 	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
 	if(!is<func, fn_user>(op1))	throw error_t::syntax;
 	auto name = as<func, fn_user>(op1).name();
-	if(name == "ln")			result = func{fn_ln{op2}};
-	else if(name == "sin")		result = func{fn_sin{op2}};
-	else if(name == "cos")		result = func{fn_cos{op2}};
-	else if(name == "tg")		result = func{fn_tg{op2}};
-	else if(name == "arcsin")	result = func{fn_arcsin{op2}};
-	else if(name == "arccos")	result = func{fn_arccos{op2}};
-	else if(name == "arctg")	result = func{fn_arctg{op2}};
-	else if(name == "df")		result = func{fn_dif{op2}};
+	if(name == "df")			result = func{fn_dif{op2}};
 	else if(name == "int")		result = func{fn_int{op2}};
 	else						result = fn(name, empty, args.items());
 }

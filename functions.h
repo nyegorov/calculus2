@@ -16,9 +16,10 @@ expr fn(string name, expr body, list_t args);
 
 template<> static expr fn_base<fn_ln>::make(expr x)
 {
-	if(x == zero)		return minf;																// ln(0) ⇒ -inf
+	if(x == zero)		return minf;																// ln(0) ⇒ -∞
 	if(x == one)		return zero;																// ln(1) ⇒ 0
 	if(x == e)			return one;																	// ln(e) ⇒ 1
+	if(x == inf)		return inf;																	// ln(∞) ⇒ ∞
 	if(is<product>(x))	return ln(as<product>(x).left()) + ln(as<product>(x).right());				// ln(x∙y) ⇒ ln(x)+ln(y)
 	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());								// ln(xʸ) ⇒ y∙ln(x)
 	return func{fn_ln{x}};
@@ -100,11 +101,8 @@ template<> static expr fn_base<fn_subst>::make(expr p) {
 };
 
 
-inline expr make_integral(expr f, expr dx)
-{
-	//return fn_base<fn_int>::make(list_t{f, dx});
-	return func{fn_int{xset{f, dx}}};
-}
+inline expr make_integral(expr f, expr dx)					{ return func{fn_int{xset{f, dx}}}; }
+inline expr make_integral(expr f, expr dx, expr a, expr b)	{ return func{fn_int{xset{f, dx, a, b}}}; }
 
 // User-defined functions
 inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{symbol{name}, body, args}) {}

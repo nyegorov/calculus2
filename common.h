@@ -343,7 +343,7 @@ inline expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
 inline expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
 inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
 inline expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
-inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return subst(F, dx, b) - subst(F, dx, a); }
+inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func, fn_int>(F) ? func{fn_int{xset{e, dx, a, b}}} : subst(F, dx, b) - subst(F, dx, a); }
 inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 inline bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
 inline match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }

@@ -47,7 +47,7 @@ inline ostream& operator << (ostream& os, const rational_t& r) {
 			if(r.denom() != 0 && r.denom() != 1) os << "<mn>" << r.denom() << "</mn>";
 		} else {
 			if(r.denom())			os << (r.numer() < 0 ? "<mo>&minus;</mo>" : "") << "<mfrac><mn>" << abs(r.numer()) << "</mn><mn>" << r.denom() << "</mn></mfrac>";
-			else if(r.numer() < 0)	os << "<mo>&minus;</mo>";
+			else if(r.numer() < 0)	os << "<mrow><mo>&minus;</mo><mn>&infin;</mn></mrow>";
 			else					os << "<mn>&infin;</mn>";
 		}
 		return os;
@@ -213,7 +213,7 @@ inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
 inline ostream& operator << (ostream& os, fn_base<fn_assign> f) {
 	if(use_mml(os)) {
 		if(print_part(os, print_type::den))					return os;
-		return os << "<mrow>" << f[0] << "<mo>=</mo>" << f[1] << "</mrow>";
+		return os << "<mrow>" << f[0] << "<mo>:</mo><mo>=</mo><mspace width='thinmathspace'/>" << f[1] << "</mrow>";
 	} else
 		return os << f[0] << '=' << f[1];
 }

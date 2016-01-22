@@ -19,7 +19,7 @@ namespace cas {
 inline expr symbol::subst(pair<expr, expr> s) const { 
 	if(is<xset>(s.first) && is<xset>(s.second)) {
 		const auto& from = as<xset>(s.first).items(), to = as<xset>(s.second).items();
-		for(auto pi = from.cbegin(), pf = to.cbegin(); pi != from.cend(); pi++, pf++)
+		for(auto pi = from.cbegin(), pf = to.cbegin(); pi != from.cend() && pf != to.cend(); pi++, pf++)
 			if(*pi == expr{*this})	return *pf;
 	}
 	return expr{*this} == s.first ? s.second : *this; 
