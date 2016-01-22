@@ -6,18 +6,15 @@
 
 namespace cas {
 
-inline int get_fmt_idx() {
-	static int i = std::ios_base::xalloc();
-	return i;
-}
-
-inline int get_part_idx() {
-	static int i = std::ios_base::xalloc();
-	return i;
-}
+inline int get_fmt_idx()   { static int i = std::ios_base::xalloc(); return i; }
+inline int get_part_idx()  { static int i = std::ios_base::xalloc(); return i; }
+inline int get_bevel_idx() { static int i = std::ios_base::xalloc(); return i; }
 
 inline ostream& fmt_mml(ostream& os) { os.iword(get_fmt_idx()) = 1; return os; }
 inline ostream& fmt_plain(ostream& os) { os.iword(get_fmt_idx()) = 0; return os; }
+
+inline ostream& fract_bevel(ostream& os)   { os.iword(get_bevel_idx()) = 1; return os; }
+inline ostream& fract_default(ostream& os) { os.iword(get_bevel_idx()) = 0; return os; }
 
 inline ostream& print_num(ostream& os) { os.iword(get_part_idx()) = (long)print_type::num; return os; }
 inline ostream& print_den(ostream& os) { os.iword(get_part_idx()) = (long)print_type::den; return os; }
@@ -27,6 +24,7 @@ const auto mml = [](bool use_mml) -> decltype(&fmt_mml)		 {return use_mml ? fmt_
 const auto set_part = [](print_type type) -> decltype(&print_all) { decltype(&print_all) tmp[] = {print_all, print_num, print_den}; return tmp[(long)type]; };
 
 inline bool use_mml(ostream& os) { return os.iword(get_fmt_idx()) != 0; }
+inline bool is_bevel(ostream& os) { return os.iword(get_bevel_idx()) != 0; }
 inline print_type get_part(ostream& os) { return (print_type)os.iword(get_part_idx()); }
 inline bool print_part(ostream& os, print_type type) { return (print_type)os.iword(get_part_idx()) == type; }
 
@@ -46,7 +44,7 @@ inline ostream& operator << (ostream& os, const rational_t& r) {
 		} else if(get_part(os) == print_type::den) {
 			if(r.denom() != 0 && r.denom() != 1) os << "<mn>" << r.denom() << "</mn>";
 		} else {
-			if(r.denom())			os << (r.numer() < 0 ? "<mo>&minus;</mo>" : "") << "<mfrac><mn>" << abs(r.numer()) << "</mn><mn>" << r.denom() << "</mn></mfrac>";
+			if(r.denom())			os << (r.numer() < 0 ? "<mo>&minus;</mo>" : "") << "<mfrac" << (is_bevel(os) ? " bevelled='true'" : "") << "><mn>" << abs(r.numer()) << "</mn><mn>" << r.denom() << "</mn></mfrac>";
 			else if(r.numer() < 0)	os << "<mrow><mo>&minus;</mo><mn>&infin;</mn></mrow>";
 			else					os << "<mn>&infin;</mn>";
 		}
@@ -97,7 +95,7 @@ inline ostream& operator << (ostream& os, power p) {
 			switch(get_part(os)) {
 			case print_type::num:	if(n >= 0)		print_pwr(os, p.x(), n, d, true); break;
 			case print_type::den:	if(n < 0)		os << print_all, print_pwr(os, p.x(), -n, d), os << print_den; break;
-			case print_type::all:	if(n < 0)		os << "<mfrac><mn>1</mn>", print_pwr(os, p.x(), -n, d), os << "</mfrac>";
+			case print_type::all:	if(n < 0)		os << "<mfrac" << (is_bevel(os) ? " bevelled = 'true'" : "") << "><mn>1</mn>", print_pwr(os, p.x(), -n, d), os << "</mfrac>";
 									else			print_pwr(os, p.x(), n, d, true);
 			}
 			return os;
@@ -122,9 +120,9 @@ inline ostream& print_stream(ostream& os, std::ostringstream& os1, const expr& e
 inline ostream& join_streams(ostream& os, std::ostringstream& osl, std::ostringstream& osr, string op, bool lfence, bool rfence)
 {
 	bool left = !osl.str().empty(), right = !osr.str().empty();
-	if(left)			os << boost::format(lfence ? "<mfenced>%s</mfenced>" : "%s") % osl.str().c_str();
+	if(left)			lfence ? os << "<mfenced>" << osl.str() << "</mfenced>" : os << osl.str();
 	if(left && right)	os << op;
-	if(right)			os << boost::format(rfence && left  ? "<mfenced>%s</mfenced>" : "%s") % osr.str();
+	if(right)			rfence && left ? os << "<mfenced>" << osr.str() << "</mfenced>" : os << osr.str();
 	return os;
 }
 inline ostream& print_mul(ostream& os, expr left, expr right, print_type part)
@@ -148,7 +146,7 @@ inline ostream& operator << (ostream& os, product p) {
 			os << "<mrow>";
 			if(has_sign(p.left()))	os <<"<mo>&minus;</mo>";
 			if(osd.str().empty())	os << osn.str();
-			else					os << "<mfrac><mrow>" << osn.str() << "</mrow><mrow>" << osd.str() << "</mrow></mfrac>";
+			else					os << "<mfrac" << (is_bevel(os) ? " bevelled='true'" : "") << "><mrow>" << osn.str() << "</mrow><mrow>" << osd.str() << "</mrow></mfrac>";
 			os << "</mrow>";
 
 			return os;
@@ -192,9 +190,9 @@ inline ostream& operator << (ostream& os, fn_base<fn_int> f) {
 	if(use_mml(os)) {
 		if(print_part(os, print_type::den))					return os;
 		if(f.size() == 4)
-			return os << "<mrow><munderover><mo>&int;</mo>" << f[2] << f[3] << "</munderover>" << f[0] << "<mspace width=\"thinmathspace\"/><mi>d</mi>" << f[1] << "</mrow>";
+			return os << fract_bevel << "<mrow><munderover><mo>&int;</mo>" << f[2] << f[3] << "</munderover><mrow>" << fract_default << f[0] << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << f[1] << "</mrow></mrow>";
 		else
-			return os << "<mrow><mo>&int;</mo>" << f[0] << "<mspace width=\"thinmathspace\"/><mi>d</mi>" << f[1] << "</mrow>";
+			return os << "<mrow><mo>&int;</mo>" << f[0] << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << f[1] << "</mrow>";
 	}	else
 		return os << "int(" << f[0] << ',' << f[1] << ')'; 
 }
