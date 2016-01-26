@@ -51,7 +51,7 @@ typedef boost::variant<
 typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
 
-enum class print_type { all = 0, num = 1, den = 2 };
+enum class part_t { all = 0, num = 1, den = 2 };
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
 static const char * error_msgs[] = {"Invalid cast", "Invalid arguments", "Not implemented", "Syntax error", "Empty"};
 
@@ -66,7 +66,7 @@ struct match_result
 bool has_sign(expr e);
 bool less(numeric_t op1, numeric_t op2);
 unsigned get_exps(expr e, const list_t& vars);
-bool use_mml(ostream& os);
+bool is_mml(ostream& os);
 
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
@@ -75,6 +75,7 @@ template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
 template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).value()); }
 
 std::ostream& operator << (std::ostream& os, const list_t& l);
+std::ostream& operator << (std::ostream& os, part_t part);
 
 class rational_t
 {
@@ -220,13 +221,14 @@ public:
 
 inline bool operator == (sum lh, sum rh) { return lh.left() == rh.left() && lh.right() == rh.right(); }
 inline bool operator < (sum lh, sum rh) { return lh.right() == rh.right() ? lh.left() < rh.left() : lh.right() < rh.right(); }
-bool print_part(ostream& os, print_type type);
+part_t get_part(ostream& os);
 inline ostream& operator << (ostream& os, sum s) {
-	if(use_mml(os)) {
-		if(print_part(os, print_type::den))	return os;
-		os << "<mrow>" << s.left();
+	if(is_mml(os)) {
+		auto part = get_part(os);
+		if(part == part_t::den)	return os;
+		os << part_t::all << "<mrow>" << s.left();
 		if(!has_sign(s.right()))	os << "<mo>&plus;</mo>";
-		return os << s.right() << "</mrow>";
+		return os << s.right() << "</mrow>" << part;
 	} else {
 		os << s.left();
 		if(!has_sign(s.right()))	os << '+';
