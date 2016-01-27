@@ -77,8 +77,8 @@ public:
 	friend class const_iterator;
 
 	expr_list(Expr left, Expr right) : _left(left), _right(right), _comp(Pred()) {}
-	Expr left() { return _left; }
-	Expr right() { return _right; }
+	Expr left() const { return _left; }
+	Expr right() const { return _right; }
 
 	iterator begin() { return iterator(this); }
 	iterator end() { return iterator(); }

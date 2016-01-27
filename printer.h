@@ -78,7 +78,7 @@ inline ostream& operator << (ostream& os, numeric n) {
 
 inline ostream& operator << (ostream& os, symbol s) { 
 	if(is_mml(os)) {
-		if(is_den(os))					return os;
+		if(is_den(os))			return os;
 		if(s.name() == "#p")	return os << "<mi>&pi;</mi>";
 		if(s.name() == "#e")	return os << "<mi>e</mi>";
 		return os << "<mi>" << s.name() << "</mi>";
@@ -100,7 +100,7 @@ inline io_manip print_pwr(const expr& x, int_t numer, int_t denom, bool print_ex
 
 inline ostream& operator << (ostream& os, power p) {
 	if(is_mml(os)) {
-		if(is<numeric, int_t>(p.y()))	p = power{p.x(), numeric{as<numeric, int_t>(p.y()), 1}};
+		if(is<numeric, int_t>(p.y()))		p = power{p.x(), numeric{as<numeric, int_t>(p.y()), 1}};
 		if(is<numeric, rational_t>(p.y())) {
 			int_t d = as<numeric, rational_t>(p.y()).denom(), n = as<numeric, rational_t>(p.y()).numer();
 			switch(get_part(os)) {
@@ -112,8 +112,8 @@ inline ostream& operator << (ostream& os, power p) {
 			return os;
 		} else {
 			switch(get_part(os)) {
-			case part_t::all:	os << "<msup>" << p.x() << p.y() << "</msup>"; break;
-			case part_t::num:	os << part_t::all << "<msup>" << p.x() << p.y() << "</msup>" << part_t::num; break;
+			case part_t::all:	os << "<msup>" << mfence(p.x(), is<sum>(p.x()) || is<product>(p.x())) << p.y() << "</msup>"; break;
+			case part_t::num:	os << part_t::all << "<msup>" << mfence(p.x(), is<sum>(p.x()) || is<product>(p.x())) << p.y() << "</msup>" << part_t::num; break;
 			}
 		}
 		return os;
@@ -128,19 +128,42 @@ inline ostream& operator << (ostream& os, power p) {
 inline ostream& join_streams(ostream& os, std::ostringstream& osl, std::ostringstream& osr, string op, bool lfence, bool rfence)
 {
 	bool left = !osl.str().empty(), right = !osr.str().empty();
-	if(left)			os << mfence(osl.str(), lfence);
+	if(left)			os << mfence(osl.str(), lfence && right);
 	if(left && right)	os << op;
 	if(right)			os << mfence(osr.str(), rfence && left);
 	return os;
 }
 
+static void get_multiplicands(list_t& multiplicands, const expr& x, part_t part)
+{
+	if(is<product>(x)) {
+		get_multiplicands(multiplicands, as<product>(x).left(), part);
+		get_multiplicands(multiplicands, as<product>(x).right(), part);
+	} else if(is<power>(x)) {
+		if(as<power>(x).y() == minus_one && part == part_t::den)	multiplicands.push_back(as<power>(x).x());
+		else if(as<power>(x).y() < zero && part == part_t::den)		multiplicands.push_back(x);
+		else if(as<power>(x).y() >= zero && part != part_t::den)	multiplicands.push_back(x);
+	} else if(is<numeric, rational_t>(x)) {
+		multiplicands.push_back(numeric{part == part_t::den ? as<numeric, rational_t>(x).denom() : as<numeric, rational_t>(x).denom()});
+	} else
+		if(part != part_t::den)	multiplicands.push_back(x);
+}
+
+inline bool need_fence(const expr& x, part_t part)
+{
+	list_t m;
+	get_multiplicands(m, x, part);
+	return m.size() == 1 && is<sum>(m.front());
+}
+
 inline io_manip print_mul(const expr& left, const expr& right) {
 	return io_manip{[=](ostream& os) -> ostream& {
 		std::ostringstream osl, osr;
-		if(left == minus_one && get_part(os) != part_t::den)	osr << "<mo>&minus;</mo>";
-		else	osl << mml(true) << get_part(os) << left;
-		osr << mml(true) << get_part(os) << right;
-		return join_streams(os, osl, osr, "<mo lspace='veryverythinmathspace' rspace='veryverythinmathspace'>&sdot;</mo>", is<sum>(left), is<sum>(right));
+		part_t part = get_part(os);
+		if(left == minus_one && part != part_t::den)	osr << "<mo>&minus;</mo>";
+		else	osl << mml(true) << part << left;
+		osr << mml(true) << part << right;
+		return join_streams(os, osl, osr, "<mo lspace='verythinmathspace' rspace='verythinmathspace'>&sdot;</mo>", need_fence(left, part), need_fence(right, part));
 	}};
 }
 
