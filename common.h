@@ -109,6 +109,7 @@ public:
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr approx() const;
+	expr simplify() const;
 	expr subst(pair<expr, expr> s) const;
 	bool match(expr e, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
@@ -134,6 +135,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	bool match(expr e, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
 };
@@ -155,6 +157,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	bool match(expr e, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
 };
@@ -175,6 +178,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	bool match(expr e, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
 };
@@ -196,6 +200,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	unsigned exponents(const list_t& vars) const;
 };
 
@@ -216,6 +221,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	unsigned exponents(const list_t& vars) const;
 };
 
@@ -252,6 +258,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	bool match(function_t f, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
 };
@@ -297,6 +304,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	bool match(expr e, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
 };
@@ -318,6 +326,7 @@ public:
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
 	expr approx() const;
+	expr simplify() const;
 	bool match(expr e, match_result& res) const;
 	unsigned exponents(const list_t& vars) const;
 };
@@ -333,6 +342,7 @@ expr operator ^ (expr op1, expr op2);
 expr operator - (expr op1, expr op2);
 expr operator - (expr op1);
 expr operator ~ (expr op1);
+expr operator * (expr op1);
 expr operator / (expr op1, expr op2);
 expr operator | (expr op1, symbol op2);
 expr operator | (expr op1, pair<expr, expr> op2);
@@ -347,6 +357,7 @@ inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { ret
 inline expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
 inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func, fn_int>(F) ? func{fn_int{xset{e, dx, a, b}}} : subst(F, dx, b) - subst(F, dx, a); }
 inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
+inline expr simplify(expr e) { return boost::apply_visitor([](auto x) { return x.simplify(); }, e); }
 inline bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
 inline match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
 inline unsigned get_exps(expr e, const list_t& vars) { return boost::apply_visitor([&vars](auto x) { return x.exponents(vars); }, e); }
@@ -366,6 +377,7 @@ inline expr error::subst(pair<expr, expr> s) const { return *this; };
 inline expr error::d(expr dx) const { return *this; };
 inline expr error::integrate(expr dx, expr c) const { return *this; };
 inline expr error::approx() const { return *this; };
+inline expr error::simplify() const { return *this; };
 inline bool error::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
 inline unsigned error::exponents(const list_t& vars) const { return 0; }
 inline expr match_result::operator[] (symbol s) { auto it = std::find(matches.begin(), matches.end(), s); return it == matches.end() ? empty : it->value(); }

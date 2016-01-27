@@ -89,20 +89,20 @@ inline expr make_xset(std::initializer_list<expr> items)
 }
 
 
-template<class T> struct is_algebraic : std::false_type {};
-template<> struct is_algebraic<int_t> : std::true_type  {};
-template<> struct is_algebraic<real_t> : std::true_type {};
-template<> struct is_algebraic<rational_t> : std::true_type {};
-template<> struct is_algebraic<complex_t> : std::true_type {};
-template<> struct is_algebraic<string> : std::true_type {};
-template<> struct is_algebraic<error> : std::true_type {};
-template<> struct is_algebraic<numeric> : std::true_type {};
-template<> struct is_algebraic<symbol> : std::true_type {};
-template<> struct is_algebraic<func> : std::true_type {};
-template<> struct is_algebraic<power> : std::true_type {};
-template<> struct is_algebraic<product> : std::true_type {};
-template<> struct is_algebraic<sum> : std::true_type {};
-template<> struct is_algebraic<xset> : std::true_type {};
+template<class T> struct is_algebraic		: std::false_type {};
+template<> struct is_algebraic<int_t>		: std::true_type  {};
+template<> struct is_algebraic<real_t>		: std::true_type {};
+template<> struct is_algebraic<rational_t>	: std::true_type {};
+template<> struct is_algebraic<complex_t>	: std::true_type {};
+template<> struct is_algebraic<string>		: std::true_type {};
+template<> struct is_algebraic<error>		: std::true_type {};
+template<> struct is_algebraic<numeric>		: std::true_type {};
+template<> struct is_algebraic<symbol>		: std::true_type {};
+template<> struct is_algebraic<func>		: std::true_type {};
+template<> struct is_algebraic<power>		: std::true_type {};
+template<> struct is_algebraic<product>		: std::true_type {};
+template<> struct is_algebraic<sum>			: std::true_type {};
+template<> struct is_algebraic<xset>		: std::true_type {};
 
 // Addition
 template<typename T, typename U> typename enable_if<is_algebraic<T>::value && is_algebraic<U>::value, expr>::type operator + (T lh, U rh) { return make_sum(lh, rh); }

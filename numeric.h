@@ -71,6 +71,15 @@ namespace cas {
 	inline rational_t::rational_t(int_t numer, int_t denom) : _numer(numer), _denom(denom) { normalize(_numer, _denom); }
 
 	inline expr numeric::approx() const { return _value.type() == typeid(rational_t) ? make_num(boost::get<rational_t>(_value).value()) : *this; };
+	inline expr numeric::simplify() const { 
+		switch(_value.which()) {
+		case 0:	return make_num(boost::get<int_t>(_value));
+		case 1:	return make_num(boost::get<rational_t>(_value).numer(), boost::get<rational_t>(_value).denom());
+		case 2:	return make_num(boost::get<real_t>(_value));
+		case 3:	return make_num(boost::get<complex_t>(_value));
+		}
+		return expr{*this};
+	};
 	inline expr numeric::subst(pair<expr, expr> s) const { return{*this}; }
 	inline bool numeric::match(expr e, match_result& res) const { if(e != expr{*this}) res.found = false; return res; };
 	inline unsigned numeric::exponents(const list_t& vars) const { return 0; }

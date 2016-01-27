@@ -44,6 +44,12 @@ inline expr xset::approx() const {
 	return{ret};
 }
 
+inline expr symbol::simplify() const { return expr{*this}; }
+inline expr power::simplify() const { return *_x ^ *_y; }
+inline expr product::simplify() const { return *_left * *_right; }
+inline expr sum::simplify() const { return *_left + *_right; }
+inline expr xset::simplify() const { return expr{*this}; }
+
 inline bool symbol::match(expr e, match_result& res) const {
 	auto it = find(res.matches.begin(), res.matches.end(), *this);
 	if(it == res.matches.end()) {
@@ -100,6 +106,7 @@ inline bool sum_comp::operator ()(const expr& left, const expr& right) const
 }
 
 inline expr operator ~ (expr op1) { return cas::approx(op1); }
+inline expr operator * (expr op1) { return cas::simplify(op1); }
 inline expr operator | (expr op1, symbol op2) { return cas::subst(op1, op2); }
 inline expr operator | (expr op1, pair<expr, expr> op2) { return cas::subst(op1, op2); }
 
