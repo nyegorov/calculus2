@@ -91,7 +91,12 @@ template<> static expr fn_base<fn_dif>::make(expr p) {
 template<> static expr fn_base<fn_assign>::make(expr p) { 
 	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
 	auto& params = as<xset>(p).items();
-	return params[1];
+	if(is<symbol>(params[0]))			return symbol{as<symbol>(params[0]).name(), params[1]};
+	if(is<func, fn_user>(params[0])) {
+		auto fn = as<func, fn_user>(params[0]);
+		return symbol{fn.name(), func{fn_user{fn.name(), params[1], fn.args()}}};
+	}
+	return make_err(error_t::syntax);
 };
 template<> static expr fn_base<fn_subst>::make(expr p) { 
 	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
@@ -125,6 +130,13 @@ template <typename ... Params> expr fn_user::operator ()(expr val, Params ... re
 		body() | std::make_pair(arg, val) : 
 		fn_user{name(), body() | std::make_pair(arg, val), rest_args}(rest...);
 }
+inline expr fn_user::simplify() const
+{ 
+	expr res = body();
+	if(res == empty)	return make(*x());
+	for(auto& e : args())	if(is<symbol>(e))	res = res | as<symbol>(e);
+	return *res; 
+}
 
 static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
 {
@@ -134,7 +146,9 @@ static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x)
 	return x;
 }
 template<class F> expr fn_base<F>::approx() const { return fn_base<F>::make(~_x); }
-template<class F> expr fn_base<F>::simplify() const { return fn_base<F>::make(~_x); }
+template<class F> expr fn_base<F>::simplify() const {
+	return fn_base<F>::make(*_x);
+}
 template<class F> expr fn_base<F>::subst(pair<expr, expr> s) const { return expr{func{F{_x}}} == s.first ? s.second : make(_x | s); }
 template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
 template<class F> unsigned fn_base<F>::exponents(const list_t& vars) const { auto c = get_exps(_x, vars); return c ? 99 : 0; }

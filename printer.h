@@ -256,14 +256,21 @@ inline ostream& operator << (ostream& os, fn_base<fn_subst> f) {
 	auto& s = as<xset>(subs).items();
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
-		return os << "<mrow><msub><mfenced open='' close='|'>" << f[0] << "</mfenced><mrow>" << s[0] << "<mo>=</mo>" << s[1] << "</mrow></msub></mrow>";
+		return os << "<mrow><msub>" << f[0] << "<mfenced open='|' close=''><mrow>" << s[0] << "<mo>=</mo>" << s[1] << "</mrow></mfenced></msub></mrow>";
 	} else
 		return os << f[0] << '|' << s[0] << '=' << s[1];
 }
 
+inline io_manip print_arg(const list_t& args) {
+	return io_manip{[&](ostream& os) -> ostream& {
+		for(const auto& a : args) os << (is<symbol>(a) && as<symbol>(a).value() != empty ? as<symbol>(a).value() : a);
+		return os;
+	}};
+}
+
 inline ostream& operator << (ostream& os, fn_user f) { 
 	if(is_den(os))					return os;
-	if(is_mml(os)) return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << f.args() << "</mfenced></mrow>";
+	if(is_mml(os)) return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
 	else			return os << f.name() << '(' << f.args() << ')';
 }
 

@@ -38,7 +38,7 @@ public:
 	enum Token	{end,mod,assign,ge,gt,le,lt,nequ,name,value,land,lor,lnot,stmt,err,dot,newobj,minus,lpar,rpar,lcurly,rcurly,equ,plus,lsquare,rsquare,multiply,divide,idiv,and,or,not,pwr,comma,unaryplus,unaryminus,forloop,ifop,iffunc,ifelse,func,object,plusset, minusset, mulset, divset, idivset, setvar, my};
 
 	Parser();
-	void Init(const char* expr){if(expr)	_content = expr;SetState(0);}
+	void Init(const string& expr){_content = expr;SetState(0);}
 	Token GetToken()			{return _token;}
 	const expr& GetValue()	{return _value;}
 	const string& GetName()	{return _name;}
@@ -72,13 +72,13 @@ private:
 class NScript
 {
 public:
-	NScript(bool evaluate = true, const char* script = NULL, const Context *pcontext = NULL) : _context(evaluate, pcontext)	{
+	NScript(bool evaluate = true, const Context *pcontext = NULL) : _context(evaluate, pcontext)	{
 		_evaluate = evaluate;
 		_operators = evaluate ? &_operators_exec : &_operators_nonexec;
-		_parser.Init(script);
 	}
 	~NScript(void)						{};
-	expr eval(const char* script);
+	expr eval(string script);
+	void set(string name, expr value) { _context.Set(name, value); }
 
 protected:
 	enum Precedence	{Statement, Approx, Assignment, Subst, Addition,Multiplication,Power,Unary,Functional,Primary,Term};

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../calculus.h"
+#include "../parser.h"
 
 using std::string;
 
@@ -25,6 +26,7 @@ class expr_renderer
 {
 	rasterizer_ptr	_prasterizer;
 	mhandle_ptr		_mhandle;
+	NScript			_parser;
 
 	string exp2mml(expr e)
 	{
@@ -79,7 +81,7 @@ class expr_renderer
 
 
 public:
-	expr_renderer(double scale)
+	expr_renderer(double scale) : _parser(false)
 	{
 		_prasterizer = rasterizer_ptr(nsvgCreateRasterizer(), nsvgDeleteRasterizer);
 		_mhandle = mhandle_ptr(mml_create_handle(), mml_free_handle);
@@ -94,8 +96,16 @@ public:
 	{
 		const char header[] = "<math xmlns='http://www.w3.org/1998/Math/MathML'>", footer[] = "</math>";
 		expr_info me;
+		e = _parser.eval(src);
 		me.source = e;
-		me.result = res;
+		me.result = *e;// res;
+
+		if(is<symbol>(me.result)) {
+			expr val = as<symbol>(me.result).value();
+			_parser.set(as<symbol>(me.result).name(), val);
+			if(val != empty)	me.result = val; // is<func, fn_user>(val) ? val : as<symbol>(me.result).value();
+		}
+
 		me.text = src;
 		auto mml_src = exp2mml(me.source);
 		auto mml_res = exp2mml(me.result);

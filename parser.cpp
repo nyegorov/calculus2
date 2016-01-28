@@ -31,13 +31,20 @@ void OpAppNE(expr& op1, expr& op2, expr& result) { result = op2; }
 void OpSubstNE(expr& op1, expr& op2, expr& result) { result = func{fn_subst{xset{op1, op2}}}; }
 void OpAssignNE(expr& op1, expr& op2, expr& result) { result = func{fn_assign{xset{op1, op2}}}; }
 void OpCallNE(expr& op1, expr& op2, expr& result) {
-	auto args = is<xset>(op2) ? as<xset>(op2) : xset{op2};
-	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, args.items());
+	auto vals = is<xset>(op2) ? as<xset>(op2) : xset{op2};
+	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), empty, vals.items());
 	if(!is<func, fn_user>(op1))	throw error_t::syntax;
 	auto name = as<func, fn_user>(op1).name();
+	auto body = as<func, fn_user>(op1).body();
+	auto args = as<func, fn_user>(op1).args();
+	auto pval = vals.items().begin();
+	for(auto& s : args) {
+		if(pval == vals.items().end())	break;
+		if(is<symbol>(s))	s = symbol{as<symbol>(s).name(), *pval++};
+	}
 	if(name == "df")			result = func{fn_dif{op2}};
 	else if(name == "int")		result = func{fn_int{op2}};
-	else						result = fn(name, empty, args.items());
+	else						result = fn(name, body, args);
 }
 
 
@@ -142,7 +149,7 @@ NScript::OpInfo NScript::_operators_nonexec[Term][10] = {
 	{{Parser::lpar,		&OpCallNE},	{Parser::end, NULL}},
 };
 
-expr NScript::eval(const char* script)
+expr NScript::eval(string script)
 {
 	expr result = empty;
 	try	{

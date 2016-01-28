@@ -48,7 +48,11 @@ inline expr symbol::simplify() const { return expr{*this}; }
 inline expr power::simplify() const { return *_x ^ *_y; }
 inline expr product::simplify() const { return *_left * *_right; }
 inline expr sum::simplify() const { return *_left + *_right; }
-inline expr xset::simplify() const { return expr{*this}; }
+inline expr xset::simplify() const {
+	list_t ret;
+	transform(_items.begin(), _items.end(), back_inserter(ret), [](auto e) {return *e; });
+	return{ret};
+}
 
 inline bool symbol::match(expr e, match_result& res) const {
 	auto it = find(res.matches.begin(), res.matches.end(), *this);

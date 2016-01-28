@@ -284,6 +284,7 @@ struct fn_user : public fn_base<fn_user> {
 	string name() const;
 	expr body() const;
 	list_t args() const;
+	expr simplify() const;
 
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
