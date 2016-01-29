@@ -1,40 +1,33 @@
 ========================================================================
-    CONSOLE APPLICATION : Calculus2 Project Overview
+    Symbolic calculus
 ========================================================================
 
-AppWizard has created this Calculus2 application for you.
+Test project to estimate C++x11 capabilities
 
-This file contains a summary of what you will find in each of the files that
-make up your Calculus2 application.
+Performs symbolic mathematical calculations, including:
 
+ * 4 arithmetic types: integer, rational, real and complex numbers
+ * extendable set of built-in functions: sin, cos, ln, etc.
+ * user-defined symbols and functions
+ * derivatives and integrals
+ * approximate calculations
+ * matching, substitution
 
-Calculus2.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+ Result of calculation can be rendered into mathml or plain-text format.
 
-Calculus2.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
-
-Calculus2.cpp
-    This is the main application source file.
+ Project contains simple parset for mathematical expressions and Win32 GDI 
+ render of mathml format.
 
 /////////////////////////////////////////////////////////////////////////////
-Other standard files:
+Usage:
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Calculus2.pch and a precompiled types file named StdAfx.obj.
+To use calculation in your project, just include header "calculus.h". If you 
+need expression parser, include also header "parser.h".
 
 /////////////////////////////////////////////////////////////////////////////
 Other notes:
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Project depends on Boost library, especially on boost::variant type.
+Reformath library (http://reformath.weebly.com) is used to render mathml.
 
 /////////////////////////////////////////////////////////////////////////////
