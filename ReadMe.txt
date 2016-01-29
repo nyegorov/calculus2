@@ -19,6 +19,11 @@ Performs symbolic mathematical calculations, including:
  render of mathml format.
 
 /////////////////////////////////////////////////////////////////////////////
+Author:
+
+Nick Yeogorv, nick.yegorov@gmail.com
+
+/////////////////////////////////////////////////////////////////////////////
 Usage:
 
 To use calculation in your project, just include header "calculus.h". If you 
