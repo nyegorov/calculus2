@@ -285,6 +285,7 @@ struct fn_user : public fn_base<fn_user> {
 	expr body() const;
 	list_t args() const;
 	expr simplify() const;
+	expr subst(pair<expr, expr> s) const;
 
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
@@ -352,8 +353,13 @@ inline bool failed(expr e) { return e.type() == typeid(error); }
 inline string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
 inline bool has_sign(expr e) { return boost::apply_visitor([](auto x) { return x.has_sign(); }, e); }
 inline expr subst(expr e, pair<expr, expr> s) { return boost::apply_visitor([s](auto x) { return x.subst(s); }, e); }
-inline expr subst(expr e, expr from, expr to) { return subst(e, {from, to}); }
-inline expr subst(expr e, symbol var) { return subst(e, var, var.value()); }
+inline expr subst(expr e, expr from, expr to) { return subst(e, std::make_pair(from, to)); }
+inline expr subst(expr e, symbol var)  { return subst(e, var, var.value()); }
+inline expr subst(expr e, list_t vars) { 
+	list_t from, to;
+	for(auto& e : vars)	if(is<symbol>(e))	from.push_back(e), to.push_back(as<symbol>(e).value() == empty ? e : as<symbol>(e).value());
+	return subst(e, std::make_pair(expr{from}, expr{to}));
+}
 inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
 inline expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
 inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func, fn_int>(F) ? func{fn_int{xset{e, dx, a, b}}} : subst(F, dx, b) - subst(F, dx, a); }

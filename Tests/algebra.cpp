@@ -281,19 +281,19 @@ namespace Tests
 			NScript ns;
 
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
-			Assert::AreEqual(2*x*x+3*x+1, ns.eval("2*x^2+3*x+1"));
-			Assert::AreEqual(cos(y^2), ns.eval("cos(y^2)"));
-			Assert::AreEqual(-2*y*sin(y^2), ns.eval("df(cos(y^2),y)"));
-			Assert::AreEqual(half, ns.eval("int(1/x^2,x,2,inf)"));
-			ns.eval("f(x)=empty"); ns.eval("g(x)=empty"); ns.eval("h(x,y)=x^2/y");
-			Assert::AreEqual((y ^ 2) / x, ns.eval("h(y,x)"));
-			Assert::AreEqual(expr{16}/5, ns.eval("h(4,5)"));
-			Assert::AreEqual("g(x)f'(x)+f(x)g'(x)", to_string(ns.eval("df(f(x)*g(x),x)")).c_str());
-			Assert::AreEqual("f'(g(x))g'(x)", to_string(ns.eval("df(f(g(x)),x)")).c_str());
-			ns.eval("xx=4"); ns.eval("yy=5");
-			Assert::AreEqual(expr{20}, ns.eval("xx*yy"));
-			Assert::AreEqual(sin(x), ns.eval("int(f(x),x)|(f(x),cos(x))"));
-			Assert::AreEqual(a/(b^2), ns.eval("x/y^2|((x,y),(a,b))"));
+			Assert::AreEqual(2*x*x+3*x+1, *ns.eval("2*x^2+3*x+1"));
+			Assert::AreEqual(cos(y^2), *ns.eval("cos(y^2)"));
+			Assert::AreEqual(-2*y*sin(y^2), *ns.eval("df(cos(y^2),y)"));
+			Assert::AreEqual(half, *ns.eval("int(1/x^2,x,2,inf)"));
+			ns.set("f", fn("f", empty, {x})); ns.set("g", fn("g", empty, {x})); ns.set("h", fn("h", (x^2)/y, {x, y}));
+			Assert::AreEqual((y ^ 2) / x, *ns.eval("h(y,x)"));
+			Assert::AreEqual(expr{16}/5, *ns.eval("h(4,5)"));
+			Assert::AreEqual("g(x)f'(x)+f(x)g'(x)", to_string(*ns.eval("df(f(x)*g(x),x)")).c_str());
+			Assert::AreEqual("f'(g(x))g'(x)", to_string(*ns.eval("df(f(g(x)),x)")).c_str());
+			ns.set("xx", 4); ns.set("yy", 5);
+			Assert::AreEqual(expr{20}, *ns.eval("xx*yy"));
+			Assert::AreEqual(sin(x), *ns.eval("int(f(x),x)|f(x)=cos(x)"));
+			Assert::AreEqual(a/(b^2), *ns.eval("x/y^2|(x=a,y=b)"));
 		}
 
 	};

@@ -101,10 +101,10 @@ template<> static expr fn_base<fn_assign>::make(expr p) {
 template<> static expr fn_base<fn_subst>::make(expr p) { 
 	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
 	auto& params = as<xset>(p).items();
-	if(!is<symbol>(params[1]))	return make_err(error_t::syntax);
-	return cas::subst(params[0], as<symbol>(params[1]));
+	if(is<symbol>(params[1]))		return cas::subst(params[0], as<symbol>(params[1]));
+	if(is<xset>(params[1]))			return cas::subst(params[0], as<xset>(params[1]).items());
+	return make_err(error_t::syntax);
 };
-
 
 inline expr make_integral(expr f, expr dx)					{ return func{fn_int{xset{f, dx}}}; }
 inline expr make_integral(expr f, expr dx, expr a, expr b)	{ return func{fn_int{xset{f, dx, a, b}}}; }
@@ -135,8 +135,15 @@ inline expr fn_user::simplify() const
 	expr res = body();
 	list_t from, to;
 	if(res == empty)	return make(*x());
-	for(auto& e : args())	if(is<symbol>(e))	from.push_back(e), to.push_back(as<symbol>(e).value() == empty ? e : as<symbol>(e).value());
-	return *::subst(res, {from}, {to});
+	return *::subst(res, args());
+}
+inline expr fn_user::subst(pair<expr, expr> s) const
+{
+	if(is<symbol>(s.first) && is<func, fn_user>(s.second)) {
+		auto& f = as<func, fn_user>(s.second);
+		if(as<symbol>(s.first).name() == name() && f.name() == name() && f.args().size() == args().size())	return ::subst(f.body(), f[2], (*this)[2]);
+	}
+	return expr{func{*this}} == s.first ? s.second : fn(name(), body() | s, args());
 }
 
 static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
