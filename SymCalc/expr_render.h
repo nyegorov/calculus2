@@ -92,21 +92,21 @@ public:
 	{
 	}
 
-	expr_info create(string src, expr e, expr res)
+	expr_info create(string src)
 	{
 		const char header[] = "<math xmlns='http://www.w3.org/1998/Math/MathML'>", footer[] = "</math>";
 		expr_info me;
-		e = _parser.eval(src);
+		expr e = _parser.eval(src);
+		me.text = src;
 		me.source = e;
-		me.result = *e;// res;
+		me.result = *e;
 
 		if(is<symbol>(me.result)) {
 			expr val = as<symbol>(me.result).value();
-			_parser.set(as<symbol>(me.result).name(), val);
-			if(val != empty)	me.result = val; // is<func, fn_user>(val) ? val : as<symbol>(me.result).value();
+			_parser.set(as<symbol>(me.result).name(), is<func, fn_user>(val) ? val : me.result);
+			if(val != empty)	me.result = val;
 		}
 
-		me.text = src;
 		auto mml_src = exp2mml(me.source);
 		auto mml_res = exp2mml(me.result);
 		me.mml = mml_src + (src.find('~') == string::npos ? "<mo mathcolor='red'>&rArr;</mo>" : "<mo>&asymp;</mo>") + mml_res;
