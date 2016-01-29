@@ -5,7 +5,6 @@
 #pragma once
 
 #include "expr_render.h"
-#include "../parser.h"
 
 typedef std::unique_ptr<std::remove_pointer<HTHEME>::type, std::function<void(HTHEME)>> theme_ptr;
 
@@ -41,7 +40,6 @@ class CMainDlg : public aero::CDialogImpl<CMainDlg>, public CUpdateUI<CMainDlg>,
 	theme_ptr		_theme;
 	std::vector<expr_info>	_history;
 	expr_renderer	_renderer{1.5};
-	cas::NScript	_parser;
 
 public:
 	enum { IDD = IDD_MAINDLG };
@@ -181,9 +179,8 @@ public:
 	{
 		ATL::CString wtext;
 		_inputCtrl.GetWindowTextW(wtext);
-		NScript builder(false);
 		string text = CW2A(wtext);
-		_history.push_back(_renderer.create(text, empty /*builder.eval(text.c_str())*/, empty /*_parser.eval(text.c_str())*/));
+		_history.push_back(_renderer.create(text));
 		_listCtrl.InsertString(-1, (LPCTSTR)(_history.size() - 1));
 		_listCtrl.SetCurSel(_listCtrl.GetCount() - 1);
 		_inputCtrl.SetSel(0, -1, FALSE);

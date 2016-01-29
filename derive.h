@@ -54,14 +54,18 @@ inline expr symbol::integrate(expr dx, expr c) const {
 	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;				// ∫ x dx ⇒ x²/2
 }
 
+template <class F> expr int_fun(F fun, expr Fx, expr dx, expr c) { 
+	return (df(*fun, dx) == zero ? *fun * dx : fun.x() == dx ? Fx : make_integral(*fun, dx)) + c;
+}
+
 template <> inline expr fn_base<fn_id>::integrate(expr dx, expr c) const { return cas::intf(_x, dx, c); }
 template <> inline expr fn_base<fn_ln>::integrate(expr dx, expr c) const { auto a = df(_x, dx); return a != zero && (df(a, dx) == zero) ? _x / a * ln(_x) - dx + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_sin>::integrate(expr dx, expr c) const { return _x == dx ? -cos(_x) + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_cos>::integrate(expr dx, expr c) const { return _x == dx ? sin(_x) + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_tg>::integrate(expr dx, expr c) const { return _x == dx ? -ln(cos(_x)) + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_arcsin>::integrate(expr dx, expr c) const { return _x == dx ? _x * arcsin(_x) + ((1 - (_x ^ 2)) ^ half) + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_arccos>::integrate(expr dx, expr c) const { return _x == dx ? _x * arccos(_x) - ((1 - (_x ^ 2)) ^ half) + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_arctg>::integrate(expr dx, expr c) const { return _x == dx ? _x * arctg(_x) - half * ln(1 + (_x ^ 2)) + c : make_integral(**this, dx) + c; }
+template <> inline expr fn_base<fn_sin>::integrate(expr dx, expr c) const { return int_fun(*this, -cos(_x), dx, c); }
+template <> inline expr fn_base<fn_cos>::integrate(expr dx, expr c) const { return int_fun(*this, sin(_x), dx, c); }
+template <> inline expr fn_base<fn_tg>::integrate(expr dx, expr c) const { return int_fun(*this, -ln(cos(_x)), dx, c); }
+template <> inline expr fn_base<fn_arcsin>::integrate(expr dx, expr c) const { return int_fun(*this, _x * arcsin(_x) + ((1 - (_x ^ 2)) ^ half), dx, c); }
+template <> inline expr fn_base<fn_arccos>::integrate(expr dx, expr c) const { return int_fun(*this, _x * arccos(_x) - ((1 - (_x ^ 2)) ^ half), dx, c); }
+template <> inline expr fn_base<fn_arctg>::integrate(expr dx, expr c) const { return int_fun(*this, _x * arctg(_x) - half * ln(1 + (_x ^ 2)), dx, c); }
 template <> inline expr fn_base<fn_dif>::integrate(expr dx, expr c) const { return dx == (*this)[1] ? (*this)[0] : make_integral(**this, dx) + c; }
 template<class F> expr fn_base<F>::integrate(expr dx, expr c) const { return make_integral(**this, dx) + c; }
 

@@ -101,8 +101,8 @@ template<> static expr fn_base<fn_assign>::make(expr p) {
 template<> static expr fn_base<fn_subst>::make(expr p) { 
 	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
 	auto& params = as<xset>(p).items();
-	if(!is<xset>(params[1]) || as<xset>(params[1]).items().size() != 2)	throw error_t::syntax;
-	return cas::subst(params[0], as<xset>(params[1]).items()[0], as<xset>(params[1]).items()[1]);
+	if(!is<symbol>(params[1]))	return make_err(error_t::syntax);
+	return cas::subst(params[0], as<symbol>(params[1]));
 };
 
 
@@ -133,9 +133,10 @@ template <typename ... Params> expr fn_user::operator ()(expr val, Params ... re
 inline expr fn_user::simplify() const
 { 
 	expr res = body();
+	list_t from, to;
 	if(res == empty)	return make(*x());
-	for(auto& e : args())	if(is<symbol>(e))	res = res | as<symbol>(e);
-	return *res; 
+	for(auto& e : args())	if(is<symbol>(e))	from.push_back(e), to.push_back(as<symbol>(e).value() == empty ? e : as<symbol>(e).value());
+	return *::subst(res, {from}, {to});
 }
 
 static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))

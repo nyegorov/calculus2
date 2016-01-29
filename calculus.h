@@ -44,7 +44,7 @@ inline expr xset::approx() const {
 	return{ret};
 }
 
-inline expr symbol::simplify() const { return expr{*this}; }
+inline expr symbol::simplify() const { return _value == empty || _name.front() == '#' ? expr{*this} : *_value; }
 inline expr power::simplify() const { return *_x ^ *_y; }
 inline expr product::simplify() const { return *_left * *_right; }
 inline expr sum::simplify() const { return *_left + *_right; }

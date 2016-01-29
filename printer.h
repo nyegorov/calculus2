@@ -245,20 +245,17 @@ inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
 inline ostream& operator << (ostream& os, fn_base<fn_assign> f) {
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
-		return os << "<mrow>" << f[0] << "<mo>:</mo><mo>=</mo><mspace width='thinmathspace'/>" << f[1] << "</mrow>";
+		return os << "<mrow>" << f[0] << "<mo>=</mo><mspace width='thinmathspace'/>" << f[1] << "</mrow>";
 	} else
 		return os << f[0] << '=' << f[1];
 }
 
 inline ostream& operator << (ostream& os, fn_base<fn_subst> f) {
-	auto subs = f[1];
-	if(!is<xset>(subs) || as<xset>(subs).items().size() != 2)	return os;
-	auto& s = as<xset>(subs).items();
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
-		return os << "<mrow><msub>" << f[0] << "<mfenced open='|' close=''><mrow>" << s[0] << "<mo>=</mo>" << s[1] << "</mrow></mfenced></msub></mrow>";
+		return os << "<mrow><msub>" << f[0] << "<mfenced open='|' close=''>" << f[1] << "</mfenced></msub></mrow>";
 	} else
-		return os << f[0] << '|' << s[0] << '=' << s[1];
+		return os << f[0] << '|' << f[1];
 }
 
 inline io_manip print_arg(const list_t& args) {

@@ -125,6 +125,11 @@ inline expr operator * (product s, product a) { for(auto& e : a) s.append_old(e)
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (T e, sum s) { return e * s.left() + e * s.right(); }
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (sum s, T e) { return s.left() * e + s.right() * e; }
 inline expr operator * (sum lh, sum rh) { return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right(); }
+inline expr operator * (func lh, power rh) {
+	if(is<func, fn_sin>(lh) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh).x() == as<func, fn_cos>(rh.x()).x() && rh.y() == minus_one)	return tg(as<func, fn_sin>(lh).x());
+	if(is<func, fn_cos>(lh) && is<func, fn_sin>(rh.x()) && as<func, fn_cos>(lh).x() == as<func, fn_sin>(rh.x()).x() && rh.y() == minus_one)	return 1/tg(as<func, fn_cos>(lh).x());
+	return make_prod(lh, rh);
+}
 
 // Power
 template<typename T, typename U> typename enable_if<is_algebraic<T>::value, expr>::type operator ^ (T x, U y) { return make_power(x, y); }
