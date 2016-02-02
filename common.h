@@ -11,6 +11,7 @@ class rational_t;
 class numeric;
 class symbol;
 class func;
+class func1;
 class power;
 class product;
 class sum;
@@ -42,6 +43,7 @@ typedef boost::variant<
 	numeric,
 	boost::recursive_wrapper<symbol>,
 	boost::recursive_wrapper<func>,
+	boost::recursive_wrapper<func1>,
 	boost::recursive_wrapper<power>,
 	boost::recursive_wrapper<product>,
 	boost::recursive_wrapper<sum>,
@@ -319,6 +321,7 @@ class xset
 {
 	list_t	_items;
 public:
+	xset(const xset& x) { _items = x.items(); }
 	xset(expr item) { _items.push_back(item); }
 	xset(list_t items) : _items(items) {}
 	xset(std::initializer_list<expr> items) : _items(items) {}
@@ -337,6 +340,57 @@ inline bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
 inline bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
 
 const expr empty = error{error_t::empty};
+
+expr func_make(expr dx);
+expr func_dif(const func1& f, expr dx);
+expr func_int(const func1& f, expr dx);
+ostream& func_print(ostream& os, const func1& f);
+
+class func1
+{
+public:
+	struct callbacks {
+		typedef std::function<expr(expr)> fmake_t;
+		typedef std::function<expr(const func1&, expr)> fdiff_t;
+		typedef std::function<expr(const func1&, expr)> fint_t;
+		typedef std::function<ostream&(ostream& os, const func1&)> fprint_t;
+		callbacks(fmake_t fmake, fdiff_t fdiff = func_dif, fint_t fintf = func_int, fprint_t fprint = func_print) :
+			fmak(fmake), fdif(fdiff), fint(fintf), fprn(fprint) {}
+		fmake_t  fmak;
+		fdiff_t  fdif;
+		fint_t   fint;
+		fprint_t fprn;
+	};
+
+	string	_name;
+	list_t	_args;
+	expr	_body;
+	callbacks _impl;
+public:
+	func1(const func1& f) : func1(f.name(), f.args(), f.body(), f.impl())  {}
+	func1(string name, list_t args, callbacks impl) : func1(name, args, empty, impl) {}
+	func1(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
+	string name() const { return _name; };
+	expr body() const { return _body; }
+	list_t args() const { return _args; }
+	callbacks impl() const { return _impl; }
+	bool has_sign() const { return false; }
+	expr operator()(expr params) const;
+	expr x() const { return _args[0]; }
+	expr operator[](unsigned i) const;
+	expr d(expr dx) const;
+	expr integrate(expr dx, expr c) const;
+	expr subst(pair<expr, expr> s) const;
+	expr approx() const;
+	expr simplify() const;
+	ostream& print(ostream& os) const;
+	bool match(expr e, match_result& res) const;
+	unsigned exponents(const list_t& vars) const;
+};
+
+inline bool operator == (func1 lh, func1 rh) { return lh.name() == rh.name() && lh.args() == rh.args() && lh.body() == rh.body(); }
+inline bool operator < (func1 lh, func1 rh) { return lh.name() < rh.name(); }
+inline ostream& operator << (ostream& os, func1 f) { return f.print(os); }
 
 expr operator + (expr op1, expr op2);
 expr operator * (expr op1, expr op2);
@@ -379,6 +433,7 @@ expr make_power(expr x, expr y);
 expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
 expr make_integral(expr f, expr dx);
+expr make_dif(expr f, expr dx);
 
 inline expr error::subst(pair<expr, expr> s) const { return *this; };
 inline expr error::d(expr dx) const { return *this; };

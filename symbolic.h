@@ -99,6 +99,7 @@ template<> struct is_algebraic<error>		: std::true_type {};
 template<> struct is_algebraic<numeric>		: std::true_type {};
 template<> struct is_algebraic<symbol>		: std::true_type {};
 template<> struct is_algebraic<func>		: std::true_type {};
+template<> struct is_algebraic<func1>		: std::true_type {};
 template<> struct is_algebraic<power>		: std::true_type {};
 template<> struct is_algebraic<product>		: std::true_type {};
 template<> struct is_algebraic<sum>			: std::true_type {};

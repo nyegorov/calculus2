@@ -285,7 +285,7 @@ namespace Tests
 			Assert::AreEqual(cos(y^2), *ns.eval("cos(y^2)"));
 			Assert::AreEqual(-2*y*sin(y^2), *ns.eval("df(cos(y^2),y)"));
 			Assert::AreEqual(half, *ns.eval("int(1/x^2,x,2,inf)"));
-			ns.set("f", fn("f", empty, {x})); ns.set("g", fn("g", empty, {x})); ns.set("h", fn("h", (x^2)/y, {x, y}));
+			ns.set("f", fn("f", {x}, empty)); ns.set("g", fn("g", {x}, empty)); ns.set("h", fn("h", {x, y}, (x^2)/y));
 			Assert::AreEqual((y ^ 2) / x, *ns.eval("h(y,x)"));
 			Assert::AreEqual(expr{16}/5, *ns.eval("h(4,5)"));
 			Assert::AreEqual("g(x)f'(x)+f(x)g'(x)", to_string(*ns.eval("df(f(x)*g(x),x)")).c_str());

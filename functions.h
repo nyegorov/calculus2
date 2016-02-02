@@ -12,7 +12,7 @@ expr tg(expr x);
 expr arcsin(expr x);
 expr arccos(expr x);
 expr arctg(expr x);
-expr fn(string name, expr body, list_t args);
+expr fn(string name, list_t args, expr body);
 
 template<> static expr fn_base<fn_ln>::make(expr x)
 {
@@ -24,6 +24,47 @@ template<> static expr fn_base<fn_ln>::make(expr x)
 	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());								// ln(xʸ) ⇒ y∙ln(x)
 	return func{fn_ln{x}};
 }
+
+inline expr sin(expr x)
+{
+	if(x == zero || x == pi || x == 2*pi)	return zero;											// sin(0), sin(π), sin(2π) ⇒ 0
+	if(x == pi/6 || x == 5*pi/6)	return half;													// sin(π/6), sin(5π/6) ⇒ 1/2
+	if(x == pi/3 || x == 2*pi/3)	return (3 ^ half) / 2;											// sin(π/3), sin(2π/3) ⇒ √3/2
+	if(x == 7*pi/6 || x == 11*pi/6)	return -half;													// sin(7π/6), sin(11π/6) ⇒ -1/2
+	if(x == 4*pi/3 || x == 5*pi/3)	return -(3 ^ half) / 2;											// sin(4π/3), sin(5π/3) ⇒ -√3/2
+	if(x == pi/4 || x == 3*pi/4)	return (2 ^ half) / 2;											// sin(π/4), sin(3π/4) ⇒ √2/2
+	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;											// sin(5π/4), sin(7π/4) ⇒ -√2/2
+	if(x == pi/2)					return one;														// sin(π/2) ⇒ 1
+	if(x == 2*pi/2)					return minus_one;												// sin(3π/2) ⇒ -1
+	if(is<product>(x) && as<product>(x).left() == minus_one) return -sin(as<product>(x).right());	// sin(-x) ⇒ -sin(x)
+	if(is<func1>(x) && as<func1>(x).name() == "arcsin")	return as<func1>(x).x();					// sin(arcsin(x)) ⇒ x
+	return func1{"sin", {x}, empty, {
+		sin, 
+		[](const func1& f, expr dx) { return df(f.x(), dx) * cos(f.x()); },
+		[](const func1& f, expr dx) { return df(f, dx) == zero ? f * dx : f.x() == dx ? -cos(f.x()) : make_integral(f, dx); }
+	}};
+}
+
+inline expr cos(expr x)
+{
+	if(x == pi/2 || x == 3*pi/2)	return zero;													// cos(π/2), cos(3π/2) ⇒ 0
+	if(x == pi/3 || x == 5*pi/3)	return half;													// cos(π/3), cos(5π/3) ⇒ 1/2
+	if(x == pi/6 || x == 11*pi/6)	return (3 ^ half) / 2;											// cos(π/6), cos(11π/6) ⇒ √3/2
+	if(x == 2*pi/3 || x == 4*pi/3)	return -half;													// cos(2π/3), cos(4π/3) ⇒ -1/2
+	if(x == 5*pi/6 || x == 7*pi/6)	return -(3 ^ half) / 2;											// cos(5π/6), cos(7π/6) ⇒ -√3/2
+	if(x == pi/4 || x == 7*pi/4)	return (2 ^ half) / 2;											// cos(π/4), cos(7π/4) ⇒ √2/2
+	if(x == 3*pi/4 || x == 5*pi/4)	return -(2 ^ half) / 2;											// cos(3π/4), cos(5π/4) ⇒ -√2/2
+	if(x == zero || x == 2*pi)		return one;														// cos(0), cos(2π) ⇒ 1
+	if(x == pi)						return minus_one;												// cos(π) ⇒ -1
+	if(is<product>(x) && as<product>(x).left() == minus_one) return cos(as<product>(x).right());	// cos(-x) ⇒ cos(x)
+	if(is<func1>(x) && as<func1>(x).name() == "arccos")	return as<func1>(x).x();					// cos(arccos(x)) ⇒ x
+	return func1{"cos", {x}, empty,{
+		cos,
+		[](const func1& f, expr dx) { return df(f.x(), dx) * -sin(f.x()); },
+		[](const func1& f, expr dx) { return df(f, dx) == zero ? f * dx : f.x() == dx ? sin(f.x()) : make_integral(f, dx); }
+	}};
+}
+
 template<> static expr fn_base<fn_sin>::make(expr x)
 {
 	if(x == zero || x == pi || x == 2*pi)	return zero;											// sin(0), sin(π), sin(2π) ⇒ 0
@@ -106,6 +147,7 @@ template<> static expr fn_base<fn_subst>::make(expr p) {
 	return make_err(error_t::syntax);
 };
 
+inline expr make_dif(expr f, expr dx)						{ return func{fn_dif{xset{f, dx}}}; }
 inline expr make_integral(expr f, expr dx)					{ return func{fn_int{xset{f, dx}}}; }
 inline expr make_integral(expr f, expr dx, expr a, expr b)	{ return func{fn_int{xset{f, dx, a, b}}}; }
 
@@ -143,7 +185,7 @@ inline expr fn_user::subst(pair<expr, expr> s) const
 		auto& f = as<func, fn_user>(s.second);
 		if(as<symbol>(s.first).name() == name() && f.name() == name() && f.args().size() == args().size())	return ::subst(f.body(), f[2], (*this)[2]);
 	}
-	return expr{func{*this}} == s.first ? s.second : fn(name(), body() | s, args());
+	return expr{func{*this}} == s.first ? s.second : fn(name(), args(), body() | s);
 }
 
 static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
@@ -187,13 +229,42 @@ inline bool func::match(expr e, match_result& res) const {
 		res.found = false;
 }
 
+//inline expr func_make(expr x) { return func1{}
+inline expr func_dif(const func1& f, expr dx) {
+	if(f.body() != empty)	return df(f.body(), dx);
+	auto& la = f.args();
+	auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
+	return it == la.end() ? zero : df(*it, dx) * make_dif(f, dx);
+}
+inline expr func_int(const func1& f, expr dx) { return (df(f, dx) == zero ? f * dx : make_integral(f, dx)); }
+
+inline expr func1::d(expr dx) const { return _impl.fdif(*this, dx); }
+inline expr func1::integrate(expr dx, expr c) const { return _impl.fint(*this, dx) + c; }
+inline expr func1::subst(pair<expr, expr> s) const { return expr{*this} == s.first ? s.second : (*this)(_args | s); }
+inline expr func1::approx() const { return (*this)(~_args); }
+inline expr func1::simplify() const { return (*this)(*_args); }
+inline ostream& func1::print(ostream& os) const { return _impl.fprn(os, *this); }
+inline unsigned func1::exponents(const list_t& vars) const { return 0; }
+inline bool func1::match(expr e, match_result& res) const {	
+	if(!is<func>(e)) return res.found = false;
+	auto f = as<func1>(e);
+	return _name == f.name() ? cas::match(f.args(), _args, res) : res.found = false;
+}
+inline expr func1::operator[](unsigned i) const { return i < _args.size() ? _args[i] : make_err(error_t::invalid_args); }
+inline expr func1::operator()(expr values) const {
+	if(_body != empty)	return _body | pair<expr, expr>{_args, values};
+	return _impl.fmak(is<xset>(values) && as<xset>(values).items().size() == 1 ? as<xset>(values).items()[0] : values);
+}
+
 inline expr ln(expr x) { return fn_ln::make(x); }
-inline expr sin(expr x) { return fn_sin::make(x); }
-inline expr cos(expr x) { return fn_cos::make(x); }
+//inline expr sin(expr x) { return fn_sin::make(x); }
+//nline expr sin(expr x) { return make_sin(x); }
+//inline expr cos(expr x) { return fn_cos::make(x); }
 inline expr tg(expr x) { return fn_tg::make(x); }
 inline expr arcsin(expr x) { return fn_arcsin::make(x); }
 inline expr arccos(expr x) { return fn_arccos::make(x); }
 inline expr arctg(expr x) { return fn_arctg::make(x); }
-inline expr fn(string name, expr body, list_t args) { return func{fn_user{name, body, args}}; }
+inline expr fn2(string name, expr body, list_t args) { return func{fn_user{name, body, args}}; }
+inline expr fn(string name, list_t args, expr body) { return func1{name, args, body, {[=](expr x) { return fn(name, is<xset>(x) ? as<xset>(x).items() : list_t{x}, body); }}}; }
 
 }

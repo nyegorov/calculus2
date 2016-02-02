@@ -271,6 +271,13 @@ inline ostream& operator << (ostream& os, fn_user f) {
 	else			return os << f.name() << '(' << f.args() << ')';
 }
 
+inline ostream& func_print(ostream& os, const func1& f)
+{
+	if(is_den(os))	return os;
+	if(is_mml(os))	return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
+	else			return os << f.name() << '(' << f.args() << ')';
+}
+
 inline ostream& operator << (std::ostream& os, const list_t& l) {
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
