@@ -2193,7 +2193,7 @@ static void nsvg__parsePath(NSVGparser* p, const char** attr)
 							break;
 						case 'T':
 						case 't':
-							nsvg__pathQuadBezShortTo(p, &cpx, &cpy, &cpx2, &cpy2, args, cmd == 's' ? 1 : 0);
+							nsvg__pathQuadBezShortTo(p, &cpx, &cpy, &cpx2, &cpy2, args, cmd == 't' ? 1 : 0);
 							break;
 						case 'A':
 						case 'a':

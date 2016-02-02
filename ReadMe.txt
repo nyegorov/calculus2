@@ -15,24 +15,25 @@ Performs symbolic mathematical calculations, including:
 
  Result of calculation can be rendered into mathml or plain-text format.
 
- Project contains simple parset for mathematical expressions and Win32 GDI 
+ Project contains simple parser for mathematical expressions and Win32 GDI 
  render of mathml format.
 
 /////////////////////////////////////////////////////////////////////////////
 Author:
 
-Nick Yeogorv, nick.yegorov@gmail.com
+Nick Yegorov, nick.yegorov@gmail.com
 
 /////////////////////////////////////////////////////////////////////////////
 Usage:
 
-To use calculation in your project, just include header "calculus.h". If you 
+To use calculations in your project, just include header "calculus.h". If you 
 need expression parser, include also header "parser.h".
 
 /////////////////////////////////////////////////////////////////////////////
 Other notes:
 
 Project depends on Boost library, especially on boost::variant type.
-Reformath library (http://reformath.weebly.com) is used to render mathml.
+Reformath library (http://reformath.weebly.com) is used to render MathML.
+NanoSVG parser (https://github.com/memononen/nanosvg) is used to render SVG.
 
 /////////////////////////////////////////////////////////////////////////////
