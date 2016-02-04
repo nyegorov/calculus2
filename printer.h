@@ -191,86 +191,12 @@ inline ostream& operator << (ostream& os, product p) {
 	}
 }
 
-/*inline ostream& operator << (ostream& os, sum s) {
-	if(use_mml(os)) {
-		os << "<mrow><mrow>" << s.left() << "</mrow>";
-		if(!has_sign(s.right()))	os << "<mo>&plus;</mo>";
-		if(is<sum>(s.right()))		return os << s.right() << "</mrow>";
-		else						return os << "<mrow>" << s.right() << "</mrow></mrow>";
-	} else {
-		os << s.left();
-		if(!has_sign(s.right()))	os << '+';
-		return os << s.right();
-	}
-}
-*/
-/*
-inline io_manip print_fun(const char *name, const expr& args) {
-	return io_manip{[=](ostream& os) -> ostream& {
-		if(is_den(os))	return os;
-		if(is_mml(os))	return os << "<mrow><mi>" << name << "</mi><mfenced>" << args << "</mfenced></mrow>";
-		else 			return os << name << "(" << args << ')';
-	}};
-}
-
-inline ostream& operator << (ostream& os, fn_base<fn_ln> f)		{ return os << print_fun("ln", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_sin> f)	{ return os << print_fun("sin", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_cos> f)	{ return os << print_fun("cos", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_tg> f)		{ return os << print_fun("tg", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_arcsin> f)	{ return os << print_fun("arcsin", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_arccos> f)	{ return os << print_fun("arccos", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_arctg> f)	{ return os << print_fun("arctg", f.x()); }
-inline ostream& operator << (ostream& os, fn_base<fn_int> f) { 
-	if(is_mml(os)) {
-		if(is_den(os))					return os;
-		if(f.size() == 4)
-			return os << fract_bevel << "<mrow><munderover><mo>&int;</mo>" << f[2] << f[3] << "</munderover><mrow>" << fract_default << f[0] << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << f[1] << "</mrow></mrow>";
-		else
-			return os << "<mrow><mo>&int;</mo>" << f[0] << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << f[1] << "</mrow>";
-	}	else
-		return os << "int(" << f[0] << ',' << f[1] << ')'; 
-}
-
-inline ostream& operator << (ostream& os, fn_base<fn_dif> f) {
-	if(is_mml(os)) {
-		if(is_den(os))					return os;
-		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << "<mrow><mi>" << as<func, fn_user>(f[0]).name() << "</mi><mo>&prime;</mo><mfenced>" << as<func, fn_user>(f[0]).args() << "</mfenced></mrow>";
-		else																	return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << f[1] << "</mrow></mfrac>" << f[0] << "</mrow>";
-	} else {
-		if(is<func, fn_user>(f[0]) && as<func, fn_user>(f[0]).body() == empty)	return os << as<func, fn_user>(f[0]).name() << '\'' << '(' << as<func, fn_user>(f[0]).args() << ')';
-		else																	return os << "d/d" << f[1] << " " << f[0];
-	}
-}
-
-inline ostream& operator << (ostream& os, fn_base<fn_assign> f) {
-	if(is_mml(os)) {
-		if(is_den(os))					return os;
-		return os << "<mrow>" << f[0] << "<mo>=</mo><mspace width='thinmathspace'/>" << f[1] << "</mrow>";
-	} else
-		return os << f[0] << '=' << f[1];
-}
-
-inline ostream& operator << (ostream& os, fn_base<fn_subst> f) {
-	if(is_mml(os)) {
-		if(is_den(os))					return os;
-		return os << "<mrow><msub>" << f[0] << "<mfenced open='|' close=''>" << f[1] << "</mfenced></msub></mrow>";
-	} else
-		return os << f[0] << '|' << f[1];
-}
-*/
-inline io_manip print_arg(const list_t& args) {
+static io_manip print_arg(const list_t& args) {
 	return io_manip{[&](ostream& os) -> ostream& {
 		for(const auto& a : args) os << (is<symbol>(a) && as<symbol>(a).value() != empty ? as<symbol>(a).value() : a);
 		return os;
 	}};
 }
-
-/*
-inline ostream& operator << (ostream& os, fn_user f) { 
-	if(is_den(os))					return os;
-	if(is_mml(os)) return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
-	else			return os << f.name() << '(' << f.args() << ')';
-}*/
 
 inline ostream& print_fun(ostream& os, const func& f)
 {

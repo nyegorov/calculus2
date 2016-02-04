@@ -132,125 +132,6 @@ inline expr arctg(expr x)	{
 	}};
 }
 
-/*template<> static expr fn_base<fn_user>::make(expr x) { return func{fn_user{x}}; };
-
-template<> static expr fn_base<fn_int>::make(expr p) {
-	if(!is<xset>(p) || as<xset>(p).items().size() < 2)	return make_err(error_t::syntax);
-	auto& params = as<xset>(p).items();
-	switch(params.size()) {
-	case 2:	return intf(params[0], params[1]);
-	case 3:	return intf(params[0], params[1], params[2]);
-	default:return intf(params[0], params[1], params[2], params[3]);
-	}
-}
-
-template<> static expr fn_base<fn_dif>::make(expr p) {
-	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
-	expr f = as<xset>(p).items().front(), dx = as<xset>(p).items().back();
-	return df(f, dx);
-}
-
-template<> static expr fn_base<fn_assign>::make(expr p) { 
-	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
-	auto& params = as<xset>(p).items();
-	if(is<symbol>(params[0]))			return symbol{as<symbol>(params[0]).name(), params[1]};
-	if(is<func, fn_user>(params[0])) {
-		auto fn = as<func, fn_user>(params[0]);
-		return symbol{fn.name(), func{fn_user{fn.name(), params[1], fn.args()}}};
-	}
-	return make_err(error_t::syntax);
-};
-template<> static expr fn_base<fn_subst>::make(expr p) { 
-	if(!is<xset>(p) || as<xset>(p).items().size() != 2)	return make_err(error_t::syntax);
-	auto& params = as<xset>(p).items();
-	if(is<symbol>(params[1]))		return cas::subst(params[0], as<symbol>(params[1]));
-	if(is<xset>(params[1]))			return cas::subst(params[0], as<xset>(params[1]).items());
-	return make_err(error_t::syntax);
-};
-
-inline expr make_dif(expr f, expr dx)						{ return func{fn_dif{xset{f, dx}}}; }
-inline expr make_integral(expr f, expr dx)					{ return func{fn_int{xset{f, dx}}}; }
-inline expr make_integral(expr f, expr dx, expr a, expr b)	{ return func{fn_int{xset{f, dx, a, b}}}; }
-
-// User-defined functions
-inline fn_user::fn_user(string name, expr body, list_t args) : fn_base(xset{symbol{name}, body, args}) {}
-inline string fn_user::name() const { return as<symbol>((*this)[0]).name(); }
-inline expr fn_user::body() const { return (*this)[1]; }
-inline list_t fn_user::args() const { return as<xset>((*this)[2]).items(); }
-inline expr fn_user::operator()(xset values) const { 
-	return body() == empty ?
-		make(x() | std::make_pair(as<xset>((*this)[2]), values)) : 
-		body() | std::make_pair(as<xset>((*this)[2]), values); 
-}
-inline expr fn_user::operator ()() const { return func{*this}; }
-template <typename ... Params> expr fn_user::operator ()(expr val, Params ... rest) const
-{
-	list_t rest_args = args();
-	if(rest_args.empty())	return error{error_t::syntax};
-	expr arg = rest_args.front();
-	rest_args.erase(rest_args.begin());
-	return rest_args.empty() ? 
-		body() | std::make_pair(arg, val) : 
-		fn_user{name(), body() | std::make_pair(arg, val), rest_args}(rest...);
-}
-inline expr fn_user::simplify() const
-{ 
-	expr res = body();
-	list_t from, to;
-	if(res == empty)	return make(*x());
-	return *::subst(res, args());
-}
-inline expr fn_user::subst(pair<expr, expr> s) const
-{
-	if(is<symbol>(s.first) && is<func, fn_user>(s.second)) {
-		auto& f = as<func, fn_user>(s.second);
-		if(as<symbol>(s.first).name() == name() && f.name() == name() && f.args().size() == args().size())	return ::subst(f.body(), f[2], (*this)[2]);
-	}
-	return expr{func{*this}} == s.first ? s.second : fn(name(), args(), body() | s);
-}
-
-static expr apply_fun(expr x, real_t rfun(real_t x), complex_t cfun(complex_t x))
-{
-	if(is<numeric, int_t>(x))		return make_num(rfun((real_t)as<numeric, int_t>(x)));
-	if(is<numeric, real_t>(x))		return make_num(rfun(as<numeric, real_t>(x)));
-	if(is<numeric, complex_t>(x))	return make_num(cfun(as<numeric, complex_t>(x)));
-	return x;
-}
-template<class F> expr fn_base<F>::approx() const { return fn_base<F>::make(~_x); }
-template<class F> expr fn_base<F>::simplify() const {
-	return fn_base<F>::make(*_x);
-}
-template<class F> expr fn_base<F>::subst(pair<expr, expr> s) const { return expr{func{F{_x}}} == s.first ? s.second : make(_x | s); }
-template<class F> bool fn_base<F>::match(function_t f, match_result& res) const { return f.type() == typeid(F) ? cas::match(boost::get<F>(f).x(), _x, res) : res.found = false; }
-template<class F> unsigned fn_base<F>::exponents(const list_t& vars) const { auto c = get_exps(_x, vars); return c ? 99 : 0; }
-template<class F> expr operator *(fn_base<F> f) { return f.make(f.x()); }
-
-template<> expr inline fn_base<fn_ln>::approx() const { return apply_fun(~_x, log, [](complex_t x) {return log(x); }); }
-template<> expr inline fn_base<fn_sin>::approx() const { return apply_fun(~_x, std::sin, [](complex_t x) {return sin(x); }); }
-template<> expr inline fn_base<fn_cos>::approx() const { return apply_fun(~_x, std::cos, [](complex_t x) {return cos(x); }); }
-template<> expr inline fn_base<fn_tg>::approx() const { return apply_fun(~_x, tan, [](complex_t x) {return tan(x); }); }
-template<> expr inline fn_base<fn_arcsin>::approx() const { return apply_fun(~_x, asin, [](complex_t x) {return asin(x); }); }
-template<> expr inline fn_base<fn_arccos>::approx() const { return apply_fun(~_x, acos, [](complex_t x) {return acos(x); }); }
-template<> expr inline fn_base<fn_arctg>::approx() const { return apply_fun(~_x, atan, [](complex_t x) {return atan(x); }); }
-template<> expr inline fn_base<fn_int>::approx() const { return make_integral(~(*this)[0], (*this)[1]); }
-template<> expr inline fn_base<fn_assign>::approx() const { return make(~_x); }
-template<> expr inline fn_base<fn_subst>::approx() const { return make(~_x); }
-
-inline expr operator * (func f) { return boost::apply_visitor([](auto f) { return *f; }, f.value()); }
-
-inline expr func::d(expr dx) const { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, _func); }
-inline expr func::integrate(expr dx, expr c) const { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, _func); }
-inline expr func::subst(pair<expr, expr> s) const { return boost::apply_visitor([s](auto x) { return x.subst(s); }, _func);}
-inline expr func::approx() const { return boost::apply_visitor([](auto x) { return x.approx(); }, _func); }
-inline expr func::simplify() const { return boost::apply_visitor([](auto x) { return x.simplify(); }, _func); }
-inline unsigned func::exponents(const list_t& vars) const { return boost::apply_visitor([&vars](auto x) { return x.exponents(vars); }, _func); }
-inline bool func::match(expr e, match_result& res) const {
-	return is<func>(e) ? 
-		boost::apply_visitor([fun = as<func>(e).value(), &res](auto f) { return f.match(fun, res); }, _func) :
-		res.found = false;
-}
-*/
-
 inline expr fdif(expr x)
 {
 	if(!is<xset>(x) || as<xset>(x).items().size() != 2)	return make_err(error_t::syntax);
@@ -344,7 +225,7 @@ inline expr func::integrate(expr dx, expr c) const { return _impl.fint(dx) + c; 
 inline expr func::subst(pair<expr, expr> s) const { 
 	if(is<symbol>(s.first) && is<func>(s.second) && !as<func>(s.second).body().empty()) {
 		auto& f = as<func>(s.second);
-		if(as<symbol>(s.first).name() == name() && f.name() == name() && f.args().size() == args().size())	return f(_args); //::subst(f.body(), f.args(), _args);
+		if(as<symbol>(s.first).name() == name() && f.name() == name() && f.args().size() == args().size())	return f(_args);
 	}
 	return expr{*this} == s.first ? s.second : (*this)(_args | s);
 }

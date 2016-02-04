@@ -20,24 +20,6 @@ inline expr symbol::d(expr dx) const
 	return df(_value, dx);
 }
 
-/*template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }									// id(f)' ⇒ f'
-template <> inline expr fn_base<fn_ln>::d(expr dx) const { return df(_x, dx) / _x; }							// ln(f)' ⇒ f'/x
-template <> inline expr fn_base<fn_sin>::d(expr dx) const { return df(_x, dx) * cos(_x); }						// sin(f)' ⇒ f'∙cos(x)
-template <> inline expr fn_base<fn_cos>::d(expr dx) const { return -df(_x, dx) * sin(_x); }						// cos(f)' ⇒ -f'∙sin(x)
-template <> inline expr fn_base<fn_tg>::d(expr dx) const { return df(_x, dx) / (cos(_x) ^ two); }				// tg(f)' ⇒ f'/cos²(x)
-template <> inline expr fn_base<fn_arcsin>::d(expr dx) const { return df(_x, dx) / ((1-(_x^2)) ^ half); }		// arcsin(f)' ⇒ f'/√(1-x²)
-template <> inline expr fn_base<fn_arccos>::d(expr dx) const { return -df(_x, dx) / ((1 - (_x ^ 2)) ^ half); }	// arccos(f)' ⇒ -f'/√(1-x²)
-template <> inline expr fn_base<fn_arctg>::d(expr dx) const { return df(_x, dx) / (1 + (_x ^ 2)); }				// arctg(f)' ⇒ f'/√(1+x²)
-template <> inline expr fn_base<fn_int>::d(expr dx) const { return dx == (*this)[1] ? (*this)[0] : func{fn_dif{xset{**this, dx}}}; }
-template<class F> expr fn_base<F>::d(expr dx) const { return func{fn_dif{xset{**this, dx}}}; }
-inline expr fn_user::d(expr dx) const { 
-	if(body() == empty) {
-		auto& la = args();
-		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
-		return it == la.end() ? zero : df(*it, dx) * func{fn_dif{xset{func{*this}, dx}}};
-	}	else return df(body(), dx); 
-}*/
-
 inline expr power::d(expr dx) const { return (_x^_y) * (df(_y, dx)*ln(_x) + _y / _x*df(_x, dx)); }				// (fᵍ)' ⇒ fᵍ∙[g'∙ln(f)+g∙f'/f]
 inline expr product::d(expr dx) const { return df(_left, dx) * _right + _left * df(_right, dx); }				// (f∙g)' ⇒ f'∙g + f∙g'
 inline expr sum::d(expr dx) const { return df(_left, dx) + df(_right, dx); }									// (f+g)' ⇒ f' + g'
@@ -53,29 +35,6 @@ inline expr numeric::integrate(expr dx, expr c) const { return expr{_value} *dx 
 inline expr symbol::integrate(expr dx, expr c) const {															
 	return is<symbol>(dx) && _name == as<symbol>(dx).name() ? (dx ^ 2) / 2 + c : *this * dx + c;				// ∫ x dx ⇒ x²/2
 }
-
-template <class F> expr int_fun(F fun, expr Fx, expr dx, expr c) { 
-	return (df(*fun, dx) == zero ? *fun * dx : fun.x() == dx ? Fx : make_integral(*fun, dx)) + c;
-}
-
-/*template <> inline expr fn_base<fn_id>::integrate(expr dx, expr c) const { return cas::intf(_x, dx, c); }
-template <> inline expr fn_base<fn_ln>::integrate(expr dx, expr c) const { auto a = df(_x, dx); return a != zero && (df(a, dx) == zero) ? _x / a * ln(_x) - dx + c : make_integral(**this, dx) + c; }
-template <> inline expr fn_base<fn_sin>::integrate(expr dx, expr c) const { return int_fun(*this, -cos(_x), dx, c); }
-template <> inline expr fn_base<fn_cos>::integrate(expr dx, expr c) const { return int_fun(*this, sin(_x), dx, c); }
-template <> inline expr fn_base<fn_tg>::integrate(expr dx, expr c) const { return int_fun(*this, -ln(cos(_x)), dx, c); }
-template <> inline expr fn_base<fn_arcsin>::integrate(expr dx, expr c) const { return int_fun(*this, _x * arcsin(_x) + ((1 - (_x ^ 2)) ^ half), dx, c); }
-template <> inline expr fn_base<fn_arccos>::integrate(expr dx, expr c) const { return int_fun(*this, _x * arccos(_x) - ((1 - (_x ^ 2)) ^ half), dx, c); }
-template <> inline expr fn_base<fn_arctg>::integrate(expr dx, expr c) const { return int_fun(*this, _x * arctg(_x) - half * ln(1 + (_x ^ 2)), dx, c); }
-template <> inline expr fn_base<fn_dif>::integrate(expr dx, expr c) const { return dx == (*this)[1] ? (*this)[0] : make_integral(**this, dx) + c; }
-template<class F> expr fn_base<F>::integrate(expr dx, expr c) const { return make_integral(**this, dx) + c; }
-
-inline expr fn_user::integrate(expr dx, expr c) const { 
-	if(body() == empty) {
-		auto& la = args();																						// ∫ f(y) dx ⇒ x∙f(y)
-		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
-		return it == la.end() ? dx * func{*this} + c : func{fn_int{xset{func{*this}, dx}}} + c;
-	} else return intf(body(), dx, c);
-}*/
 
 inline expr power::integrate(expr dx, expr c) const
 {

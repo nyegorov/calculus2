@@ -287,7 +287,6 @@ class func
 	callbacks _impl;
 public:
 	func(const func& f) : func(f.name(), f.args(), f.body(), f.impl())  {}
-	//func(string name, list_t args, callbacks impl) : func(name, args, empty, impl) {}
 	func(string name, list_t args, expr body);
 	func(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
 	string name() const { return _name; };
