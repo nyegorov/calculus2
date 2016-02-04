@@ -77,7 +77,7 @@ inline expr product::integrate(expr dx, expr c) const {
 	// Integrals with Exponents
 	if((mr = cas::match(*this, x*(e ^ (y*x)))) && df(a = mr[y], dx) == zero) return (x / a - (a^-2))*_right + c;// ∫ x∙eᵃˣ dx ⇒ (x/a-1/a²)∙eᵃˣ
 	if((mr = cas::match(*this, (x^n)*(e^(y*x)))) && df(a=mr[y], dx) == zero &&	is<numeric, int_t>(b = mr[n]) && b > zero)
-		return (dx^b)*(e^a*x)/a - b/a*intf((dx ^ (b - 1))*(e^a*x), dx) + c;										// ∫ xⁿ∙eᵃˣ dx ⇒ xⁿ∙eᵃˣ/a - n/a ∫ xⁿ⁻¹∙eᵃˣ dx
+		return (dx^b)*(e^a*x)/a - b/a*intf((dx ^ (b - 1))*(e^a*x), dx) + c;									// ∫ xⁿ∙eᵃˣ dx ⇒ xⁿ∙eᵃˣ/a - n/a ∫ xⁿ⁻¹∙eᵃˣ dx
 
 	return make_integral(make_prod(p.left(), p.right()), dx) + c;
 }

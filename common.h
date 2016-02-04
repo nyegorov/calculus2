@@ -47,6 +47,9 @@ typedef boost::variant<
 >	expr;
 
 typedef std::vector<expr> list_t;
+typedef std::function<expr(expr)> fmake_t;
+typedef std::function<expr(expr, expr)> fcall_t;
+typedef std::function<ostream&(ostream& os, const func&)> fprint_t;
 
 enum class part_t { all = 0, num = 1, den = 2 };
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
@@ -64,13 +67,27 @@ bool has_sign(expr e);
 bool less(numeric_t op1, numeric_t op2);
 unsigned get_exps(expr e, const list_t& vars);
 bool is_mml(ostream& os);
+expr make_err(error_t err);
+expr make_num(int_t value);
+expr make_num(int_t numer, int_t denom);
+expr make_num(real_t value);
+expr make_num(real_t real, real_t imag);
+expr make_num(complex_t value);
+expr make_power(expr x, expr y);
+expr make_sum(expr x, expr y);
+expr make_prod(expr left, expr right);
+expr make_integral(expr f, expr dx);
+expr make_integral(expr f, expr dx, expr c);
+expr make_integral(expr f, expr dx, expr a, expr b);
+expr make_dif(expr f, expr dx);
+expr make_int(expr f, expr dx);
 
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
 template<class T> T& as(expr& e) { return boost::get<T>(e); }
 template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
 template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).value()); }
-bool is_func(expr x, const char name[]);
+bool is_func(const expr& x, const char name[]);
 
 std::ostream& operator << (std::ostream& os, const list_t& l);
 std::ostream& operator << (std::ostream& os, part_t part);
@@ -262,22 +279,18 @@ public:
 inline bool operator == (xset lh, xset rh) { return lh.items() == rh.items(); }
 inline bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
 
-const expr empty = error{error_t::empty};
-
 ostream& print_fun(ostream& os, const func& f);
-expr approx_fun(const func& f, const expr& x);
+expr approx_fun(expr f, expr x);
 
 class func
 {
+public:
 	struct callbacks {
-		typedef std::function<expr(expr)> fmake_t;
-		typedef std::function<expr(const func&, expr)> fapprox_t;
-		typedef std::function<ostream&(ostream& os, const func&)> fprint_t;
-		callbacks(fmake_t fmake, fmake_t fdiff, fmake_t fintf, fapprox_t fapprox = approx_fun, fprint_t fprint = print_fun) : make(fmake), fdif(fdiff), fint(fintf), approx(fapprox), print(fprint) {}
+		callbacks(fmake_t m, fcall_t d = make_dif, fcall_t i = make_int, fcall_t a = approx_fun, fprint_t p = print_fun) : make(m), d(d), integrate(i), approx(a), print(p) {}
 		fmake_t make;
-		fapprox_t approx;
-		fmake_t fdif;
-		fmake_t fint;
+		fcall_t d;
+		fcall_t integrate;
+		fcall_t approx;
 		fprint_t print;
 	};
 
@@ -286,17 +299,14 @@ class func
 	expr	_body;
 	callbacks _impl;
 public:
-	func(const func& f) : func(f.name(), f.args(), f.body(), f.impl())  {}
 	func(string name, list_t args, expr body);
 	func(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
 	string name() const { return _name; };
 	expr body() const { return _body; }
 	list_t args() const { return _args; }
-	callbacks impl() const { return _impl; }
 	bool has_sign() const { return false; }
 	expr operator()(expr params) const;
 	expr x() const { return _args[0]; }
-	expr operator[](unsigned i) const;
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
@@ -322,19 +332,7 @@ expr operator / (expr op1, expr op2);
 expr operator | (expr op1, symbol op2);
 expr operator | (expr op1, pair<expr, expr> op2);
 
-expr make_err(error_t err);
-expr make_num(int_t value);
-expr make_num(int_t numer, int_t denom);
-expr make_num(real_t value);
-expr make_num(real_t real, real_t imag);
-expr make_num(complex_t value);
-expr make_power(expr x, expr y);
-expr make_sum(expr x, expr y);
-expr make_prod(expr left, expr right);
-expr make_integral(expr f, expr dx);
-expr make_integral(expr f, expr dx, expr c);
-expr make_integral(expr f, expr dx, expr a, expr b);
-expr make_dif(expr f, expr dx);
+const expr empty = error{error_t::empty};
 
 inline bool failed(expr e) { return e.type() == typeid(error); }
 inline string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
@@ -348,7 +346,8 @@ inline expr subst(expr e, list_t vars) {
 	return subst(e, std::make_pair(expr{from}, expr{to}));
 }
 inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
-inline expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
+inline expr intf(expr e, expr dx, expr c) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
+inline expr intf(expr e, expr dx) { return intf(e, dx, expr{0}); }
 inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func>(F) && as<func>(F).name() == S_INT ? make_integral(e, dx, a, b) : subst(F, dx, b) - subst(F, dx, a); }
 inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 inline expr simplify(expr e) { return boost::apply_visitor([](auto x) { return x.simplify(); }, e); }

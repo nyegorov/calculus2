@@ -213,42 +213,44 @@ static bool is_simple(expr e, expr dx)
 	return false;
 }
 
-inline ostream& print_dif(ostream& os, expr f, expr dx) {
+inline ostream& print_dif(ostream& os, const func& f) {
+	auto fn = f.args()[0], dx = f.args()[1];
 	if(is_mml(os)) {
 		if(is_den(os))			return os;
-		if(is_simple(f, dx))	return os << "<mrow><mi>" << as<func>(f).name() << "</mi><mo>&prime;</mo><mfenced>" << print_arg(as<func>(f).args()) << "</mfenced></mrow>";
-		else										return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << dx << "</mrow></mfrac>" << f << "</mrow>";
+		if(is_simple(fn, dx))	return os << "<mrow><mi>" << as<func>(fn).name() << "</mi><mo>&prime;</mo><mfenced>" << print_arg(as<func>(fn).args()) << "</mfenced></mrow>";
+		else										return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << dx << "</mrow></mfrac>" << fn << "</mrow>";
 	} else {
-		if(is_simple(f, dx))	return os << as<func>(f).name() << '\'' << '(' << as<func>(f).args() << ')';
-		else					return os << "d/d" << dx << " " << f;
+		if(is_simple(fn, dx))	return os << as<func>(fn).name() << '\'' << '(' << as<func>(fn).args() << ')';
+		else					return os << "d/d" << dx << " " << fn;
 	}
 }
 
-inline ostream& print_int(ostream& os, expr f, expr dx, expr a = empty, expr b = empty) {
+inline ostream& print_int(ostream& os, const func& f) {
+	auto fn = f.args()[0], dx = f.args()[1], a = f.args().size() >= 3 ? f.args()[2] : empty, b = f.args().size() >= 4 ? f.args()[3] : empty;
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
 		if(a != empty || b != empty)
-			return os << fract_bevel << "<mrow><munderover><mo>&int;</mo>" << a << b << "</munderover><mrow>" << fract_default << f << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow></mrow>";
+			return os << fract_bevel << "<mrow><munderover><mo>&int;</mo>" << a << b << "</munderover><mrow>" << fract_default << fn << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow></mrow>";
 		else
-			return os << "<mrow><mo>&int;</mo>" << f << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow>";
+			return os << "<mrow><mo>&int;</mo>" << fn << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow>";
 	} else
-		return os << "int(" << f << ',' << dx << ')';
+		return os << "int(" << fn << ',' << dx << ')';
 }
 
-inline ostream& print_assign(ostream& os, expr x, expr y) {
+inline ostream& print_assign(ostream& os, const func& f) {
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
-		return os << "<mrow>" << x << "<mo>=</mo><mspace width='thinmathspace'/>" << y << "</mrow>";
+		return os << "<mrow>" << f.args()[0] << "<mo>=</mo><mspace width='thinmathspace'/>" << f.args()[1] << "</mrow>";
 	} else
-		return os << x << '=' << y;
+		return os << f.args()[0] << '=' << f.args()[1];
 }
 
-inline ostream& print_subst(ostream& os, expr x, expr y) {
+inline ostream& print_subst(ostream& os, const func& f) {
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
-		return os << "<mrow><msub>" << x << "<mfenced open='|' close=''>" << y << "</mfenced></msub></mrow>";
+		return os << "<mrow><msub>" << f.args()[0] << "<mfenced open='|' close=''>" << f.args()[1] << "</mfenced></msub></mrow>";
 	} else
-		return os << x << '|' << y;
+		return os << f.args()[0] << '|' << f.args()[1];
 }
 
 inline ostream& operator << (std::ostream& os, const list_t& l) {
