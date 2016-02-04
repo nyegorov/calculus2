@@ -5,52 +5,47 @@ using std::string;
 using std::ostream;
 using std::pair;
 
+const char S_LN[] = "ln";
+const char S_SIN[] = "sin";
+const char S_COS[] = "cos";
+const char S_TG[] = "tg";
+const char S_ASIN[] = "arcsin";
+const char S_ACOS[] = "arccos";
+const char S_ATG[] = "arctg";
+const char S_DIF[] = "dif";
+const char S_INT[] = "int";
+const char S_ASSIGN[] = "assign";
+const char S_SUBST[] = "subst";
+
 namespace cas {
 class rational_t;
 
 class numeric;
 class symbol;
 class func;
-class func1;
+class func;
 class power;
 class product;
 class sum;
 class xset;
 class error;
 
-struct fn_id;
-struct fn_ln;
-struct fn_sin;
-struct fn_cos;
-struct fn_tg;
-struct fn_arcsin;
-struct fn_arccos;
-struct fn_arctg;
-struct fn_int;
-struct fn_dif;
-struct fn_assign;
-struct fn_subst;
-struct fn_user;
-
 typedef int int_t;
 typedef double real_t;
 typedef std::complex<real_t> complex_t;
 
 typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
-typedef boost::variant<fn_id, fn_ln, fn_sin, fn_cos, fn_tg, fn_arcsin, fn_arccos, fn_arctg, fn_user, fn_int, fn_dif, fn_assign, fn_subst> function_t;
 typedef boost::variant<
 	error,
 	numeric,
 	boost::recursive_wrapper<symbol>,
 	boost::recursive_wrapper<func>,
-	boost::recursive_wrapper<func1>,
 	boost::recursive_wrapper<power>,
 	boost::recursive_wrapper<product>,
 	boost::recursive_wrapper<sum>,
 	boost::recursive_wrapper<xset>
 >	expr;
 
-typedef std::vector<expr> vec_expr;
 typedef std::vector<expr> list_t;
 
 enum class part_t { all = 0, num = 1, den = 2 };
@@ -75,6 +70,7 @@ template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T)
 template<class T> T& as(expr& e) { return boost::get<T>(e); }
 template<class T> const T& as(const expr& e) { return boost::get<T>(e); }
 template<class T, class F> const F as(const expr& f) { return boost::get<F>(boost::get<T>(f).value()); }
+bool is_func(expr x, const char name[]);
 
 std::ostream& operator << (std::ostream& os, const list_t& l);
 std::ostream& operator << (std::ostream& os, part_t part);
@@ -244,79 +240,6 @@ inline ostream& operator << (ostream& os, sum s) {
 	}
 }
 
-template<class F> class fn_base
-{
-	expr _x;
-public:
-	fn_base(expr x) : _x(x) {}
-	expr x() const { return _x; }
-	static expr make(expr x) { return x; };
-	expr operator[] (unsigned i) const { 
-		if(is<xset>(_x))	return i < as<xset>(_x).items().size() ? as<xset>(_x).items()[i] : make_err(error_t::invalid_args);
-		else				return i == 0 ? _x : make_err(error_t::invalid_args);
-	}
-	size_t size() const { return is<xset>(_x) ? as<xset>(_x).items().size() : 1; }
-	expr d(expr dx) const;
-	expr integrate(expr dx, expr c) const;
-	expr subst(pair<expr, expr> s) const;
-	expr approx() const;
-	expr simplify() const;
-	bool match(function_t f, match_result& res) const;
-	unsigned exponents(const list_t& vars) const;
-};
-template<class F> bool operator == (fn_base<F> lh, fn_base<F> rh) { return lh.x() == rh.x(); }
-template<class F> bool operator < (fn_base<F> lh, fn_base<F> rh) { return lh.x() < rh.x(); }
-template<class F> ostream& operator << (ostream& os, fn_base<F> f) { return os << f.x(); }
-
-struct fn_id : public fn_base<fn_id> { using fn_base::fn_base; };
-struct fn_ln : public fn_base<fn_ln> { using fn_base::fn_base; };
-struct fn_sin : public fn_base<fn_sin> { using fn_base::fn_base; };
-struct fn_cos : public fn_base<fn_cos> { using fn_base::fn_base; };
-struct fn_tg : public fn_base<fn_tg> { using fn_base::fn_base; };
-struct fn_arcsin : public fn_base<fn_arcsin> { using fn_base::fn_base; };
-struct fn_arccos : public fn_base<fn_arccos> { using fn_base::fn_base; };
-struct fn_arctg : public fn_base<fn_arctg> { using fn_base::fn_base; };
-struct fn_int : public fn_base<fn_int> { using fn_base::fn_base; };
-struct fn_dif : public fn_base<fn_dif> { using fn_base::fn_base; };
-struct fn_assign : public fn_base<fn_assign> { using fn_base::fn_base; };
-struct fn_subst : public fn_base<fn_subst> { using fn_base::fn_base; };
-struct fn_user : public fn_base<fn_user> {
-	fn_user(expr x) : fn_base(x) {}
-	fn_user(string name, expr body, list_t args);
-	string name() const;
-	expr body() const;
-	list_t args() const;
-	expr simplify() const;
-	expr subst(pair<expr, expr> s) const;
-
-	expr d(expr dx) const;
-	expr integrate(expr dx, expr c) const;
-	expr operator()(xset params) const;
-	expr operator ()() const;
-	template <typename ... Params> expr operator ()(expr val, Params ... rest) const;
-};
-typedef fn_user	fun;
-
-class func
-{
-	function_t	_func;
-public:
-	func(function_t func) : _func(func) {}
-	function_t value() const { return _func; }
-	bool has_sign() const { return false; }
-	expr d(expr dx) const;
-	expr integrate(expr dx, expr c) const;
-	expr subst(pair<expr, expr> s) const;
-	expr approx() const;
-	expr simplify() const;
-	bool match(expr e, match_result& res) const;
-	unsigned exponents(const list_t& vars) const;
-};
-
-inline bool operator == (func lh, func rh) { return lh.value() == rh.value(); }
-inline bool operator < (func lh, func rh) { return lh.value() < rh.value(); }
-inline ostream& operator << (ostream& os, func f) { return os << f.value(); }
-
 class xset
 {
 	list_t	_items;
@@ -341,25 +264,18 @@ inline bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
 
 const expr empty = error{error_t::empty};
 
-expr func_make(expr dx);
-expr func_dif(const func1& f, expr dx);
-expr func_int(const func1& f, expr dx);
-ostream& func_print(ostream& os, const func1& f);
+ostream& print_fun(ostream& os, const func& f);
 
-class func1
+class func
 {
-public:
 	struct callbacks {
 		typedef std::function<expr(expr)> fmake_t;
-		typedef std::function<expr(const func1&, expr)> fdiff_t;
-		typedef std::function<expr(const func1&, expr)> fint_t;
-		typedef std::function<ostream&(ostream& os, const func1&)> fprint_t;
-		callbacks(fmake_t fmake, fdiff_t fdiff = func_dif, fint_t fintf = func_int, fprint_t fprint = func_print) :
-			fmak(fmake), fdif(fdiff), fint(fintf), fprn(fprint) {}
-		fmake_t  fmak;
-		fdiff_t  fdif;
-		fint_t   fint;
-		fprint_t fprn;
+		typedef std::function<ostream&(ostream& os, const func&)> fprint_t;
+		callbacks(fmake_t fmake, fmake_t fdiff, fmake_t fintf, fprint_t fprint = print_fun) : make(fmake), fdif(fdiff), fint(fintf), print(fprint) {}
+		fmake_t make;
+		fmake_t fdif;
+		fmake_t fint;
+		fprint_t print;
 	};
 
 	string	_name;
@@ -367,9 +283,10 @@ public:
 	expr	_body;
 	callbacks _impl;
 public:
-	func1(const func1& f) : func1(f.name(), f.args(), f.body(), f.impl())  {}
-	func1(string name, list_t args, callbacks impl) : func1(name, args, empty, impl) {}
-	func1(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
+	func(const func& f) : func(f.name(), f.args(), f.body(), f.impl())  {}
+	//func(string name, list_t args, callbacks impl) : func(name, args, empty, impl) {}
+	func(string name, list_t args, expr body);
+	func(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
 	string name() const { return _name; };
 	expr body() const { return _body; }
 	list_t args() const { return _args; }
@@ -388,9 +305,9 @@ public:
 	unsigned exponents(const list_t& vars) const;
 };
 
-inline bool operator == (func1 lh, func1 rh) { return lh.name() == rh.name() && lh.args() == rh.args() && lh.body() == rh.body(); }
-inline bool operator < (func1 lh, func1 rh) { return lh.name() < rh.name(); }
-inline ostream& operator << (ostream& os, func1 f) { return f.print(os); }
+inline bool operator == (func lh, func rh) { return lh.name() == rh.name() && lh.args() == rh.args() && lh.body() == rh.body(); }
+inline bool operator < (func lh, func rh) { return lh.name() < rh.name(); }
+inline ostream& operator << (ostream& os, func f) { return f.print(os); }
 
 expr operator + (expr op1, expr op2);
 expr operator * (expr op1, expr op2);
@@ -402,6 +319,20 @@ expr operator * (expr op1);
 expr operator / (expr op1, expr op2);
 expr operator | (expr op1, symbol op2);
 expr operator | (expr op1, pair<expr, expr> op2);
+
+expr make_err(error_t err);
+expr make_num(int_t value);
+expr make_num(int_t numer, int_t denom);
+expr make_num(real_t value);
+expr make_num(real_t real, real_t imag);
+expr make_num(complex_t value);
+expr make_power(expr x, expr y);
+expr make_sum(expr x, expr y);
+expr make_prod(expr left, expr right);
+expr make_integral(expr f, expr dx);
+expr make_integral(expr f, expr dx, expr c);
+expr make_integral(expr f, expr dx, expr a, expr b);
+expr make_dif(expr f, expr dx);
 
 inline bool failed(expr e) { return e.type() == typeid(error); }
 inline string to_string(expr e) { std::stringstream ss; ss << e; return ss.str(); }
@@ -416,24 +347,12 @@ inline expr subst(expr e, list_t vars) {
 }
 inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
 inline expr intf(expr e, expr dx, expr c = expr{0}) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
-inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func, fn_int>(F) ? func{fn_int{xset{e, dx, a, b}}} : subst(F, dx, b) - subst(F, dx, a); }
+inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func>(F) && as<func>(F).name() == S_INT ? make_integral(e, dx, a, b) : subst(F, dx, b) - subst(F, dx, a); }
 inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 inline expr simplify(expr e) { return boost::apply_visitor([](auto x) { return x.simplify(); }, e); }
 inline bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }
 inline match_result match(expr e, expr pattern) { match_result res; match(e, pattern, res); return res; }
 inline unsigned get_exps(expr e, const list_t& vars) { return boost::apply_visitor([&vars](auto x) { return x.exponents(vars); }, e); }
-
-expr make_err(error_t err);
-expr make_num(int_t value);
-expr make_num(int_t numer, int_t denom);
-expr make_num(real_t value);
-expr make_num(real_t real, real_t imag);
-expr make_num(complex_t value);
-expr make_power(expr x, expr y);
-expr make_sum(expr x, expr y);
-expr make_prod(expr left, expr right);
-expr make_integral(expr f, expr dx);
-expr make_dif(expr f, expr dx);
 
 inline expr error::subst(pair<expr, expr> s) const { return *this; };
 inline expr error::d(expr dx) const { return *this; };

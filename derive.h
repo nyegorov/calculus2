@@ -20,7 +20,7 @@ inline expr symbol::d(expr dx) const
 	return df(_value, dx);
 }
 
-template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }									// id(f)' ⇒ f'
+/*template <> inline expr fn_base<fn_id>::d(expr dx) const { return df(_x, dx); }									// id(f)' ⇒ f'
 template <> inline expr fn_base<fn_ln>::d(expr dx) const { return df(_x, dx) / _x; }							// ln(f)' ⇒ f'/x
 template <> inline expr fn_base<fn_sin>::d(expr dx) const { return df(_x, dx) * cos(_x); }						// sin(f)' ⇒ f'∙cos(x)
 template <> inline expr fn_base<fn_cos>::d(expr dx) const { return -df(_x, dx) * sin(_x); }						// cos(f)' ⇒ -f'∙sin(x)
@@ -36,7 +36,7 @@ inline expr fn_user::d(expr dx) const {
 		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
 		return it == la.end() ? zero : df(*it, dx) * func{fn_dif{xset{func{*this}, dx}}};
 	}	else return df(body(), dx); 
-}
+}*/
 
 inline expr power::d(expr dx) const { return (_x^_y) * (df(_y, dx)*ln(_x) + _y / _x*df(_x, dx)); }				// (fᵍ)' ⇒ fᵍ∙[g'∙ln(f)+g∙f'/f]
 inline expr product::d(expr dx) const { return df(_left, dx) * _right + _left * df(_right, dx); }				// (f∙g)' ⇒ f'∙g + f∙g'
@@ -58,7 +58,7 @@ template <class F> expr int_fun(F fun, expr Fx, expr dx, expr c) {
 	return (df(*fun, dx) == zero ? *fun * dx : fun.x() == dx ? Fx : make_integral(*fun, dx)) + c;
 }
 
-template <> inline expr fn_base<fn_id>::integrate(expr dx, expr c) const { return cas::intf(_x, dx, c); }
+/*template <> inline expr fn_base<fn_id>::integrate(expr dx, expr c) const { return cas::intf(_x, dx, c); }
 template <> inline expr fn_base<fn_ln>::integrate(expr dx, expr c) const { auto a = df(_x, dx); return a != zero && (df(a, dx) == zero) ? _x / a * ln(_x) - dx + c : make_integral(**this, dx) + c; }
 template <> inline expr fn_base<fn_sin>::integrate(expr dx, expr c) const { return int_fun(*this, -cos(_x), dx, c); }
 template <> inline expr fn_base<fn_cos>::integrate(expr dx, expr c) const { return int_fun(*this, sin(_x), dx, c); }
@@ -75,7 +75,7 @@ inline expr fn_user::integrate(expr dx, expr c) const {
 		auto it = std::find_if(la.begin(), la.end(), [dx](auto x) {return df(x, dx) != zero; });
 		return it == la.end() ? dx * func{*this} + c : func{fn_int{xset{func{*this}, dx}}} + c;
 	} else return intf(body(), dx, c);
-}
+}*/
 
 inline expr power::integrate(expr dx, expr c) const
 {
@@ -112,7 +112,7 @@ inline expr product::integrate(expr dx, expr c) const {
 	if(_left == ln(dx) && _right == 1/dx)	return half * (ln(dx) ^ 2) + c;										// ∫ ln(x)/x dx ⇒ 1/2∙ln²(x)
 	if((mr = cas::match(*this, (x^n)*ln(x))) && is<numeric, int_t>(b = mr[n]))									// ∫ xⁿ∙ln(x) dx ⇒ xⁿ⁺¹∙[ln(x)/(n+1)-1/(n+1)²], n≠-1
 		return (dx ^ (b + 1))*(ln(dx) / (b + 1) - ((b + 1) ^ -2)) + c;
-	if(_left == dx && is<func, fn_ln>(_right) && is_linear(as<func, fn_ln>(_right).x(), dx, a, b))				// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
+	if(_left == dx && is_func(_right, S_LN) && is_linear(as<func>(_right).x(), dx, a, b))						// ∫ x∙ln(ax+b) dx ⇒ (a²x²-b²)∙ln(ax+b)/2a²-x∙(ax-2b)/4a
 		return (((a*dx) ^ 2) - (b ^ 2))*_right / (2 * (a ^ 2)) - dx*(a*dx - 2 * b) / (4 * a) + c;
 
 	// Integrals with Exponents

@@ -205,8 +205,8 @@ namespace Tests
 			Assert::AreEqual("-sin(x^2)", to_string(sin(-x*x)).c_str());
 			Assert::AreEqual("cos(x^2)", to_string(cos(-x*x)).c_str());
 			// User
-			fun f{"f", x / y,{x,y}};
-			Assert::AreEqual(one / 5, f(1, 5));
+			///func f{"f", {x,y}, x / y};
+			///Assert::AreEqual(one / 5, f(1, 5));
 
 		}
 		TEST_METHOD(Approximation)
@@ -231,7 +231,7 @@ namespace Tests
 		TEST_METHOD(Derivative)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
-			fun f{"f", x / y, {x,y}};
+			func f{"f",{x,y}, x / y};
 			Assert::AreEqual(3*(x^2), df(x^3, x));
 			Assert::AreEqual(ln(3)*(3^x), df(3^x, x));
 			Assert::AreEqual((x^x)+ln(x)*(x^x), df(x^x, x));
@@ -239,9 +239,9 @@ namespace Tests
 			Assert::AreEqual(2/x, df(ln(x^2), x));
 			Assert::AreEqual(-cos(1/x)/(x^2), df(sin(1/x), x));
 			Assert::AreEqual(-sin(tg(x))/(cos(x)^2), df(cos(tg(x)), x));
-			//Assert::AreEqual(1 / y, df(f, x));
-			//Assert::AreEqual(-1 / (y^2), df(f, y));
-			//Assert::AreEqual(1 / y, df(f, x));
+			Assert::AreEqual(1 / y, df(f, x));
+			Assert::AreEqual(-x / (y^2), df(f, y));
+			Assert::AreEqual(1 / y, df(f, x));
 		}
 		TEST_METHOD(Integrals)
 		{
@@ -254,7 +254,7 @@ namespace Tests
 			Assert::AreEqual(ln(1+5*x)/5, intf((5 * x + 1) ^ -1, x));
 			Assert::AreEqual(-(x^2)/4+ln(x)*(x^2)/2, intf(x*ln(x), x));
 			Assert::AreEqual(two, intf(sin(x), x, 0, pi));
-			Assert::AreEqual("int(#e^x^2,x)+c", to_string(intf(e^(x^2), x, c)).c_str());
+			Assert::AreEqual("c+int(#e^x^2,x)", to_string(intf(e^(x^2), x, c)).c_str());
 			Assert::AreEqual((ln(x)^2)/2, intf(ln(x)/x, x));
 			Assert::AreEqual(sin(x)*tg(y), df(intf(sin(x)*tg(y), x), x));
 			Assert::AreEqual(-cos(x)/(cos(y)^2), df(intf(sin(x)*tg(y), x), y));
@@ -283,13 +283,13 @@ namespace Tests
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
 			Assert::AreEqual(2*x*x+3*x+1, *ns.eval("2*x^2+3*x+1"));
 			Assert::AreEqual(cos(y^2), *ns.eval("cos(y^2)"));
-			Assert::AreEqual(-2*y*sin(y^2), *ns.eval("df(cos(y^2),y)"));
+			Assert::AreEqual(-2*y*sin(y^2), *ns.eval("dif(cos(y^2),y)"));
 			Assert::AreEqual(half, *ns.eval("int(1/x^2,x,2,inf)"));
 			ns.set("f", fn("f", {x}, empty)); ns.set("g", fn("g", {x}, empty)); ns.set("h", fn("h", {x, y}, (x^2)/y));
 			Assert::AreEqual((y ^ 2) / x, *ns.eval("h(y,x)"));
 			Assert::AreEqual(expr{16}/5, *ns.eval("h(4,5)"));
-			Assert::AreEqual("g(x)f'(x)+f(x)g'(x)", to_string(*ns.eval("df(f(x)*g(x),x)")).c_str());
-			Assert::AreEqual("f'(g(x))g'(x)", to_string(*ns.eval("df(f(g(x)),x)")).c_str());
+			Assert::AreEqual("g'(x)f(x)+f'(x)g(x)", to_string(*ns.eval("dif(f(x)*g(x),x)")).c_str());
+			Assert::AreEqual("f'(g(x))g'(x)", to_string(*ns.eval("dif(f(g(x)),x)")).c_str());
 			ns.set("xx", 4); ns.set("yy", 5);
 			Assert::AreEqual(expr{20}, *ns.eval("xx*yy"));
 			Assert::AreEqual(sin(x), *ns.eval("int(f(x),x)|f(x)=cos(x)"));

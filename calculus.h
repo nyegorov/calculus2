@@ -106,7 +106,7 @@ inline bool prod_comp::operator ()(const expr& left, const expr& right) const
 inline bool sum_comp::operator ()(const expr& left, const expr& right) const
 {
 	auto l = get_exps(left, variables), r = get_exps(right, variables);
-	return l != r ? l > r : left < right;
+	return l != r ? l > r : left <= right;
 }
 
 inline expr operator ~ (expr op1) { return cas::approx(op1); }

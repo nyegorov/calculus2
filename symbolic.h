@@ -31,7 +31,7 @@ inline expr make_power(expr x, expr y) {
 	if(x == zero)		return zero;				// 0ⁿ ⇒ 0
 	if(y == one)		return x;					// x¹ ⇒ x
 	if(x == one)		return one;					// 1ⁿ ⇒ 1
-	if(x == e && is<func, fn_ln>(y))		return as<func, fn_ln>(y).x();	// eˡⁿ⁽ˣ⁾ ⇒ x
+	if(x == e && is_func(y, S_LN))	return as<func>(y).x();	// eˡⁿ⁽ˣ⁾ ⇒ x
 	return power{x, y};
 }
 
@@ -99,7 +99,6 @@ template<> struct is_algebraic<error>		: std::true_type {};
 template<> struct is_algebraic<numeric>		: std::true_type {};
 template<> struct is_algebraic<symbol>		: std::true_type {};
 template<> struct is_algebraic<func>		: std::true_type {};
-template<> struct is_algebraic<func1>		: std::true_type {};
 template<> struct is_algebraic<power>		: std::true_type {};
 template<> struct is_algebraic<product>		: std::true_type {};
 template<> struct is_algebraic<sum>			: std::true_type {};
@@ -112,8 +111,8 @@ template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type op
 inline expr operator + (sum s, sum a) { return s.append(a.left()) + a.right(); }
 inline expr operator + (power lh, power rh) {
 	if(lh.y() == two && rh.y() == two) {			// sin²(x)+cos²(x)=1
-		if(is<func, fn_sin>(lh.x()) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh.x()).x() == as<func, fn_cos>(rh.x()).x())	return one;
-		if(is<func, fn_sin>(rh.x()) && is<func, fn_cos>(lh.x()) && as<func, fn_sin>(rh.x()).x() == as<func, fn_cos>(lh.x()).x())	return one;
+		if(is_func(lh.x(), S_SIN) && is_func(rh.x(), S_COS) && as<func>(lh.x()).x() == as<func>(rh.x()).x())	return one;
+		if(is_func(lh.x(), S_COS) && is_func(rh.x(), S_SIN) && as<func>(lh.x()).x() == as<func>(rh.x()).x())	return one;
 	}
 	return make_sum(lh, rh);
 }
@@ -127,8 +126,8 @@ template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type op
 template<typename T> typename enable_if<!is_same<T, expr>::value, expr>::type operator * (sum s, T e) { return s.left() * e + s.right() * e; }
 inline expr operator * (sum lh, sum rh) { return lh.left() * rh.left() + lh.left() * rh.right() + lh.right() * rh.left() + lh.right() * rh.right(); }
 inline expr operator * (func lh, power rh) {
-	if(is<func, fn_sin>(lh) && is<func, fn_cos>(rh.x()) && as<func, fn_sin>(lh).x() == as<func, fn_cos>(rh.x()).x() && rh.y() == minus_one)	return tg(as<func, fn_sin>(lh).x());
-	if(is<func, fn_cos>(lh) && is<func, fn_sin>(rh.x()) && as<func, fn_cos>(lh).x() == as<func, fn_sin>(rh.x()).x() && rh.y() == minus_one)	return 1/tg(as<func, fn_cos>(lh).x());
+	if(is_func(lh, S_SIN) && is_func(rh.x(), S_COS) && as<func>(lh).x() == as<func>(rh.x()).x() && rh.y() == minus_one)	return tg(as<func>(lh).x());
+	if(is_func(lh, S_COS) && is_func(rh.x(), S_SIN) && as<func>(lh).x() == as<func>(rh.x()).x() && rh.y() == minus_one)	return 1/tg(as<func>(lh).x());
 	return make_prod(lh, rh);
 }
 

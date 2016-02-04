@@ -204,7 +204,7 @@ inline ostream& operator << (ostream& os, product p) {
 	}
 }
 */
-
+/*
 inline io_manip print_fun(const char *name, const expr& args) {
 	return io_manip{[=](ostream& os) -> ostream& {
 		if(is_den(os))	return os;
@@ -257,25 +257,63 @@ inline ostream& operator << (ostream& os, fn_base<fn_subst> f) {
 	} else
 		return os << f[0] << '|' << f[1];
 }
-
+*/
 inline io_manip print_arg(const list_t& args) {
 	return io_manip{[&](ostream& os) -> ostream& {
 		for(const auto& a : args) os << (is<symbol>(a) && as<symbol>(a).value() != empty ? as<symbol>(a).value() : a);
 		return os;
 	}};
 }
-
+/*
 inline ostream& operator << (ostream& os, fn_user f) { 
 	if(is_den(os))					return os;
 	if(is_mml(os)) return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
 	else			return os << f.name() << '(' << f.args() << ')';
-}
+}*/
 
-inline ostream& func_print(ostream& os, const func1& f)
+inline ostream& print_fun(ostream& os, const func& f)
 {
 	if(is_den(os))	return os;
 	if(is_mml(os))	return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
 	else			return os << f.name() << '(' << f.args() << ')';
+}
+
+inline ostream& print_dif(ostream& os, expr f, expr dx) {
+	if(is_mml(os)) {
+		if(is_den(os))					return os;
+		if(is<func>(f) && as<func>(f).x() == dx)	return os << "<mrow><mi>" << as<func>(f).name() << "</mi><mo>&prime;</mo><mfenced>" << as<func>(f).args() << "</mfenced></mrow>";
+		else										return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << dx << "</mrow></mfrac>" << f << "</mrow>";
+	} else {
+		if(is<func>(f) && as<func>(f).x() == dx)	return os << as<func>(f).name() << '\'' << '(' << as<func>(f).args() << ')';
+		else										return os << "d/d" << dx << " " << f;
+	}
+}
+
+inline ostream& print_int(ostream& os, expr f, expr dx, expr a = empty, expr b = empty) {
+	if(is_mml(os)) {
+		if(is_den(os))					return os;
+		if(a != empty || b != empty)
+			return os << fract_bevel << "<mrow><munderover><mo>&int;</mo>" << a << b << "</munderover><mrow>" << fract_default << f << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow></mrow>";
+		else
+			return os << "<mrow><mo>&int;</mo>" << f << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow>";
+	} else
+		return os << "int(" << f << ',' << dx << ')';
+}
+
+inline ostream& print_assign(ostream& os, expr x, expr y) {
+	if(is_mml(os)) {
+		if(is_den(os))					return os;
+		return os << "<mrow>" << x << "<mo>=</mo><mspace width='thinmathspace'/>" << y << "</mrow>";
+	} else
+		return os << x << '=' << y;
+}
+
+inline ostream& print_subst(ostream& os, expr x, expr y) {
+	if(is_mml(os)) {
+		if(is_den(os))					return os;
+		return os << "<mrow><msub>" << x << "<mfenced open='|' close=''>" << y << "</mfenced></msub></mrow>";
+	} else
+		return os << x << '|' << y;
 }
 
 inline ostream& operator << (std::ostream& os, const list_t& l) {

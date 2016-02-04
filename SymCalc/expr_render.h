@@ -103,7 +103,7 @@ public:
 
 		if(is<symbol>(me.result)) {
 			expr val = as<symbol>(me.result).value();
-			_parser.set(as<symbol>(me.result).name(), is<func, fn_user>(val) ? val : me.result);
+			_parser.set(as<symbol>(me.result).name(), is<func>(val) ? val : me.result);
 			if(val != empty)	me.result = val;
 		}
 
