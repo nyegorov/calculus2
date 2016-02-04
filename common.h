@@ -265,14 +265,17 @@ inline bool operator < (xset lh, xset rh) { return lh.items() < rh.items(); }
 const expr empty = error{error_t::empty};
 
 ostream& print_fun(ostream& os, const func& f);
+expr approx_fun(const func& f, const expr& x);
 
 class func
 {
 	struct callbacks {
 		typedef std::function<expr(expr)> fmake_t;
+		typedef std::function<expr(const func&, expr)> fapprox_t;
 		typedef std::function<ostream&(ostream& os, const func&)> fprint_t;
-		callbacks(fmake_t fmake, fmake_t fdiff, fmake_t fintf, fprint_t fprint = print_fun) : make(fmake), fdif(fdiff), fint(fintf), print(fprint) {}
+		callbacks(fmake_t fmake, fmake_t fdiff, fmake_t fintf, fapprox_t fapprox = approx_fun, fprint_t fprint = print_fun) : make(fmake), fdif(fdiff), fint(fintf), approx(fapprox), print(fprint) {}
 		fmake_t make;
+		fapprox_t approx;
 		fmake_t fdif;
 		fmake_t fint;
 		fprint_t print;

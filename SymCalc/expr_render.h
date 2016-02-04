@@ -101,6 +101,8 @@ public:
 		me.source = e;
 		me.result = *e;
 
+		if(src.find('~') != string::npos)	me.result = ~me.result;
+
 		if(is<symbol>(me.result)) {
 			expr val = as<symbol>(me.result).value();
 			_parser.set(as<symbol>(me.result).name(), is<func>(val) ? val : me.result);

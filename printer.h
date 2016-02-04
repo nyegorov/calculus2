@@ -264,6 +264,7 @@ inline io_manip print_arg(const list_t& args) {
 		return os;
 	}};
 }
+
 /*
 inline ostream& operator << (ostream& os, fn_user f) { 
 	if(is_den(os))					return os;
@@ -278,14 +279,22 @@ inline ostream& print_fun(ostream& os, const func& f)
 	else			return os << f.name() << '(' << f.args() << ')';
 }
 
+static bool is_simple(expr e, expr dx)
+{
+	if(!is<func>(e))	return false;
+	func& f = as<func>(e);
+	if(f.args().size() == 1 && df(f.x(), dx) != zero)	return true;
+	return false;
+}
+
 inline ostream& print_dif(ostream& os, expr f, expr dx) {
 	if(is_mml(os)) {
-		if(is_den(os))					return os;
-		if(is<func>(f) && as<func>(f).x() == dx)	return os << "<mrow><mi>" << as<func>(f).name() << "</mi><mo>&prime;</mo><mfenced>" << as<func>(f).args() << "</mfenced></mrow>";
+		if(is_den(os))			return os;
+		if(is_simple(f, dx))	return os << "<mrow><mi>" << as<func>(f).name() << "</mi><mo>&prime;</mo><mfenced>" << print_arg(as<func>(f).args()) << "</mfenced></mrow>";
 		else										return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << dx << "</mrow></mfrac>" << f << "</mrow>";
 	} else {
-		if(is<func>(f) && as<func>(f).x() == dx)	return os << as<func>(f).name() << '\'' << '(' << as<func>(f).args() << ')';
-		else										return os << "d/d" << dx << " " << f;
+		if(is_simple(f, dx))	return os << as<func>(f).name() << '\'' << '(' << as<func>(f).args() << ')';
+		else					return os << "d/d" << dx << " " << f;
 	}
 }
 

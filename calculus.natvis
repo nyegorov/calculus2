@@ -33,35 +33,19 @@
       <Item Name="[body]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[1]</Item>
     </Expand>
   </Type>
-
-  <Type Name="std::vector&lt;boost::variant&lt;*&gt;&gt;">
-    <DisplayString>()</DisplayString>
-<!--    
-    <DisplayString Condition="_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst == 0">()</DisplayString>
-    <DisplayString Condition="_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst == 1">({*_Mypair._Myval2._Myfirst})</DisplayString>
-    <DisplayString Condition="_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst == 2">({*_Mypair._Myval2._Myfirst}, {*(_Mypair._Myval2._Myfirst+1)})</DisplayString>
-    <DisplayString Condition="_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst == 3">({*_Mypair._Myval2._Myfirst}, {*(_Mypair._Myval2._Myfirst+1)}, {*(_Mypair._Myval2._Myfirst+2)})</DisplayString>
-    <DisplayString Condition="_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst == 4">({*_Mypair._Myval2._Myfirst}, {*(_Mypair._Myval2._Myfirst+1)}, {*(_Mypair._Myval2._Myfirst+2)}, {*(_Mypair._Myval2._Myfirst+3)})</DisplayString>
-    <DisplayString>{{ size={_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst} }}</DisplayString>
-    <Expand>
-      <ArrayItems>
-        <Size>_Mypair._Myval2._Mylast - _Mypair._Myval2._Myfirst</Size>
-        <ValuePointer>_Mypair._Myval2._Myfirst</ValuePointer>
-      </ArrayItems>
-    </Expand>-->
-  </Type>
-
+  
   <Type Name="cas::func">
+
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 1 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst})</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 2 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)})</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 3 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)})</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 4 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}, {*(_args._Mypair._Myval2._Myfirst+3)})</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 1">{_name,sb}({*_args._Mypair._Myval2._Myfirst}): [{_body}]</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 2">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}): [{_body}]</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 3">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}): [{_body}]</DisplayString>
+    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 5">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}, {*(_args._Mypair._Myval2._Myfirst+3)}): [{_body}]</DisplayString>
     <DisplayString Condition="_body.which_ == 0">{_name,sb}{_args}</DisplayString>
     <DisplayString>{_name,sb}{_args}: {_body}</DisplayString>
-
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 1 &amp;&amp; _body.which_ != 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}): _body</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 1 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 2 &amp;&amp; _body.which_ != 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}): _body</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 2 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 3">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 4">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}, {*(_args._Mypair._Myval2._Myfirst+3)})</DisplayString>
-    <DisplayString>{_name,sb}{{ size={_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst} }}</DisplayString>
   
     <Expand>
       <Item Name="[name]">_name</Item>
@@ -72,7 +56,7 @@
 
   <Type Name="cas::symbol">
     <DisplayString Condition="_value.which_ == 0">{_name,sb}</DisplayString>
-    <DisplayString Condition="_value.which_ != 0">{_name,sb}:{_value}</DisplayString>
+    <DisplayString Condition="_value.which_ != 0">{_name,sb}={_value}</DisplayString>
   </Type>
   
   <Type Name="cas::power">
