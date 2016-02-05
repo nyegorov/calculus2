@@ -69,12 +69,12 @@ Context::Context(const Context *base) : _locals(1)
 		_globals.insert(pair("i",		numeric{complex_t{0.0, 1.0}}));
 		_globals.insert(pair("ln",		fn("ln",  {x}, ln(x))));
 		_globals.insert(pair("sin",		fn("sin", {x}, sin(x))));
-		_globals.insert(pair("cos", fn("cos", {x}, cos(x))));
+		_globals.insert(pair("cos",		fn("cos", {x}, cos(x))));
 		_globals.insert(pair("tg",		fn("tg", {x}, tg(x))));
 		_globals.insert(pair("arcsin",	fn("arcsin", {x}, arcsin(x))));
 		_globals.insert(pair("arccos",	fn("arccos", {x}, arccos(x))));
 		_globals.insert(pair("arctg",	fn("arctg", {x}, arctg(x))));
-		_globals.insert(pair("dif",		fn("dif", {f, x},  make_dif(f, x))));
+		_globals.insert(pair("dif",		fn("dif", {f, x}, make_dif(f, x))));
 		_globals.insert(pair("int",		fn("int", {f, x, a, b}, make_integral(f, x, a, b))));
 		_globals.insert(pair("sqrt",	fn("sqrt", {x}, x^half)));
 	}
@@ -131,22 +131,21 @@ expr NScript::eval(string script)
 void NScript::ParseVar(expr& result)
 {
 	string name = _parser.GetName();
-	list_t params;
+	expr params = empty;
 	_parser.Next();
 	if(_parser.GetToken() == Parser::lpar) {
-		auto state = _parser.GetState();
+		// function call or function definition
 		_parser.Next();
-		Parse(Statement, result);
+		Parse(Statement, params);
 		_parser.CheckPairedToken(Parser::lpar);
-		if(_parser.GetToken() != Parser::setvar)	_parser.SetState(state);
-		else params = is<xset>(result) ? as<xset>(result).items() : list_t{result};
 	}
 	if(_parser.GetToken() == Parser::setvar)	{
 		_parser.Next(); 
 		Parse(Assignment, result); 
-		result = make_assign(params.empty() ? symbol{name} : fn(name, params, empty), result);
+		result = make_assign(params == empty ? symbol{name} : fn(name, is<xset>(params) ? as<xset>(params).items() : list_t{params}, empty), result);
 	}	else	{
 		result = _context.Get(name);
+		if(params != empty)	OpCall(result, params, result);
 	}
 }
 

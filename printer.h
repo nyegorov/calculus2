@@ -229,7 +229,7 @@ inline ostream& print_int(ostream& os, const func& f) {
 	auto fn = f.args()[0], dx = f.args()[1], a = f.args().size() >= 3 ? f.args()[2] : empty, b = f.args().size() >= 4 ? f.args()[3] : empty;
 	if(is_mml(os)) {
 		if(is_den(os))					return os;
-		if(a != empty || b != empty)
+		if(a != empty && b != empty)
 			return os << fract_bevel << "<mrow><munderover><mo>&int;</mo>" << a << b << "</munderover><mrow>" << fract_default << fn << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow></mrow>";
 		else
 			return os << "<mrow><mo>&int;</mo>" << fn << "<mspace width='thinmathspace'/><mo>&dd;</mo>" << dx << "</mrow>";
