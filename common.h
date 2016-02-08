@@ -302,11 +302,10 @@ public:
 	func(string name, list_t args, expr body);
 	func(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
 	string name() const { return _name; };
-	expr body() const { return _body; }
 	list_t args() const { return _args; }
 	bool has_sign() const { return false; }
 	expr operator()(expr params) const;
-	expr x() const { return _args[0]; }
+	expr x() const;
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
@@ -317,7 +316,7 @@ public:
 	unsigned exponents(const list_t& vars) const;
 };
 
-inline bool operator == (func lh, func rh) { return lh.name() == rh.name() && lh.args() == rh.args() && lh.body() == rh.body(); }
+inline bool operator == (func lh, func rh) { return lh.name() == rh.name() && lh.args() == rh.args(); }
 inline bool operator < (func lh, func rh) { return lh.name() < rh.name(); }
 inline ostream& operator << (ostream& os, func f) { return f.print(os); }
 

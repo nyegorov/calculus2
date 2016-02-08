@@ -32,22 +32,9 @@ void OpApp(expr& op1, expr& op2, expr& result) { result = op2; }
 void OpSubst(expr& op1, expr& op2, expr& result) { result = make_subst(op1, op2); }
 void OpAssign(expr& op1, expr& op2, expr& result) { result = make_assign(op1, op2); }
 void OpCall(expr& op1, expr& op2, expr& result) {
-	auto vals = is<xset>(op2) ? as<xset>(op2) : xset{op2};
-	if(is<symbol>(op1))	op1 = fn(as<symbol>(op1).name(), vals.items(), empty);
-	if(!is<func>(op1))	throw error_t::syntax;
-	auto name = as<func>(op1).name();
-	auto body = as<func>(op1).body();
-	auto args = as<func>(op1).args();
-	auto pval = vals.items().begin();
-	for(auto& s : args) {
-		if(pval == vals.items().end())	break;
-		if(is<symbol>(s))	s = symbol{as<symbol>(s).name(), *pval++};
-	}
-	if(name == S_DIF)			result = make_dif(vals.items()[0], vals.items()[1]);
-	else if(name == S_INT)		result = vals.items().size() == 2 ? make_integral(vals.items()[0], vals.items()[1]) : 
-										 vals.items().size() == 3 ? make_integral(vals.items()[0], vals.items()[1], vals.items()[2]) :
-																    make_integral(vals.items()[0], vals.items()[1], vals.items()[2], vals.items()[3]);
-	else						result = fn(name, args, body);
+	if(is<symbol>(op1))		result = fn(as<symbol>(op1).name(), is<xset>(op2) ? as<xset>(op2).items() : list_t{op2}, empty);
+	else if(is<func>(op1))	result = as<func>(op1)(op2);
+	else throw error_t::syntax;
 }
 
 Context::vars_t	Context::_globals;
@@ -67,15 +54,15 @@ Context::Context(const Context *base) : _locals(1)
 		_globals.insert(pair("pi",		pi));
 		_globals.insert(pair("e",		e));
 		_globals.insert(pair("i",		numeric{complex_t{0.0, 1.0}}));
-		_globals.insert(pair("ln",		fn("ln",  {x}, ln(x))));
-		_globals.insert(pair("sin",		fn("sin", {x}, sin(x))));
-		_globals.insert(pair("cos",		fn("cos", {x}, cos(x))));
-		_globals.insert(pair("tg",		fn("tg", {x}, tg(x))));
-		_globals.insert(pair("arcsin",	fn("arcsin", {x}, arcsin(x))));
-		_globals.insert(pair("arccos",	fn("arccos", {x}, arccos(x))));
-		_globals.insert(pair("arctg",	fn("arctg", {x}, arctg(x))));
-		_globals.insert(pair("dif",		fn("dif", {f, x}, make_dif(f, x))));
-		_globals.insert(pair("int",		fn("int", {f, x, a, b}, make_integral(f, x, a, b))));
+		_globals.insert(pair("ln",		ln(x)));
+		_globals.insert(pair("sin",		sin(x)));
+		_globals.insert(pair("cos",		cos(x)));
+		_globals.insert(pair("tg",		tg(x)));
+		_globals.insert(pair("arcsin",	arcsin(x)));
+		_globals.insert(pair("arccos",	arccos(x)));
+		_globals.insert(pair("arctg",	arctg(x)));
+		_globals.insert(pair("dif",		make_dif(f, x)));
+		_globals.insert(pair("int",		make_integral(f, x, a, b)));
 		_globals.insert(pair("sqrt",	fn("sqrt", {x}, x^half)));
 	}
 }

@@ -17,7 +17,7 @@ expr arccos(expr x);
 expr arctg(expr x);
 
 inline func::func(string name, list_t args, expr body) : _name(name), _args(args), _body(body), _impl{
-	[=](expr x) { return fn(name, is<xset>(x) ? as<xset>(x).items() : list_t{x}, body); },
+	[=](expr x) { return body == empty ? fn(name, is<xset>(x) ? as<xset>(x).items() : list_t{x}, body) : body | pair<expr, expr>{args.size() == 1 ? args.front() : args, x}; },
 	[=](expr f, expr dx) {
 		if(body != empty)	return df(body, dx);
 		auto it = std::find_if(args.begin(), args.end(), [dx](auto x) {return df(x, dx) != zero; });
@@ -66,7 +66,7 @@ inline expr sin(expr x)
 	if(x == 5*pi/4 || x == 7*pi/4)	return -(2 ^ half) / 2;											// sin(5π/4), sin(7π/4) ⇒ -√2/2
 	if(x == pi/2)					return one;														// sin(π/2) ⇒ 1
 	if(x == 2*pi/2)					return minus_one;												// sin(3π/2) ⇒ -1
-	if(is<product>(x) && as<product>(x).left() == minus_one) return -sin(as<product>(x).right());	// sin(-x) ⇒ -sin(x)
+	if(is<product>(x) && has_sign(as<product>(x).left())) return -sin(-x);							// sin(-x) ⇒ -sin(x)
 	if(is<func>(x) && as<func>(x).name() == S_ASIN)	return as<func>(x).x();							// sin(arcsin(x)) ⇒ x
 	return func{S_SIN, {x}, empty, {
 		sin, 
@@ -192,17 +192,18 @@ inline expr make_integral(expr f, expr dx, expr a, expr b) { return func{S_INT,{
 inline expr make_assign(expr x, expr y) { return func{S_ASSIGN, {x, y}, empty, { fass, make_dif, make_int, approx_fun, print_assign }}; }
 inline expr make_subst(expr x, expr y)  { return func{S_SUBST,  {x, y}, empty, { fsub, make_dif, make_int, approx_fun, print_subst }}; }
 
+inline expr func::x() const { return _args.size() == 1 ? _args.front() : xset(_args); }
 inline expr func::d(expr dx) const { return _impl.d(*this, dx); }
 inline expr func::integrate(expr dx, expr c) const { return _impl.integrate(*this, dx) + c; }
 inline expr func::subst(pair<expr, expr> s) const { 
-	if(is<symbol>(s.first) && is<func>(s.second) && !as<func>(s.second).body().empty()) {
+	if(is<symbol>(s.first) && is<func>(s.second)) {
 		auto& f = as<func>(s.second);
 		if(as<symbol>(s.first).name() == name() && f.name() == name() && f.args().size() == args().size())	return f(_args);
 	}
-	return expr{*this} == s.first ? s.second : (*this)(_args | s);
+	return expr{*this} == s.first ? s.second : _impl.make(x() | s);
 }
 inline expr func::approx() const { return _impl.approx(*this, ~_args); }
-inline expr func::simplify() const { return (*this)(*_args); }
+inline expr func::simplify() const { return _impl.make(*x()); }
 inline ostream& func::print(ostream& os) const { return _impl.print(os, *this); }
 inline unsigned func::exponents(const list_t& vars) const { return 0; }
 inline bool func::match(expr e, match_result& res) const {	
@@ -211,8 +212,7 @@ inline bool func::match(expr e, match_result& res) const {
 	return _name == f.name() ? cas::match(f.args(), _args, res) : res.found = false;
 }
 inline expr func::operator()(expr values) const {
-	if(_body != empty)	return _body | pair<expr, expr>{_args, values};
-	return _impl.make(is<xset>(values) && as<xset>(values).items().size() == 1 ? as<xset>(values).items()[0] : values);
+	return func{_name, is<xset>(values) ? as<xset>(values).items() : list_t{values}, _body, _impl};
 }
 
 }
