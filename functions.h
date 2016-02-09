@@ -7,6 +7,7 @@ namespace cas {
 
 inline bool is_func(const expr& x, const char name[]) { return is<func>(x) && as<func>(x).name() == name; }
 
+expr fn(string name, list_t args);
 expr fn(string name, list_t args, expr body);
 expr ln(expr x);
 expr sin(expr x);
@@ -16,16 +17,22 @@ expr arcsin(expr x);
 expr arccos(expr x);
 expr arctg(expr x);
 
-inline func::func(string name, list_t args, expr body) : _name(name), _args(args), _body(body), _impl{
-	[=](expr x) { return body == empty ? fn(name, is<xset>(x) ? as<xset>(x).items() : list_t{x}, body) : body | pair<expr, expr>{args.size() == 1 ? args.front() : args, x}; },
-	[=](expr f, expr dx) {
-		if(body != empty)	return df(body, dx);
+inline func::func(string name, list_t args) : _name(name), _args(args), _impl{
+	[name](expr x) { return fn(name, is<xset>(x) ? as<xset>(x).items() : list_t{x}); },
+	[args](expr f, expr dx) {
 		auto it = std::find_if(args.begin(), args.end(), [dx](auto x) {return df(x, dx) != zero; });
 		return it == args.end() ? zero : df(*it, dx) * make_dif(f, dx);
 	},
-	[=](expr f, expr dx) { return body != empty ? intf(body, dx) : df(f, dx) == zero ? f * dx : make_integral(f, dx); },
-} {};
+	[](expr f, expr dx) { return df(f, dx) == zero ? f * dx : make_int(f, dx); }
+} {}
 
+inline func::func(string name, list_t args, expr body) : _name(name), _args(args), _impl{
+	[body, a = args.size() == 1 ? args.front() : args](expr x) { return ::subst(body, a, x); },
+	[body](expr f, expr dx) { return df(body, dx);   },
+	[body](expr f, expr dx) { return intf(body, dx); }
+} {}
+
+inline expr fn(string name, list_t args)			{ return func{name, args}; }
 inline expr fn(string name, list_t args, expr body) { return func{name, args, body}; }
 
 inline expr approx_fun(expr f, expr x) { return as<func>(f)(x); }
@@ -47,10 +54,10 @@ inline expr ln(expr x)
 	if(x == inf)		return inf;																	// ln(∞) ⇒ ∞
 	if(is<product>(x))	return ln(as<product>(x).left()) + ln(as<product>(x).right());				// ln(x∙y) ⇒ ln(x)+ln(y)
 	if(is<power>(x))	return as<power>(x).y() * ln(as<power>(x).x());								// ln(xʸ) ⇒ y∙ln(x)
-	return func{S_LN, {x}, empty,{
+	return func{S_LN, {x}, {
 		ln,
 		[x](expr f, expr dx) { return df(x, dx) / x; },												// ln(f)' ⇒ f'/x
-		[x](expr f, expr dx) { auto a = df(x, dx); return a != zero && (df(a, dx) == zero) ? x / a * ln(x) - dx : make_integral(f, dx); },
+		[x](expr f, expr dx) { auto a = df(x, dx); return a != zero && (df(a, dx) == zero) ? x / a * ln(x) - dx : make_int(f, dx); },
 		apply_fun(std::log, std::log)
 	}};
 }
@@ -68,10 +75,10 @@ inline expr sin(expr x)
 	if(x == 2*pi/2)					return minus_one;												// sin(3π/2) ⇒ -1
 	if(is<product>(x) && has_sign(as<product>(x).left())) return -sin(-x);							// sin(-x) ⇒ -sin(x)
 	if(is<func>(x) && as<func>(x).name() == S_ASIN)	return as<func>(x).x();							// sin(arcsin(x)) ⇒ x
-	return func{S_SIN, {x}, empty, {
+	return func{S_SIN, {x}, {
 		sin, 
 		[x](expr f, expr dx) { return df(x, dx) * cos(x); },										// sin(f)' ⇒ f'∙cos(x)
-		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? -cos(x) : make_integral(f, dx); },
+		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? -cos(x) : make_int(f, dx); },
 		apply_fun(std::sin, std::sin)
 	}};
 }
@@ -89,10 +96,10 @@ inline expr cos(expr x)
 	if(x == pi)						return minus_one;												// cos(π) ⇒ -1
 	if(is<product>(x) && as<product>(x).left() == minus_one) return cos(as<product>(x).right());	// cos(-x) ⇒ cos(x)
 	if(is<func>(x) && as<func>(x).name() == S_ACOS)	return as<func>(x).x();							// cos(arccos(x)) ⇒ x
-	return func{S_COS, {x}, empty,{
+	return func{S_COS, {x}, {
 		cos,
 		[x](expr f, expr dx) { return df(x, dx) * -sin(x); },										// cos(f)' ⇒ -f'∙sin(x)
-		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? sin(x) : make_integral(f, dx); },
+		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? sin(x) : make_int(f, dx); },
 		apply_fun(std::cos, std::cos)
 	}};
 }
@@ -100,34 +107,34 @@ inline expr cos(expr x)
 inline expr tg(expr x) {
 	if(is<product>(x) && as<product>(x).left() == minus_one)return -tg(as<product>(x).right());		// tg(-x) ⇒ -tg(x)
 	if(is<func>(x) && as<func>(x).name() == S_ATG)		return as<func>(x).x();						// tg(arctg(x)) ⇒ x
-	return func{S_TG, {x}, empty,{
+	return func{S_TG, {x}, {
 		tg,
 		[x](expr f, expr dx) { return df(x, dx) / (cos(x) ^ two); },								// tg(f)' ⇒ f'/cos²(x)
-		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? -ln(cos(x)) : make_integral(f, dx); },
+		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? -ln(cos(x)) : make_int(f, dx); },
 		apply_fun(std::tan, std::tan)
 	}};
 }
 inline expr arcsin(expr x)	{
-	return func{S_ASIN,{x}, empty,{
+	return func{S_ASIN,{x}, {
 		arcsin,
 		[x](expr f, expr dx) { return df(x, dx) / ((1 - (x^2)) ^ half); },							// arcsin(f)' ⇒ f'/√(1-x²)
-		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? x * f + ((1-(x^2))^half) : make_integral(f, dx); },
+		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? x * f + ((1-(x^2))^half) : make_int(f, dx); },
 		apply_fun(std::asin, std::asin)
 	}};
 }
 inline expr arccos(expr x)	{
-	return func{S_ACOS, {x}, empty,{
+	return func{S_ACOS, {x}, {
 		arccos,
 		[x](expr f, expr dx) { return -df(x, dx) / ((1 - (x^2)) ^ half); },							// arccos(f)' ⇒ -f'/√(1-x²)
-		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? x * f - ((1-(x^2))^half) : make_integral(f, dx); },
+		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? x * f - ((1-(x^2))^half) : make_int(f, dx); },
 		apply_fun(std::acos, std::acos)
 	}};
 }
 inline expr arctg(expr x)	{
-	return func{S_ATG, {x}, empty,{
+	return func{S_ATG, {x}, {
 		arctg,
 		[x](expr f, expr dx) { return df(x, dx) / ((1 + (x^2)) ^ half); },							// arctg(f)' ⇒ f'/√(1+x²)
-		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? x * f - half * ln(1+(x^2)) : make_integral(f, dx); },
+		[x](expr f, expr dx) { return df(x, dx) == zero ? x * dx : x == dx ? x * f - half * ln(1+(x^2)) : make_int(f, dx); },
 		apply_fun(std::atan, std::atan)
 	}};
 }
@@ -169,18 +176,16 @@ static expr fsub(expr x) {
 };
 
 inline expr make_dif(expr f, expr dx) {
-	return func{S_DIF, {f, dx}, empty, {
+	return func{S_DIF, {f, dx}, {
 		fdif,
 		make_dif,
-		[f, dx](expr f2, expr dx2) { return dx2 == dx ? f : make_integral(f2, dx2); },
+		[f, dx](expr f2, expr dx2) { return dx2 == dx ? f : make_int(f2, dx2); },
 		approx_fun,
 		print_dif
 	}};
 }
-inline expr make_integral(expr f, expr dx) { return make_integral(f, dx, zero); }
-inline expr make_int(expr f, expr dx) { return make_integral(f, dx, zero); }
-inline expr make_integral(expr f, expr dx, expr c) {
-	return func{S_INT, {f, dx, c}, empty,{
+inline expr make_int(expr f, expr dx) { 
+	return func{S_INT,{f, dx},{
 		fint,
 		[f, dx](expr f2, expr dx2) { return dx2 == dx ? f : make_dif(f2, dx2); },
 		make_int,
@@ -188,9 +193,9 @@ inline expr make_integral(expr f, expr dx, expr c) {
 		print_int
 	}};
 }
-inline expr make_integral(expr f, expr dx, expr a, expr b) { return func{S_INT,{f, dx, a, b}, empty,{ fint, make_dif, make_int, approx_fun, print_int }}; }
-inline expr make_assign(expr x, expr y) { return func{S_ASSIGN, {x, y}, empty, { fass, make_dif, make_int, approx_fun, print_assign }}; }
-inline expr make_subst(expr x, expr y)  { return func{S_SUBST,  {x, y}, empty, { fsub, make_dif, make_int, approx_fun, print_subst }}; }
+inline expr make_integral(expr f, expr dx, expr a, expr b) { return func{S_INT,{f, dx, a, b}, { fint, make_dif, make_int, approx_fun, print_int }}; }
+inline expr make_assign(expr x, expr y) { return func{S_ASSIGN, {x, y}, { fass, make_dif, make_int, approx_fun, print_assign }}; }
+inline expr make_subst(expr x, expr y)  { return func{S_SUBST,  {x, y}, { fsub, make_dif, make_int, approx_fun, print_subst }}; }
 
 inline expr func::x() const { return _args.size() == 1 ? _args.front() : xset(_args); }
 inline expr func::d(expr dx) const { return _impl.d(*this, dx); }
@@ -212,7 +217,7 @@ inline bool func::match(expr e, match_result& res) const {
 	return _name == f.name() ? cas::match(f.args(), _args, res) : res.found = false;
 }
 inline expr func::operator()(expr values) const {
-	return func{_name, is<xset>(values) ? as<xset>(values).items() : list_t{values}, _body, _impl};
+	return func{_name, is<xset>(values) ? as<xset>(values).items() : list_t{values}, _impl};
 }
 
 }

@@ -47,7 +47,7 @@ inline expr power::integrate(expr dx, expr c) const
 			ln(_x) / d_x + c :																					// ∫ 1/(ax+b) dx ⇒ ln(ax+b)/a
 			(_x ^ (_y + 1)) / (d_x * (_y + 1)) + c;																// ∫ (ax+b)ⁿ dx ⇒ (ax+b)ⁿ⁺¹/a(n+1)
 	}
-	return make_integral(*this, dx) + c;
+	return make_int(*this, dx) + c;
 }
 
 inline expr product::integrate(expr dx, expr c) const {
@@ -79,7 +79,7 @@ inline expr product::integrate(expr dx, expr c) const {
 	if((mr = cas::match(*this, (x^n)*(e^(y*x)))) && df(a=mr[y], dx) == zero &&	is<numeric, int_t>(b = mr[n]) && b > zero)
 		return (dx^b)*(e^a*x)/a - b/a*intf((dx ^ (b - 1))*(e^a*x), dx) + c;									// ∫ xⁿ∙eᵃˣ dx ⇒ xⁿ∙eᵃˣ/a - n/a ∫ xⁿ⁻¹∙eᵃˣ dx
 
-	return make_integral(make_prod(p.left(), p.right()), dx) + c;
+	return make_int(make_prod(p.left(), p.right()), dx) + c;
 }
 
 inline expr sum::integrate(expr dx, expr c) const { 

@@ -76,8 +76,6 @@ expr make_num(complex_t value);
 expr make_power(expr x, expr y);
 expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
-expr make_integral(expr f, expr dx);
-expr make_integral(expr f, expr dx, expr c);
 expr make_integral(expr f, expr dx, expr a, expr b);
 expr make_dif(expr f, expr dx);
 expr make_int(expr f, expr dx);
@@ -294,13 +292,13 @@ public:
 		fprint_t print;
 	};
 
-	string	_name;
-	list_t	_args;
-	expr	_body;
+	string	  _name;
+	list_t	  _args;
 	callbacks _impl;
 public:
+	func(string name, list_t args);
 	func(string name, list_t args, expr body);
-	func(string name, list_t args, expr body, callbacks impl) : _name(name), _args(args), _body(body), _impl(impl) {}
+	func(string name, list_t args, callbacks impl) : _name(name), _args(args), _impl(impl) {}
 	string name() const { return _name; };
 	list_t args() const { return _args; }
 	bool has_sign() const { return false; }

@@ -32,7 +32,7 @@ void OpApp(expr& op1, expr& op2, expr& result) { result = op2; }
 void OpSubst(expr& op1, expr& op2, expr& result) { result = make_subst(op1, op2); }
 void OpAssign(expr& op1, expr& op2, expr& result) { result = make_assign(op1, op2); }
 void OpCall(expr& op1, expr& op2, expr& result) {
-	if(is<symbol>(op1))		result = fn(as<symbol>(op1).name(), is<xset>(op2) ? as<xset>(op2).items() : list_t{op2}, empty);
+	if(is<symbol>(op1))		result = fn(as<symbol>(op1).name(), is<xset>(op2) ? as<xset>(op2).items() : list_t{op2});
 	else if(is<func>(op1))	result = as<func>(op1)(op2);
 	else throw error_t::syntax;
 }
@@ -129,7 +129,7 @@ void NScript::ParseVar(expr& result)
 	if(_parser.GetToken() == Parser::setvar)	{
 		_parser.Next(); 
 		Parse(Assignment, result); 
-		result = make_assign(params == empty ? symbol{name} : fn(name, is<xset>(params) ? as<xset>(params).items() : list_t{params}, empty), result);
+		result = make_assign(params == empty ? symbol{name} : fn(name, is<xset>(params) ? as<xset>(params).items() : list_t{params}), result);
 	}	else	{
 		result = _context.Get(name);
 		if(params != empty)	OpCall(result, params, result);
