@@ -76,9 +76,9 @@ expr make_num(complex_t value);
 expr make_power(expr x, expr y);
 expr make_sum(expr x, expr y);
 expr make_prod(expr left, expr right);
-expr make_integral(expr f, expr dx, expr a, expr b);
 expr make_dif(expr f, expr dx);
 expr make_int(expr f, expr dx);
+expr make_intd(expr f, expr dx, expr a, expr b);
 
 template<class T> bool is(const expr& e) { return e.type() == typeid(T); }
 template<class T, class F> bool is(const expr& f) { return f.type() == typeid(T) && boost::get<T>(f).value().type() == typeid(F); }
@@ -293,17 +293,19 @@ public:
 	};
 
 	string	  _name;
-	list_t	  _args;
+	expr	  _args;
 	callbacks _impl;
 public:
-	func(string name, list_t args);
-	func(string name, list_t args, expr body);
-	func(string name, list_t args, callbacks impl) : _name(name), _args(args), _impl(impl) {}
-	string name() const { return _name; };
-	list_t args() const { return _args; }
+	func(string name, expr args);
+	func(string name, expr args, expr body);
+	func(string name, expr args, callbacks impl) : _name(name), _args(args), _impl(impl) {}
+	string name() const { return _name; }
+	callbacks impl() const { return _impl; }
+	list_t args() const;
 	bool has_sign() const { return false; }
+	template <typename ... Params> expr operator ()(expr val, Params ... rest) const;
 	expr operator()(expr params) const;
-	expr x() const;
+	expr x() const { return _args; }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
 	expr subst(pair<expr, expr> s) const;
@@ -345,7 +347,7 @@ inline expr subst(expr e, list_t vars) {
 inline expr df(expr e, expr dx) { return boost::apply_visitor([dx](auto x) { return x.d(dx); }, e); }
 inline expr intf(expr e, expr dx, expr c) { return boost::apply_visitor([dx, c](auto x) { return x.integrate(dx, c); }, e); }
 inline expr intf(expr e, expr dx) { return intf(e, dx, expr{0}); }
-inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func>(F) && as<func>(F).name() == S_INT ? make_integral(e, dx, a, b) : subst(F, dx, b) - subst(F, dx, a); }
+inline expr intf(expr e, expr dx, expr a, expr b) { auto F = intf(e, dx); return is<func>(F) && as<func>(F).name() == S_INT ? make_intd(e, dx, a, b) : subst(F, dx, b) - subst(F, dx, a); }
 inline expr approx(expr e) { return boost::apply_visitor([](auto x) { return x.approx(); }, e); }
 inline expr simplify(expr e) { return boost::apply_visitor([](auto x) { return x.simplify(); }, e); }
 inline bool match(expr e, expr pattern, match_result& res) { return boost::apply_visitor([e, &res](auto x) { return x.match(e, res); }, pattern); }

@@ -205,9 +205,8 @@ namespace Tests
 			Assert::AreEqual("-sin(x^2)", to_string(sin(-x*x)).c_str());
 			Assert::AreEqual("cos(x^2)", to_string(cos(-x*x)).c_str());
 			// User
-			///func f{"f", {x,y}, x / y};
-			///Assert::AreEqual(one / 5, f(1, 5));
-
+			func f{"f", xset{x,y}, y / x};
+			Assert::AreEqual(one / 5, f(5, 1));
 		}
 		TEST_METHOD(Approximation)
 		{
@@ -231,7 +230,7 @@ namespace Tests
 		TEST_METHOD(Derivative)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
-			func f{"f",{x,y}, x / y};
+			func f{"f", xset{x,y}, x / y};
 			Assert::AreEqual(3*(x^2), df(x^3, x));
 			Assert::AreEqual(ln(3)*(3^x), df(3^x, x));
 			Assert::AreEqual((x^x)+ln(x)*(x^x), df(x^x, x));
@@ -285,7 +284,7 @@ namespace Tests
 			Assert::AreEqual(cos(y^2), *ns.eval("cos(y^2)"));
 			Assert::AreEqual(-2*y*sin(y^2), *ns.eval("dif(cos(y^2),y)"));
 			Assert::AreEqual(half, *ns.eval("int(1/x^2,x,2,inf)"));
-			ns.set("f", fn("f", {x})); ns.set("g", fn("g", {x})); ns.set("h", fn("h", {x, y}, (x^2)/y));
+			ns.set("f", fn("f", x)); ns.set("g", fn("g", x)); ns.set("h", fn("h", xset{x, y}, (x^2)/y));
 			Assert::AreEqual((y ^ 2) / x, *ns.eval("h(y,x)"));
 			Assert::AreEqual(expr{16}/5, *ns.eval("h(4,5)"));
 			Assert::AreEqual("g'(x)f(x)+f'(x)g(x)", to_string(*ns.eval("dif(f(x)*g(x),x)")).c_str());
@@ -294,6 +293,17 @@ namespace Tests
 			Assert::AreEqual(expr{20}, *ns.eval("xx*yy"));
 			Assert::AreEqual(sin(x), *ns.eval("int(f(x),x)|f(x)=cos(x)"));
 			Assert::AreEqual(a/(b^2), *ns.eval("x/y^2|(x=a,y=b)"));
+		}
+		TEST_METHOD(Errors)
+		{
+			NScript ns;
+			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
+			func f1{"f", xset{x,y}}, f2{"f", xset{x,y}, x/y};
+			auto esyntax = make_err(error_t::syntax), eargs = make_err(error_t::invalid_args);
+			Assert::AreEqual(eargs, f1(3));
+			Assert::AreEqual(eargs, f2(3));
+			Assert::AreEqual(eargs, f1(3, 4, 5));
+			Assert::AreEqual(eargs, f2(3, 4, 5));
 		}
 
 	};

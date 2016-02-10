@@ -218,7 +218,7 @@ inline ostream& print_dif(ostream& os, const func& f) {
 	if(is_mml(os)) {
 		if(is_den(os))			return os;
 		if(is_simple(fn, dx))	return os << "<mrow><mi>" << as<func>(fn).name() << "</mi><mo>&prime;</mo><mfenced>" << print_arg(as<func>(fn).args()) << "</mfenced></mrow>";
-		else										return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << dx << "</mrow></mfrac>" << fn << "</mrow>";
+		else					return os << "<mrow><mfrac><mi>d</mi><mrow><mi>d</mi>" << dx << "</mrow></mfrac>" << fn << "</mrow>";
 	} else {
 		if(is_simple(fn, dx))	return os << as<func>(fn).name() << '\'' << '(' << as<func>(fn).args() << ')';
 		else					return os << "d/d" << dx << " " << fn;

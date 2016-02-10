@@ -32,8 +32,8 @@ void OpApp(expr& op1, expr& op2, expr& result) { result = op2; }
 void OpSubst(expr& op1, expr& op2, expr& result) { result = make_subst(op1, op2); }
 void OpAssign(expr& op1, expr& op2, expr& result) { result = make_assign(op1, op2); }
 void OpCall(expr& op1, expr& op2, expr& result) {
-	if(is<symbol>(op1))		result = fn(as<symbol>(op1).name(), is<xset>(op2) ? as<xset>(op2).items() : list_t{op2});
-	else if(is<func>(op1))	result = as<func>(op1)(op2);
+	if(is<symbol>(op1))		result = func{as<symbol>(op1).name(), op2 };
+	else if(is<func>(op1))	result = func{as<func>(op1).name(), op2, as<func>(op1).impl() };
 	else throw error_t::syntax;
 }
 
@@ -62,7 +62,7 @@ Context::Context(const Context *base) : _locals(1)
 		_globals.insert(pair("arccos",	arccos(x)));
 		_globals.insert(pair("arctg",	arctg(x)));
 		_globals.insert(pair("dif",		make_dif(f, x)));
-		_globals.insert(pair("int",		make_integral(f, x, a, b)));
+		_globals.insert(pair("int",		make_intd(f, x, a, b)));
 		_globals.insert(pair("sqrt",	fn("sqrt", {x}, x^half)));
 	}
 }
@@ -129,7 +129,7 @@ void NScript::ParseVar(expr& result)
 	if(_parser.GetToken() == Parser::setvar)	{
 		_parser.Next(); 
 		Parse(Assignment, result); 
-		result = make_assign(params == empty ? symbol{name} : fn(name, is<xset>(params) ? as<xset>(params).items() : list_t{params}), result);
+		result = make_assign(params == empty ? expr{symbol{name}} : expr{func{name, params}}, result);
 	}	else	{
 		result = _context.Get(name);
 		if(params != empty)	OpCall(result, params, result);
