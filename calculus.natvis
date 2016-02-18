@@ -13,44 +13,13 @@
     <DisplayString>{{{_numer}/{_denom}}}</DisplayString>
   </Type>
 
-  <Type Name="cas::fn_id"><DisplayString>id({_x})</DisplayString></Type>
-  <Type Name="cas::fn_ln"><DisplayString>ln({_x})</DisplayString></Type>
-  <Type Name="cas::fn_sin"><DisplayString>sin({_x})</DisplayString></Type>
-  <Type Name="cas::fn_cos"><DisplayString>cos({_x})</DisplayString></Type>
-  <Type Name="cas::fn_tg"><DisplayString>tg({_x})</DisplayString></Type>
-  <Type Name="cas::fn_arcsin"><DisplayString>arcsin({_x})</DisplayString></Type>
-  <Type Name="cas::fn_arccos"><DisplayString>arccos({_x})</DisplayString></Type>
-  <Type Name="cas::fn_arctg"><DisplayString>arctg({_x})</DisplayString></Type>
-  <Type Name="cas::fn_df"><DisplayString>df{_x}</DisplayString></Type>
-  <Type Name="cas::fn_int"><DisplayString>int{_x}</DisplayString></Type>
-  <Type Name="cas::fn_assign"><DisplayString>assign{_x}</DisplayString></Type>
-  <Type Name="cas::fn_subst"><DisplayString>subst{_x}</DisplayString></Type>
-  <Type Name="cas::fn_user">
-    <DisplayString>{(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[0]}{(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[2]}: {(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[1]}</DisplayString>
-    <Expand>
-      <Item Name="[name]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[0]</Item>
-      <Item Name="[args]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[2]</Item>
-      <Item Name="[body]">(*((*(boost::recursive_wrapper&lt;cas::xset&gt;  *)&amp;(_x.storage_.data_.buf)).p_))[1]</Item>
-    </Expand>
-  </Type>
-  
   <Type Name="cas::func">
-
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 1 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 2 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 3 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 4 &amp;&amp; _body.which_ == 0">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}, {*(_args._Mypair._Myval2._Myfirst+3)})</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 1">{_name,sb}({*_args._Mypair._Myval2._Myfirst}): [{_body}]</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 2">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}): [{_body}]</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 3">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}): [{_body}]</DisplayString>
-    <DisplayString Condition="_args._Mypair._Myval2._Mylast - _args._Mypair._Myval2._Myfirst == 5">{_name,sb}({*_args._Mypair._Myval2._Myfirst}, {*(_args._Mypair._Myval2._Myfirst+1)}, {*(_args._Mypair._Myval2._Myfirst+2)}, {*(_args._Mypair._Myval2._Myfirst+3)}): [{_body}]</DisplayString>
-    <DisplayString Condition="_body.which_ == 0">{_name,sb}{_args}</DisplayString>
-    <DisplayString>{_name,sb}{_args}: {_body}</DisplayString>
+    <DisplayString>{_name,sb} {_args}</DisplayString>
   
     <Expand>
       <Item Name="[name]">_name</Item>
       <Item Name="[args]">_args</Item>
-      <Item Name="[body]">_body</Item>
+      <Item Name="[impl]">_impl</Item>
     </Expand>
   </Type>
 

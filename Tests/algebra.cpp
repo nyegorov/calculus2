@@ -230,7 +230,7 @@ namespace Tests
 		TEST_METHOD(Derivative)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"};
-			func f{"f", xset{x,y}, x / y};
+			func f{"f", xset{x,y}, x / y}, g{"g", xset{x,y}}, u("u", x);
 			Assert::AreEqual(3*(x^2), df(x^3, x));
 			Assert::AreEqual(ln(3)*(3^x), df(3^x, x));
 			Assert::AreEqual((x^x)+ln(x)*(x^x), df(x^x, x));
@@ -241,6 +241,11 @@ namespace Tests
 			Assert::AreEqual(1 / y, df(f, x));
 			Assert::AreEqual(-x / (y^2), df(f, y));
 			Assert::AreEqual(1 / y, df(f, x));
+			Assert::AreEqual(zero, df(u(x^2), y));
+			Assert::AreEqual(2*x*make_dif(u(x^2),x), df(u(x^2), x));
+			Assert::AreEqual(zero, df(g(a, b), x));
+			Assert::AreEqual(make_dif(g(x, b), x), df(g(x, b), x));
+			Assert::AreEqual(make_dif(u(x),x)*make_dif(g(u(x), b), x), df(g(u(x), b), x));
 		}
 		TEST_METHOD(Integrals)
 		{
@@ -304,6 +309,8 @@ namespace Tests
 			Assert::AreEqual(eargs, f2(3));
 			Assert::AreEqual(eargs, f1(3, 4, 5));
 			Assert::AreEqual(eargs, f2(3, 4, 5));
+			Assert::AreEqual(eargs, fint(xset{3}));
+			Assert::AreEqual(eargs, fint(xset{3, 4, 5, 6, 7}));
 		}
 
 	};

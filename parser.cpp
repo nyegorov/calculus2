@@ -12,6 +12,17 @@ namespace cas	{
 
 // Operators
 
+inline expr make_match(expr x, expr y) { return func{"match", xset{x, y}, func::callbacks{
+	[](expr e) -> expr {
+		if(!is<xset>(e) || as<xset>(e).items().size() != 2)	return empty;
+		auto mr = match(as<xset>(e).items()[0], as<xset>(e).items()[1]);
+		if(!mr)	return empty;
+		list_t res;
+		for(auto& s : mr.matches)	res.push_back(make_assign(s, s.value()));
+		return xset(res);
+	}
+}}; }
+
 void OpNull(expr& op1, expr& op2, expr& result) {}
 void OpAdd(expr& op1, expr& op2, expr& result) { result = sum{op1, op2}; }
 void OpNeg(expr& op1, expr& op2, expr& result) { result = product{minus_one, op2}; }
@@ -64,6 +75,7 @@ Context::Context(const Context *base) : _locals(1)
 		_globals.insert(pair("dif",		make_dif(f, x)));
 		_globals.insert(pair("int",		make_intd(f, x, a, b)));
 		_globals.insert(pair("sqrt",	fn("sqrt", {x}, x^half)));
+		_globals.insert(pair("match",	make_match(a, b)));
 	}
 }
 

@@ -292,6 +292,7 @@ public:
 		fprint_t print;
 	};
 
+protected:
 	string	  _name;
 	expr	  _args;
 	callbacks _impl;
