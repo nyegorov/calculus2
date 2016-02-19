@@ -30,12 +30,12 @@ class sum;
 class xset;
 class error;
 
-typedef int int_t;
-typedef double real_t;
-typedef std::complex<real_t> complex_t;
+using int_t = int;
+using real_t = double;
+using complex_t = std::complex<real_t>;
 
-typedef boost::variant<int_t, rational_t, real_t, complex_t> numeric_t;
-typedef boost::variant<
+using numeric_t = boost::variant<int_t, rational_t, real_t, complex_t>;
+using expr = boost::variant<
 	error,
 	numeric,
 	boost::recursive_wrapper<symbol>,
@@ -44,12 +44,12 @@ typedef boost::variant<
 	boost::recursive_wrapper<product>,
 	boost::recursive_wrapper<sum>,
 	boost::recursive_wrapper<xset>
->	expr;
+>;
 
-typedef std::vector<expr> list_t;
-typedef std::function<expr(expr)> fmake_t;
-typedef std::function<expr(expr, expr)> fcall_t;
-typedef std::function<ostream&(ostream& os, const func&)> fprint_t;
+using list_t = std::vector<expr>;
+using fmake_t = std::function<expr(expr)>;
+using fcall_t = std::function<expr(expr, expr)>;
+using fprint_t = std::function<ostream&(ostream& os, const func&)>;
 
 enum class part_t { all = 0, num = 1, den = 2 };
 enum class error_t { cast, invalid_args, not_implemented, syntax, empty };
