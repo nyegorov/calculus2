@@ -5,10 +5,10 @@
 
 using std::string;
 
-typedef std::unique_ptr<NSVGimage, std::function<void(NSVGimage*)>> image_ptr;
-typedef std::unique_ptr<NSVGrasterizer, std::function<void(NSVGrasterizer*)>> rasterizer_ptr;
-typedef std::unique_ptr<std::remove_pointer<HBITMAP>::type, std::function<void(HBITMAP)>> bitmap_ptr;
-typedef std::unique_ptr<std::remove_pointer<mml_handle>::type, std::function<void(mml_handle)>> mhandle_ptr;
+using image_ptr		= std::unique_ptr<NSVGimage, void (*)(NSVGimage*)>;
+using rasterizer_ptr= std::unique_ptr<NSVGrasterizer, void (*)(NSVGrasterizer*)>;
+using bitmap_ptr	= std::unique_ptr<std::remove_pointer_t<HBITMAP>, std::function<BOOL(HBITMAP)>>;
+using mhandle_ptr	= std::unique_ptr<std::remove_pointer_t<mml_handle>, void (*)(mml_handle)>;
 
 struct expr_info
 {
@@ -17,7 +17,7 @@ struct expr_info
 	string		text;
 	string		mml;
 	string		svg;
-	image_ptr 	pimage;
+	image_ptr 	pimage{nullptr, nsvgDelete};
 	unsigned width()  const { return pimage ? (unsigned)pimage->width : 0; }
 	unsigned height() const { return pimage ? (unsigned)pimage->height : 0; }
 };
@@ -81,10 +81,10 @@ class expr_renderer
 
 
 public:
-	expr_renderer(double scale) : _parser(false)
+	expr_renderer(double scale) : _parser(false), 
+		_prasterizer(nsvgCreateRasterizer(), nsvgDeleteRasterizer),
+		_mhandle(mml_create_handle(), mml_free_handle)
 	{
-		_prasterizer = rasterizer_ptr(nsvgCreateRasterizer(), nsvgDeleteRasterizer);
-		_mhandle = mhandle_ptr(mml_create_handle(), mml_free_handle);
 		mml_set_scale(_mhandle.get(), scale);
 	}
 
@@ -113,7 +113,7 @@ public:
 		auto mml_res = exp2mml(me.result);
 		me.mml = mml_src + (src.find('~') == string::npos ? "<mo mathcolor='red'>&rArr;</mo>" : "<mo>&asymp;</mo>") + mml_res;
 		me.svg = mml2svg(me.mml);
-		me.pimage = image_ptr(svg2img(me.svg), nsvgDelete);
+		me.pimage.reset(svg2img(me.svg));
 		return me;
 	}
 
@@ -126,7 +126,7 @@ public:
 
 		HDC hdcMem = CreateCompatibleDC(hdc);
 		nsvgRasterize(_prasterizer.get(), me.pimage.get(), 0, 0, 1, (unsigned char *)&image_data.front(), width, height, width * 4);
-		auto pbitmap = bitmap_ptr(CreateBitmap(width, height, 1, 32, &image_data.front()), DeleteObject);
+		auto pbitmap = bitmap_ptr(CreateBitmap(width, height, 1, 32, &image_data.front()), ::DeleteObject);
 		HGDIOBJ old_bmp = SelectObject(hdcMem, pbitmap.get());
 		BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
 		AlphaBlend(hdc, x, y, width, height, hdcMem, 0, 0, width, height, bf);

@@ -261,8 +261,9 @@ class xset
 public:
 	xset(const xset& x) { _items = x.items(); }
 	xset(expr item) { _items.push_back(item); }
-	xset(list_t items) : _items(items) {}
-	xset(std::initializer_list<expr> items) : _items(items) {}
+	xset(const list_t& items) : _items(items) {}
+	xset(list_t&& items) : _items(std::forward<list_t>(items)) {}
+	xset(std::initializer_list<expr> items) : _items(std::move(items)) {}
 	const list_t& items() const { return _items; }
 	bool has_sign() const { return false; }
 	expr d(expr dx) const;
