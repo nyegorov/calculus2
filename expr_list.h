@@ -76,7 +76,8 @@ public:
 	friend class iterator;
 	friend class const_iterator;
 
-	expr_list(Expr left, Expr right) : _left(left), _right(right), _comp(Pred()) {}
+	expr_list(const Expr& left, const Expr& right) : _left(left), _right(right), _comp(Pred()) {}
+	expr_list(Expr&& left, Expr&& right) : _left(left), _right(right), _comp(Pred()) {}
 	Expr left() const { return _left; }
 	Expr right() const { return _right; }
 
@@ -114,31 +115,16 @@ public:
 		else						_right = T{_right, e};
 	}
 
-	void append_old(Expr e)
-	{
-		expr tmp;
-		while(e != T::unit()) {
-			iterator it;
-			for(it = begin(); it != end(); ++it) {
-				if(*it == T::unit())		continue;
-				tmp = T::op(*it, e);
-				if(tmp.type() != typeid(T))	break;
-			}
-			if(it == end()) {
-				insert(e);
-				return;
-			}
-			erase(it);
-			e = tmp;
-		}
-	}
-
 	// try to append new element (summand or multiplicand) to the list
 	// returns unappendable remainder and modified list
-	std::pair<Expr, Expr> try_append(Expr& e) const
+	std::pair<Expr, Expr> try_append(const Expr& e) const
 	{
-		auto& t = T::op(_left, e);
-		if(t.type() != typeid(T)) return{t, _right};
+		auto&& t = T::op(_left, e);
+		if(t.type() != typeid(T)) {
+			auto&& u = T::op(_right, t);
+			if(u.type() != typeid(T))	return{T::unit(), u};
+			else						return{t, _right};
+		}
 
 		if(is<T>(_right)) {
 			auto& r = as<T>(_right).try_append(e);
@@ -150,7 +136,7 @@ public:
 		return{e, static_cast<const T&>(*this)};
 	}
 
-	Expr append(Expr e) const
+	Expr append(const Expr& e) const
 	{
 		auto& r = try_append(e);
 		if(r.first == T::unit())	return r.second;

@@ -207,7 +207,7 @@ public:
 	static expr unit() { return{1}; }
 	static expr op(const expr& lh, const expr& rh);
 
-	product(expr left, expr right) : expr_list(left, right) {}
+	product(expr left, expr right) : expr_list(std::move(left), std::move(right)) {}
 	bool has_sign() const { return cas::has_sign(_left); }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
@@ -228,7 +228,7 @@ public:
 	static expr unit() { return{0}; }
 	static expr op(const expr& lh, const expr& rh);
 
-	sum(expr left, expr right) : expr_list(left, right) {}
+	sum(expr left, expr right) : expr_list(std::move(left), std::move(right)) {}
 	bool has_sign() const { return cas::has_sign(_left); }
 	expr d(expr dx) const;
 	expr integrate(expr dx, expr c) const;
@@ -262,7 +262,7 @@ public:
 	xset(const xset& x) { _items = x.items(); }
 	xset(expr item) { _items.push_back(item); }
 	xset(const list_t& items) : _items(items) {}
-	xset(list_t&& items) : _items(std::forward<list_t>(items)) {}
+	xset(list_t&& items) : _items(items) {}
 	xset(std::initializer_list<expr> items) : _items(std::move(items)) {}
 	const list_t& items() const { return _items; }
 	bool has_sign() const { return false; }
