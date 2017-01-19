@@ -16,7 +16,7 @@ Performs symbolic mathematical calculations, including:
  Result of calculation can be rendered into mathml or plain-text format.
 
  Project contains simple parser for mathematical expressions and Win32 GDI 
- render of mathml format.
+ render of mathml format (requires STIX fonts).
 
 /////////////////////////////////////////////////////////////////////////////
 Author:
