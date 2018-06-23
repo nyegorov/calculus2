@@ -201,7 +201,7 @@ static io_manip print_arg(const list_t& args) {
 inline ostream& print_fun(ostream& os, const func& f)
 {
 	if(is_den(os))	return os;
-	if(is_mml(os))	return os << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
+	if(is_mml(os))	return os << part_t::all << "<mrow><mi>" << f.name() << "</mi><mfenced>" << print_arg(f.args()) << "</mfenced></mrow>";
 	else			return os << f.name() << '(' << f.args() << ')';
 }
 
