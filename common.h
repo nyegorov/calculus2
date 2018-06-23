@@ -369,4 +369,11 @@ const expr e = symbol{"#e", numeric{boost::math::constants::e<double>()}};
 const expr pi = symbol{"#p", numeric{boost::math::constants::pi<double>()}};
 const list_t variables = {symbol{"x"}, symbol{"y"}, symbol{"z"}};
 
+inline numeric operator "" _i(unsigned long long val)	{ return complex_t{ 0, (real_t)val }; }
+inline numeric operator "" _i(long double val)			{ return complex_t{ 0, (real_t)val }; }
+inline numeric operator "" _n(unsigned long long val)	{ return numeric{ (int_t)val }; }
+inline numeric operator "" _n(long double val)			{ return numeric{ (real_t)val }; }
+inline expr operator "" _e(unsigned long long val)		{ return numeric{ (int_t)val }; }
+inline expr operator "" _e(long double val)				{ return numeric{ (real_t)val }; }
+
 }

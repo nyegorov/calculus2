@@ -20,6 +20,11 @@ template<> inline std::wstring ToString<expr>(const expr& e)
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 	return converter.from_bytes(to_string(e));
 }
+template<> inline std::wstring ToString<numeric>(const numeric& e)
+{
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+	return converter.from_bytes(to_string(e));
+}
 }
 }
 }
@@ -74,11 +79,11 @@ namespace Tests
 		TEST_METHOD(Integers)
 		{
 			numeric three{ 3 }, five{ 5 };
-			Assert::AreEqual("8",   to_string(three + five).c_str());
-			Assert::AreEqual("2",   to_string(five - three).c_str());
-			Assert::AreEqual("15",  to_string(five * three).c_str());
-			Assert::AreEqual("4",   to_string((five + three) / two).c_str());
-			Assert::AreEqual("125", to_string(five ^ three).c_str());
+			Assert::AreEqual(8_e,   three + five);
+			Assert::AreEqual(2_e,   five - three);
+			Assert::AreEqual(15_e,  five * three);
+			Assert::AreEqual(4_e,   (five + three) / two);
+			Assert::AreEqual(125_e, five ^ three);
 			int_t r = boost::get<int_t>(boost::get<numeric>(three + five).value());
 			Assert::AreEqual(8, r);
 			Assert::IsTrue(five - five == zero);
@@ -121,15 +126,15 @@ namespace Tests
 		{
 			auto q = make_num(3, 4);
 			auto half = make_num(0.5), three_seconds = make_num(1.5);
-			Assert::AreEqual("0.5", to_string(half).c_str());
-			Assert::AreEqual("1.5", to_string(three_seconds).c_str());
-			Assert::AreEqual("1", to_string(half + make_num(1, 2)).c_str());
-			Assert::AreEqual("2", to_string(half + three_seconds).c_str());
-			Assert::AreEqual("-1", to_string(half - three_seconds).c_str());
-			Assert::AreEqual("1", to_string(two * half).c_str());
-			Assert::AreEqual("3", to_string(three_seconds / half).c_str());
-			Assert::AreEqual("2.25", to_string(three_seconds ^ two).c_str());
-			Assert::AreEqual("2", to_string(q+half+q*half+half*q).c_str());
+			Assert::AreEqual(0.5_e, half);
+			Assert::AreEqual(1.5_e, three_seconds);
+			Assert::AreEqual(1_e, half + make_num(1, 2));
+			Assert::AreEqual(2_e, half + three_seconds);
+			Assert::AreEqual(-1_e, half - three_seconds);
+			Assert::AreEqual(1_e, two * half);
+			Assert::AreEqual(3_e, three_seconds / half);
+			Assert::AreEqual(2.25_e, three_seconds ^ two);
+			Assert::AreEqual(2_e, q+half+q*half+half*q);
 			Assert::AreEqual(1.46062, to_real(~((q^half) + (half^q))), 0.0001);
 			Assert::IsTrue(half + three_seconds == two);
 			Assert::IsTrue(half < one);
@@ -143,13 +148,15 @@ namespace Tests
 			Assert::AreEqual("1-i", to_string(c1mi).c_str());
 			Assert::AreEqual("-5i", to_string(cm5i).c_str());
 			Assert::AreEqual("3+2i", to_string(c3p2i).c_str());
-			Assert::AreEqual("4+i", to_string(c1mi + c3p2i).c_str());
-			Assert::AreEqual("-2-3i", to_string(c1mi - c3p2i).c_str());
-			Assert::AreEqual("5-i", to_string(c1mi * c3p2i).c_str());
-			Assert::AreEqual("-2i", to_string(c1mi ^ make_num(2)).c_str());
+			Assert::AreEqual(4+1_i, c1mi + c3p2i);
+			Assert::AreEqual(-2-3_i, c1mi - c3p2i);
+			Assert::AreEqual(5-1_i, c1mi * c3p2i);
+			Assert::AreEqual(-2_i, c1mi ^ make_num(2));
 			Assert::AreEqual("-0.707107+0.707107i", to_string(-1 ^ q).c_str());
-			Assert::AreEqual("3.5+6.25i", to_string((q+i)+(i+q)+(i+n)+(n+i)+r*i+q*i+n*i).c_str());
+			Assert::AreEqual(3.5+6.25_i, (q+i)+(i+q)+(i+n)+(n+i)+r*i+q*i+n*i);
 			Assert::AreEqual("0.958904-0.28373i", to_string(q^i).c_str());
+			Assert::AreEqual(expr{ c3p2i }, 3 + 2_i);
+			Assert::AreEqual(13_e, (3 + 2_i) * (3 - 2_i));
 			Assert::IsTrue(c1mi + i == make_num(1.0));
 			Assert::IsTrue(c1mi - make_num(1.5) + i - make_num(-1, 2) == zero);
 			Assert::IsTrue(i < c3p2i && 0.5 < c3p2i);
@@ -190,8 +197,8 @@ namespace Tests
 		{
 			symbol x{"x"}, y{"y"};
 			// Logarithm
-			Assert::AreEqual("1", to_string(ln(e)).c_str());
-			Assert::AreEqual("0", to_string(ln(1)).c_str());
+			Assert::AreEqual(1_e, ln(e));
+			Assert::AreEqual(0_e, ln(1));
 			Assert::AreEqual("-inf", to_string(ln(0)).c_str());
 			Assert::AreEqual(ln(x)+ln(y), ln(x*y));
 			Assert::AreEqual(y*ln(x), ln(x^y));
@@ -250,14 +257,14 @@ namespace Tests
 		TEST_METHOD(Integrals)
 		{
 			symbol x{"x"}, y{"y"}, a{"a"}, b{"b"}, c{"c"};
-			Assert::AreEqual(one, intf(cos(x), x, 0, pi/2));
+			Assert::AreEqual(1_e, intf(cos(x), x, 0, pi/2));
 			Assert::AreEqual(e^x, intf(e^x, x));
 			Assert::AreEqual(sin(x)-cos(x), intf(sin(x)+cos(x), x));
 			Assert::AreEqual(2*y/3*(x^3), intf(2*x*y*x, x));
 			Assert::AreEqual(x+10*(x^2)+50*(x^3)+125*(x^4)+125*(x^5), intf((5*x+1)^4, x));
 			Assert::AreEqual(ln(1+5*x)/5, intf((5 * x + 1) ^ -1, x));
 			Assert::AreEqual(-(x^2)/4+ln(x)*(x^2)/2, intf(x*ln(x), x));
-			Assert::AreEqual(two, intf(sin(x), x, 0, pi));
+			Assert::AreEqual(2_e, intf(sin(x), x, 0, pi));
 			Assert::AreEqual("c+int(#e^x^2,x)", to_string(intf(e^(x^2), x, c)).c_str());
 			Assert::AreEqual((ln(x)^2)/2, intf(ln(x)/x, x));
 			Assert::AreEqual(sin(x)*tg(y), df(intf(sin(x)*tg(y), x), x));
