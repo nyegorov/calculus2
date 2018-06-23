@@ -22,7 +22,7 @@
     <ProjectGuid>{3A0FF04D-E987-4056-AB02-F1197DD64C1F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Calculus2</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
